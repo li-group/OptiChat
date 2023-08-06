@@ -1,0 +1,53 @@
+# .gitignore
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.egg-info/
+dist/
+build/
+*.egg
+*.so
+*.pkl
+
+# Jupyter Notebooks
+.ipynb_checkpoints/
+*.ipynb_metadata
+
+# Environments
+.venv/
+env/
+venv/
+ENV/
+
+# IDEs
+.vscode/
+.idea/
+
+# Database
+*.sqlite
+
+# Misc
+.DS_Store
+*.swp
+*.swo
+*.swn
+*~
+
+# GAMS Gitignore
+
+# Ignore all GAMS output files
+*.lst
+*.gdx
+*.pf
+*.opt
+
+# Ignore log files
+*.log
+
+# Ignore other GAMS system files
+__gams*
+
+index*.bin
