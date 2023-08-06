@@ -250,7 +250,7 @@ def generate_slack_text(iis_param, model):
 
         if slack_var_pos > 1e-5:
             text = text + f"increase {p} by {slack_var_pos} unit; "
-        elif slack_var_neg < -1e-5:
+        elif slack_var_neg > 1e-5:
             text = text + f"decrease {p} by {slack_var_neg} unit; "
     return text
 
