@@ -217,10 +217,24 @@ class InfeasibleModelTroubleshooter(QMainWindow):
     def first_message(self):
         self.chatbot_messages.append({'role': 'assistant', 'content': self.summary + '\n' + self.infeasibility_report})
         self.chatbot_messages.append({'role': 'system',
-                                      'content': "Introduce this model and its infeasibility to unskilled user "
-                                                 "using plain English. You should avoid use symbols. "
-                                                 "Instead, you can replace the symbol with their physical meaning "
-                                                 "and bold the terms"})
+                                      'content': """First introduce this model to the user using the following four steps:
+                                      1. explain what data is available to make decisions in plain English
+                                        for example you could say "You are given a number of cities and the distance between any two
+                                            cities." for a TSP problem. You can say "You are given n item with different values and
+                                                weights to be filled in a knapsack who capacity is known"
+                                      2. explain what decisions are to be made in plain English\
+                                        for example, you could say "you would like to decide the sequence to visit all the n cities." for the TSP 
+                                        problem.
+                                        you could say "you would like to decide the items to be filled in the knapsack" for the knapsack problem. 
+                                    3. explain what constraints the decisions have to satisfy in plain English
+                                        for example you could say "the weights of all the items in the knapsack have to be less than or 
+                                        equal to the knapsack capacity"
+                                    4. explain the objective function in plain English
+                                        you could say "given these decisions, we would like to find the shortest path" for the TSP problem.
+                                        "given these decisions and constraints, we would like to find the items to be filled in the knapsack that 
+                                        have the total largest values"
+                                    Now you have introduced the model to the user. The second step is to tell the user why the model is infeasible
+                            """})
         chatbot_messages, model = self.chatbot_messages, self.model
         self.chat_thread = ChatThread(chatbot_messages, model)
         self.chat_thread.ai_message_signal.connect(self.chat_ai_message)

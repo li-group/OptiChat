@@ -169,13 +169,13 @@ model.a = Param(model.cr, model.c, model.p, default=0, mutable=True, initialize=
 model.b = Param(model.m, model.p, default=0, mutable=True, initialize=b_values)
 model.k = Param(model.m, default=0, mutable=True, initialize=k_values)
 model.ur = Param(model.cr, default=0, mutable=True,initialize=ur_values)
-model.qs = Param(model.lim, model.cf, model.q, default=0, initialize=qs_values)
+model.qs = Param(model.lim, model.cf, model.q, mutable=True, default=0, initialize=qs_values)
 model.atc = Param(model.cr, model.ci, model.q, default=0, mutable=True, initialize=atc_values)
 model.pf = Param(model.cf, default=0, mutable=True, initialize=pf_values)
 model.pr = Param(model.cr, default=0, mutable=True, initialize=pr_values)
 model.pd = Param(model.cd, default=0, mutable=True, initialize=pd_values)
 model.op = Param(model.p, default=0, mutable=True, initialize=op_values)
-model.d = Param(model.cf, mutable=True, initialize={'premium':43, 'regular':5, 'distillate':0, 'fuel-oil':37, 'fuel-gas':8})
+model.d = Param(model.cf, mutable=True, initialize={'premium':43, 'regular':5, 'distillate':0, 'fuel-oil':37, 'fuel-gas':8}, doc='demand')
 
 # Define the decision variables
 model.z = Var(model.cr, model.p, domain=NonNegativeReals) #process level'
@@ -224,7 +224,7 @@ model.bb = Constraint(model.cf, rule=bb_rule)
 
 #quality constraints lower bounds
 def qlb_rule(model, cf, q):
-    if model.qs["lower", cf, q] != 0:
+    if ("lower", cf, q) in qs_values:
         return sum(model.atc[cr, ci, q] * model.w[cr, ci, cf] for cr in model.cr for ci in model.ci) >= model.qs["lower", cf, q] * model.x[cf]
     else:
         return Constraint.Skip
@@ -232,7 +232,7 @@ model.qlb = Constraint(model.cf, model.q, rule=qlb_rule)
 
 #quality constraints upper bounds
 def qub_rule(model, cf, q):
-    if model.qs["upper", cf, q] != 0:
+    if ("upper", cf, q) in qs_values:
         return sum(model.atc[cr, ci, q] * model.w[cr, ci, cf] for cr in model.cr for ci in model.ci) <= model.qs["upper", cf, q] * model.x[cf]
     else:
         return Constraint.Skip

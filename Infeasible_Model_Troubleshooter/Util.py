@@ -133,13 +133,13 @@ def infer_infeasibility(const_names, summary_const, summary_param, summary_var):
 
     Summary: ```{summary_const}\n\n{summary_param}\n\n{summary_var}```"""
 
-    prompt = f"""Optimization experts are troubleshooting an infeasible optimization model.
-    They found that {', '.join(const_names)} constraints are contradictory and lead to infeasibility. 
+    # prompt = f"""Optimization experts are troubleshooting an infeasible optimization model.
+    # They found that {', '.join(const_names)} constraints are contradictory and lead to infeasibility. 
 
-    Your task is to identify the most probable conflicts among the constraints based on the model summary delimited by
-    triple backticks. \
+    # Your task is to identify the most probable conflicts among the constraints based on the model summary delimited by
+    # triple backticks. \
 
-    Summary: ```{summary_const}```"""
+    # Summary: ```{summary_const}```"""
 
     explanation = get_completion(prompt)
     return explanation
@@ -248,9 +248,9 @@ def generate_slack_text(iis_param, model):
         slack_var_pos = eval("model.slack_pos_" + p + ".value")
         slack_var_neg = eval("model.slack_neg_" + p + ".value")
 
-        if slack_var_pos > 0 and slack_var_neg == 0:
+        if slack_var_pos > 1e-5:
             text = text + f"increase {p} by {slack_var_pos} unit; "
-        elif slack_var_pos == 0 and slack_var_neg < 0:
+        elif slack_var_neg < -1e-5:
             text = text + f"decrease {p} by {slack_var_neg} unit; "
     return text
 
