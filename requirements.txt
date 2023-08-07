@@ -4,3 +4,4 @@ openai
 python-dotenv
 tiktoken
 PySide6
+networkx
