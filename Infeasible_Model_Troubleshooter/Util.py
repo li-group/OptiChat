@@ -1,6 +1,5 @@
 # Gurobi
 import typing
-import json
 import os
 import sys
 import importlib
@@ -11,32 +10,12 @@ from pyomo.core.expr.visitor import identify_mutable_parameters, replace_express
 # GPT
 import openai
 import tiktoken
-from langchain.chat_models import ChatOpenAI
-from langchain import PromptTemplate, LLMChain
-from langchain.prompts.chat import (
-    ChatPromptTemplate,
-    SystemMessagePromptTemplate,
-    AIMessagePromptTemplate,
-    HumanMessagePromptTemplate,
-)
-from langchain.document_loaders import TextLoader
-from langchain.embeddings.openai import OpenAIEmbeddings
-from langchain.text_splitter import (
-    CharacterTextSplitter,
-    RecursiveCharacterTextSplitter,
-    Language,
-)
-from langchain.vectorstores import Chroma
-from langchain.chains import RetrievalQA, SequentialChain, ConversationChain
-
 from dotenv import load_dotenv, find_dotenv
-
 _ = load_dotenv(find_dotenv())  # read local .env file
-
 openai.api_key = os.environ['OPENAI_API_KEY']
 
 
-def get_completion(prompt, model="gpt-3.5-turbo-16k"):
+def get_completion_standalone(prompt, model="gpt-3.5-turbo-16k"):
     messages = [{"role": "user", "content": prompt}]
     response = openai.ChatCompletion.create(
         model=model,
@@ -55,9 +34,6 @@ def get_completion_from_messages(messages, model="gpt-3.5-turbo-16k"):
     return response.choices[0].message["content"]
 
 
-llm = ChatOpenAI(temperature=0.0)
-
-
 def load_model(pyomo_file):
     original_dir = os.getcwd()
     directory_path = os.path.dirname(pyomo_file)
@@ -72,27 +48,60 @@ def load_model(pyomo_file):
     return model, ilp_path
 
 
-def build_QARetriever(pyomo_file):
-    loader = TextLoader(file_path=pyomo_file)
-    PYOMO_CODE = loader.load()
-    embeddings_model = OpenAIEmbeddings()
-    docsearch_PYOMO_CODE = Chroma.from_documents(PYOMO_CODE, embeddings_model)
-    qa_PYOMO_CODE = RetrievalQA.from_chain_type(llm=llm, chain_type="stuff",
-                                                retriever=docsearch_PYOMO_CODE.as_retriever())
-    return qa_PYOMO_CODE
+def extract_component(model, pyomo_file):
+    const_list = []
+    param_list = []
+    var_list = []
+    for const in model.component_objects(pe.Constraint):
+        const_list.append(str(const))
+    for param in model.component_objects(pe.Param):
+        param_list.append(str(param))
+    for var in model.component_objects(pe.Var):
+        var_list.append(str(var))
+    with open(pyomo_file, 'r') as file:
+        PYOMO_CODE = file.read()
+    file.close()
+    return const_list, param_list, var_list, PYOMO_CODE
 
 
-def ask_QARetriever(query_object, qa_retriever):
-    if query_object == 'Constraint':
-        query = f"what are the {query_object} involved in this model, as well as their physical meaning? \n" \
-                f"Output a table and each row is in a style of " \
-                f"- <Name of the {query_object}> | <physical meaning of the {query_object}> \n" \
-                f"You need to cover the physical meaning of each term in the constraint expression and connect them."
-    else:
-        query = f"what are the {query_object} involved in this model, as well as their physical meaning? \
-            Output a table and each row is in a style of - <Name of the {query_object}> | <physical meaning of the {query_object}>"
-    summary = qa_retriever({'query': query})["result"]
-    return summary
+def extract_summary(var_list, param_list, const_list, PYOMO_CODE):
+    prompt = f"""Here is an optimization model written in Pyomo, which is delimited by triple backticks. 
+    Your task is to 
+    (1): use plain English to describe the objective funtion of this model. \n\n
+    (2): We identified that it includes variables: {var_list}, please output a table and each row is in a style of 
+    - <Name of the variable> | <physical meaning of the variable>. \n\n
+    (3) We identified that it includes parameters: {param_list}, please output a table and each row is in a style of
+    - <Name of the parameter> | <physical meaning of the parameter>. \n\n
+    (4) We identified that it includes constraints: {const_list} please output a table and each row is in a style of 
+    - <Name of the constraint> | <physical meaning of the constraint>. 
+    You need to cover the physical meaning of each term in the constraint expression and give a detailed explanation. \n
+    Pyomo Model Code: ```{PYOMO_CODE}```"""
+    summary_response = get_completion_standalone(prompt)
+    return summary_response
+
+
+def add_eg(summary):
+    prompt = f"""I will give you a decription of an optimization model with parameters, variables, constraints and objective.
+    First introduce this model to the user using the following four steps:
+                                      1. explain what data is available to make decisions in plain English
+                                        for example you could say "You are given a number of cities and the distance between any two
+                                            cities." for a TSP problem. You can say "You are given n item with different values and
+                                                weights to be filled in a knapsack who capacity is known"
+                                      2. explain what decisions are to be made in plain English\
+                                        for example, you could say "you would like to decide the sequence to visit all the n cities." for the TSP 
+                                        problem.
+                                        you could say "you would like to decide the items to be filled in the knapsack" for the knapsack problem. 
+                                    3. explain what constraints the decisions have to satisfy in plain English
+                                        for example you could say "the weights of all the items in the knapsack have to be less than or 
+                                        equal to the knapsack capacity"
+                                    4. explain the objective function in plain English
+                                        you could say "given these decisions, we would like to find the shortest path" for the TSP problem.
+                                        "given these decisions and constraints, we would like to find the items to be filled in the knapsack that 
+                                        have the total largest values"
+                                    Now you have introduced the model to the user. The second step is to tell the user why the model is infeasible                
+    Model Description: ```{summary}```"""
+    summary_response = get_completion_standalone(prompt)
+    return summary_response
 
 
 def read_iis(ilp_file, model):
@@ -106,6 +115,7 @@ def read_iis(ilp_file, model):
     iis_dict = {}
     param_names = []
     for const_name in const_names:
+        iis_dict.update({const_name: []})
         consts = eval('model.' + const_name)
         for const_idx in consts:
             const = consts[const_idx]
@@ -114,42 +124,39 @@ def read_iis(ilp_file, model):
                 p_name = p.name.split("[")[0]
                 param_names.append(p_name)
 
-                if p_name in iis_dict.keys():
-                    if const_name not in iis_dict[p_name]:
-                        iis_dict[p_name].append(const_name)
-                else:
-                    iis_dict[p_name] = [const_name]
+                if p_name not in iis_dict[const_name]:
+                    iis_dict[const_name].append(p_name)
 
     param_names = list(set(param_names))
     return const_names, param_names, iis_dict
 
 
-def infer_infeasibility(const_names, summary_const, summary_param, summary_var):
+def param_in_const(iis_dict):
+    text_list = []
+    for key, values in iis_dict.items():
+        if values:
+            if len(values) == 1:
+                text_list.append(f"{key} constraint only contains {values[0]} parameter")
+            else:
+                objects = ', '.join(values[:-1]) + f" and {values[-1]}"
+                text_list.append(f"{key} constraint contains {objects} parameters")
+        else:
+            text_list.append(f"{key} constraint contains no parameter")
+
+    final_text = ', '.join(text_list) + '.\n'
+    return final_text
+
+
+def infer_infeasibility(const_names, summary):
     prompt = f"""Optimization experts are troubleshooting an infeasible optimization model.
     They found that {', '.join(const_names)} constraints are contradictory and lead to infeasibility. 
 
     Your task is to identify the most probable conflicts among the constraints based on the model summary delimited by
     triple backticks. \
 
-    Summary: ```{summary_const}\n\n{summary_param}\n\n{summary_var}```"""
-
-    # prompt = f"""Optimization experts are troubleshooting an infeasible optimization model.
-    # They found that {', '.join(const_names)} constraints are contradictory and lead to infeasibility. 
-
-    # Your task is to identify the most probable conflicts among the constraints based on the model summary delimited by
-    # triple backticks. \
-
-    # Summary: ```{summary_const}```"""
-
-    explanation = get_completion(prompt)
+    Summary: ```{summary}```"""
+    explanation = get_completion_standalone(prompt)
     return explanation
-
-
-def simple_chatbot(user_text, messages):
-    messages.append({'role': 'user', 'content': f"{user_text}"})
-    response = get_completion_from_messages(messages)
-    messages.append({'role': 'assistant', 'content': f"{response}"})
-    return response
 
 
 def add_slack(param_names, model):
@@ -175,7 +182,6 @@ def add_slack(param_names, model):
 
 
 def generate_replacements(param_names, model):
-    print("generating replacements...", param_names)
     iis_param = []
     replacements_list = []
     for p_name in param_names:
@@ -242,34 +248,19 @@ def resolve(model):
 
 
 def generate_slack_text(iis_param, model):
-    text = "The model becomes feasible after the following change: "
-    print(iis_param)
+    text = "I made some changes to your code and now the model becomes feasible after the following change: "
     for p in iis_param:
         slack_var_pos = eval("model.slack_pos_" + p + ".value")
         slack_var_neg = eval("model.slack_neg_" + p + ".value")
 
-        if slack_var_pos > 1e-5:
+        if slack_var_pos > 0:
             text = text + f"increase {p} by {slack_var_pos} unit; "
-        elif slack_var_neg > 1e-5:
+        elif slack_var_neg > 0:
             text = text + f"decrease {p} by {slack_var_neg} unit; "
     return text
 
 
-def explain_slack(summary, infeasibility_report, description):
-    # todo not useful now
-    prompt = f""""The model information is summarized below: ```{summary}```. \n\n
-    {infeasibility_report}. \n
-    In order to enable feasibility, optimization experts change the values of parameters in this model. 
-    {description}. 
-
-    Your task is to explain to inexperienced undergraduates the step-by-step process by which the changes make this model feasible.
-    """
-    explanation = get_completion(prompt)
-    return explanation
-
-
 def solve_the_model(param_names: list[str], model) -> str:
-    print("solving the model...", param_names)
     model_copy = model.clone()  ####todo change it back to self.model if you need to use in gui_v4.py
     is_slack_added = add_slack(param_names, model_copy)
     # all_const_in_model = find_const_in_model(model_copy)
@@ -324,40 +315,3 @@ def gpt_function_call(ai_response, model):
         return solve_the_model(param_names, model), fn_name
     else:
         return
-
-# pyomo_file = "/Users/chen4433/Documents/MATLAB/macro_v1.py"
-# model, ilp_path = load_model(pyomo_file)
-
-#
-# pyomo_file = "/Users/chen4433/Documents/GPTandOPT/Infeasible_Model_Troubleshooter/macro_v1.py"
-# pyomo_file = "/Users/chen4433/Documents/GPTandOPT/Infeasible_Model_Troubleshooter/RTN_v1.py"
-# model, ilp_path = load_model(pyomo_file)
-# const_names, param_names, iis_dict = read_iis(ilp_path, model)
-# example_user_input = "can you please change the Xmax parameter ?"
-# example_messages = [{"role": "user", "content": example_user_input}]
-#
-# response = get_completion_from_messages_withfn(example_messages)
-# a,b = gpt_function_call(response, model)
-# print(a)
-
-# pyomo_file = '/Users/chen4433/Documents/GPTandOPT/'
-# modelllll, _ = load_model(pyomo_file)
-#
-# ### try ###
-# #it seems, gpt-3.5-turbo can't have function_call (set auto or nudge or none or specify a fn)
-# # if function is called, response should have a key called "function_call" but no "content"
-# # if function is not called, response should have a key called "content" but no "function_call"
-# example_user_input = "can you please change the parameter Pi and Xmax and solve the model again?"
-# # example_user_input = "Hi nice to meet you"
-# example_messages = [{"role": "user", "content": example_user_input}]
-#
-# response = get_completion_from_messages_withfn(example_messages)
-#
-# out_txt = gpt_function_call(response, modelllll)
-
-
-
-
-
-
-

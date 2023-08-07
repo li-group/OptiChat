@@ -6,8 +6,8 @@ from PySide6.QtCore import Qt, QTimer, QThread, Signal
 from PySide6.QtGui import QIcon, QKeySequence, QShortcut
 from PySide6.QtGui import QTextCursor, QColor, QBrush
 
-from Util import load_model, build_QARetriever, ask_QARetriever, read_iis
-from Util import infer_infeasibility
+from Util import load_model, extract_component, extract_obj, extract_var, extract_param, extract_const, add_eg, read_iis
+from Util import infer_infeasibility, param_in_const,extract_summary
 from Util import get_completion_from_messages_withfn, gpt_function_call
 
 
@@ -115,6 +115,7 @@ class InGroupBox(QGroupBox):
 class ProcessThread(QThread):
     summary_signal = Signal(str)
     infeasibility_report_signal = Signal(str)
+    iis_relation_signal = Signal(str)
 
     def __init__(self, py_path, ilp_path, model):
         super().__init__()
@@ -123,18 +124,16 @@ class ProcessThread(QThread):
         self.model = model
 
     def run(self):
-        QARetriever = build_QARetriever(self.py_path)
-        summary_const = ask_QARetriever('Constraint', QARetriever)
-        summary_param = ask_QARetriever('Parameter', QARetriever)
-        summary_var = ask_QARetriever('Variable', QARetriever)
+        const_list, param_list, var_list, PYOMO_CODE = extract_component(self.model, self.py_path)
+        summary = extract_summary(var_list, param_list, const_list, PYOMO_CODE)
+        summary_response = add_eg(summary)
+        self.summary_signal.emit(summary_response)
+
         const_names, param_names, iis_dict = read_iis(self.ilp_path, self.model)
-
+        iis_relation = param_in_const(iis_dict)
+        self.iis_relation_signal.emit(iis_relation)
         print(const_names, param_names, iis_dict)
-
-        infeasibility_report = infer_infeasibility(const_names, summary_const,
-                                                   summary_param, summary_var)
-        summary = summary_var + '\n\n' + summary_param + '\n\n' + summary_const + '\n\n'
-        self.summary_signal.emit(summary)
+        infeasibility_report = infer_infeasibility(const_names, summary_response)
         self.infeasibility_report_signal.emit(infeasibility_report)
 
 
@@ -199,6 +198,7 @@ class InfeasibleModelTroubleshooter(QMainWindow):
         self.process_thread = ProcessThread(py_path, ilp_path, model)
 
         self.process_thread.summary_signal.connect(self.process_summary)
+        self.process_thread.iis_relation_signal.connect(self.process_relation)
         self.process_thread.infeasibility_report_signal.connect(self.process_report)
         self.process_thread.finished.connect(self.process_finished)
         self.process_thread.start()
@@ -206,40 +206,18 @@ class InfeasibleModelTroubleshooter(QMainWindow):
     def process_summary(self, summary):
         self.summary = summary
 
+    def process_relation(self, relation):
+        self.relation = relation
+
     def process_report(self, infeasibility_report):
         self.infeasibility_report = infeasibility_report
 
     def process_finished(self):
-        self.lbl_model.setText(f"GPT is answering...")
+        self.add_message('assistant', self.summary + '\n' + 'Remember that ' + self.relation +
+                         '\n' + self.infeasibility_report)
+        self.lbl_model.setText(f"GPT responded.")
         self.lbl_model.setStyleSheet("color: black;")
-        self.first_message()
-
-    def first_message(self):
-        self.chatbot_messages.append({'role': 'assistant', 'content': self.summary + '\n' + self.infeasibility_report})
-        self.chatbot_messages.append({'role': 'system',
-                                      'content': """First introduce this model to the user using the following four steps:
-                                      1. explain what data is available to make decisions in plain English
-                                        for example you could say "You are given a number of cities and the distance between any two
-                                            cities." for a TSP problem. You can say "You are given n item with different values and
-                                                weights to be filled in a knapsack who capacity is known"
-                                      2. explain what decisions are to be made in plain English\
-                                        for example, you could say "you would like to decide the sequence to visit all the n cities." for the TSP 
-                                        problem.
-                                        you could say "you would like to decide the items to be filled in the knapsack" for the knapsack problem. 
-                                    3. explain what constraints the decisions have to satisfy in plain English
-                                        for example you could say "the weights of all the items in the knapsack have to be less than or 
-                                        equal to the knapsack capacity"
-                                    4. explain the objective function in plain English
-                                        you could say "given these decisions, we would like to find the shortest path" for the TSP problem.
-                                        "given these decisions and constraints, we would like to find the items to be filled in the knapsack that 
-                                        have the total largest values"
-                                    Now you have introduced the model to the user. The second step is to tell the user why the model is infeasible
-                            """})
-        chatbot_messages, model = self.chatbot_messages, self.model
-        self.chat_thread = ChatThread(chatbot_messages, model)
-        self.chat_thread.ai_message_signal.connect(self.chat_ai_message)
-        self.chat_thread.finished.connect(self.chat_finished)
-        self.chat_thread.start()
+        self.txt_in.setReadOnly(False)
 
     def add_message(self, role, message, fn_name=None):
         role_style = {
@@ -327,6 +305,8 @@ class InfeasibleModelTroubleshooter(QMainWindow):
         self.btn_enter.setDisabled(True)
         # Enable key Enter
         self.txt_in.enterPressed.connect(self.btn_enter.click)
+        self.txt_in.setReadOnly(True)
+        self.txt_in.setPlaceholderText("Load your model first")
 
         # Layout
         # Top Layout
