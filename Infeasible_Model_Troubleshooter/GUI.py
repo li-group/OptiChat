@@ -154,8 +154,19 @@ class ChatThread(QThread):
             self.ai_message_signal.emit(ai_message)
         else:
             fn_message, fn_name = gpt_function_call(response, self.model)
-            self.fn_message_signal.emit(fn_message)
-            self.fn_name_signal.emit(fn_name)
+            orig_message = {'role': 'function', 'name': fn_name, 'content': fn_message}
+            self.chatbot_messages.append(orig_message)
+            expl_message = {'role': 'system',
+                            'content': 'State that you made some changes to the code and run it for the user.'
+                                       'If the model becomes feasible, '
+                                       'replace the parameter symbol in the text with its physical meaning'
+                                       'and provide brief explanation. '
+                                       'If the model is still infeasible, suggest other parameters that '
+                                       'the user can try. '}
+            self.chatbot_messages.append(expl_message)
+            response = get_completion_from_messages_withfn(self.chatbot_messages)
+            ai_message = response["choices"][0]["message"]["content"]
+            self.ai_message_signal.emit(ai_message)
 
 
 class InfeasibleModelTroubleshooter(QMainWindow):

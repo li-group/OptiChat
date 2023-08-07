@@ -276,12 +276,13 @@ def replace_obj(iis_param, model):
 def resolve(model):
     opt = SolverFactory('gurobi')
     opt.options['nonConvex'] = 2
+    opt.options['TimeLimit'] = 300
     results = opt.solve(model, tee=True)
     return str(results.solver.termination_condition)
 
 
 def generate_slack_text(iis_param, model):
-    text = "I made some changes to your code and now the model becomes feasible after the following change: "
+    text = "Model becomes feasible after the following change: "
     for p in iis_param:
         slack_var_pos = eval("model.slack_pos_" + p + ".value")
         slack_var_neg = eval("model.slack_neg_" + p + ".value")
