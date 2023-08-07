@@ -6,7 +6,7 @@ from PySide6.QtCore import Qt, QTimer, QThread, Signal
 from PySide6.QtGui import QIcon, QKeySequence, QShortcut
 from PySide6.QtGui import QTextCursor, QColor, QBrush
 
-from Util import load_model, extract_component, extract_obj, extract_var, extract_param, extract_const, add_eg, read_iis
+from Util import load_model, extract_component, add_eg, read_iis
 from Util import infer_infeasibility, param_in_const,extract_summary
 from Util import get_completion_from_messages_withfn, gpt_function_call
 
