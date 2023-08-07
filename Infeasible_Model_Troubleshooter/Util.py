@@ -81,13 +81,21 @@ def extract_summary(var_list, param_list, const_list, PYOMO_CODE):
 
 
 def add_eg(summary):
-    prompt = f"""I will give you a decription of an optimization model with parameters, variables, constraints and objective.
-    First introduce this model to the user using the following four steps:
-                                      1. explain what data is available to make decisions in plain English
+    prompt = f"""I will give you a decription of an optimization model with parameters, variables, constraints and objective. 
+    First introduce this model to the user using the following four steps. However, DO NOT write bullets 1-4\
+        make it more sounds like coherent paragraph:
+                                      1. Try to guess what the problem is about and who is using is model for deciding 
+                                      what problem.\
+                                        give a high level summary, e.g. "An oil\
+                                        producer has developed an optimization to determine where to drill the wells".
+                                        "A travel planner is determining the best way to visit n cities".explain what data is available to the decision maker\
+                                            make decisions in plain English. Avoid using bullet points!
+                                      Try to make it smooth like a story. 
                                         for example you could say "You are given a number of cities and the distance between any two
                                             cities." for a TSP problem. You can say "You are given n item with different values and
                                                 weights to be filled in a knapsack who capacity is known"
-                                      2. explain what decisions are to be made in plain English\
+                                      2. explain what decisions are to be made in plain English. Avoid using bullet points!
+                                      Try to make it smooth like a story. \
                                         for example, you could say "you would like to decide the sequence to visit all the n cities." for the TSP 
                                         problem.
                                         you could say "you would like to decide the items to be filled in the knapsack" for the knapsack problem. 
@@ -97,8 +105,7 @@ def add_eg(summary):
                                     4. explain the objective function in plain English
                                         you could say "given these decisions, we would like to find the shortest path" for the TSP problem.
                                         "given these decisions and constraints, we would like to find the items to be filled in the knapsack that 
-                                        have the total largest values"
-                                    Now you have introduced the model to the user. The second step is to tell the user why the model is infeasible                
+                                        have the total largest values"               
     Model Description: ```{summary}```"""
     summary_response = get_completion_standalone(prompt)
     return summary_response
@@ -147,14 +154,40 @@ def param_in_const(iis_dict):
     return final_text
 
 
-def infer_infeasibility(const_names, summary):
-    prompt = f"""Optimization experts are troubleshooting an infeasible optimization model.
-    They found that {', '.join(const_names)} constraints are contradictory and lead to infeasibility. 
-
-    Your task is to identify the most probable conflicts among the constraints based on the model summary delimited by
-    triple backticks. \
-
-    Summary: ```{summary}```"""
+def infer_infeasibility(const_names, param_names, summary):
+    prompt = f"""Optimization experts are troubleshooting an infeasible optimization model. 
+    They found that {', '.join(const_names)} constraints are in the Irreducible infeasible set.
+    and that  {', '.join(param_names)} are the parameters involved in the Irreducible infeasible set.
+    To understand what the parameters and the constraints mean, Here's the  Model Summary \
+        in a Markdown Table ```{summary}```\
+    Now, given these information, your job is to do the following steps. Try to use plain
+    english! Do not show A-C, show the answers in three papagraphs:
+    A. Tell the user something like "The following constraints are causing the model to be infeasible". 
+    Then provide the list constraints ( {', '.join(const_names)}) and their physical meaning in an itemized list.
+    You can refer to the Model Summary I gave you to get the meaning of the constraints. Avoid using any
+    symbols of the constraints, use natural language. For example, answer to this step can be 
+    "The following constraints are causing the model to be infeasible:
+    C1. The mass balance constraints that specify the level of the storage vessel at a given time point\
+        is equal to the 
+    C2. The storage level should be less than its maximum capacity.
+    "
+    B. Tell the user all the parameters, {', '.join(param_names)} \
+        involved in the constraints and their physical meaning in an itemized list. 
+        You can refer to the Model Summary I gave you to get the meaning of the parameters.\
+             Avoid using any symbols of the parameters.  For example, answer to this step can be 
+             "The following input data are involved in the constraints:
+             P1. The molecular weight of a molecule A
+             P2. the demand of customers 
+             P3. the storage capacity"
+    C. Tell the user they might want to change some data involved in {', '.join(param_names)} to make the model feasible. \
+        For this step B, you should provide the user with an recommendation. In general, recommend parameters that can be \
+            easily change in the physical world. For example, if I have the molecular weight of a molecule and the demand of \
+                customers in the parameters, you should only recommend the demand of the customers to be changed\
+                    because the molecular weight is a physical property that cannot be changed. An example answer would be 
+                "Based on my interpretation of your data,
+                you might want to change the demand of the customers and expand your storage capacity
+                 to make the model feasible."
+            """
     explanation = get_completion_standalone(prompt)
     return explanation
 

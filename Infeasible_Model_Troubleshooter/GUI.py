@@ -132,8 +132,8 @@ class ProcessThread(QThread):
         const_names, param_names, iis_dict = read_iis(self.ilp_path, self.model)
         iis_relation = param_in_const(iis_dict)
         self.iis_relation_signal.emit(iis_relation)
-        print(const_names, param_names, iis_dict)
-        infeasibility_report = infer_infeasibility(const_names, summary_response)
+        # print(const_names, param_names, iis_dict)
+        infeasibility_report = infer_infeasibility(const_names, param_names, summary)
         self.infeasibility_report_signal.emit(infeasibility_report)
 
 
@@ -213,7 +213,7 @@ class InfeasibleModelTroubleshooter(QMainWindow):
         self.infeasibility_report = infeasibility_report
 
     def process_finished(self):
-        self.add_message('assistant', self.summary + '\n' + 'Remember that ' + self.relation +
+        self.add_message('assistant', self.summary + '\n' 
                          '\n' + self.infeasibility_report)
         self.lbl_model.setText(f"GPT responded.")
         self.lbl_model.setStyleSheet("color: black;")
