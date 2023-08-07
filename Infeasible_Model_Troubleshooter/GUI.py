@@ -157,8 +157,7 @@ class ChatThread(QThread):
             orig_message = {'role': 'function', 'name': fn_name, 'content': fn_message}
             self.chatbot_messages.append(orig_message)
             expl_message = {'role': 'system',
-                            'content': 'State that you made some changes to the code and run it for the user.'
-                                       'If the model becomes feasible, '
+                            'content': 'If the model becomes feasible, '
                                        'replace the parameter symbol in the text with its physical meaning'
                                        'and provide brief explanation. '
                                        'If the model is still infeasible, suggest other parameters that '
