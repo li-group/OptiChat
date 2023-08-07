@@ -25,6 +25,7 @@ def get_completion_standalone(prompt, model="gpt-3.5-turbo-16k"):
     return response.choices[0].message["content"]
 
 
+
 def get_completion_from_messages(messages, model="gpt-3.5-turbo-16k"):
     response = openai.ChatCompletion.create(
         model=model,
@@ -294,20 +295,28 @@ def generate_slack_text(iis_param, model):
     return text
 
 
-def solve_the_model(param_names: list[str], model) -> str:
-    model_copy = model.clone()  ####todo change it back to self.model if you need to use in gui_v4.py
-    is_slack_added = add_slack(param_names, model_copy)
-    # all_const_in_model = find_const_in_model(model_copy)
-    iis_param, replacements_list = generate_replacements(param_names, model_copy)
-    replace_const(replacements_list, model_copy)
-    replace_obj(iis_param, model_copy)
-    termination_condition = resolve(model_copy)
-    if termination_condition == 'optimal':
-        out_text = generate_slack_text(iis_param, model_copy)
+def solve_the_model(param_names: list[str], param_names_aval, model) -> str:
+    if all(param_name in param_names_aval for param_name in param_names):
+        model_copy = model.clone()  ####todo change it back to self.model if you need to use in gui_v4.py
+        is_slack_added = add_slack(param_names, model_copy)
+        # all_const_in_model = find_const_in_model(model_copy)
+        iis_param, replacements_list = generate_replacements(param_names, model_copy)
+        replace_const(replacements_list, model_copy)
+        replace_obj(iis_param, model_copy)
+        termination_condition = resolve(model_copy)
+        if termination_condition == 'optimal':
+            out_text = generate_slack_text(iis_param, model_copy)
+            flag = 'feasible'
+        else:
+            out_text = f"Changing {param_names} is not sufficient to make this model feasible, \n" \
+                       f"Try other potential mutable parameters instead. \n"
+            flag = 'infeasible'
     else:
-        out_text = f"Changing {param_names} is not sufficient to make this model feasible, \n" \
-                   f"Try other potential mutable parameters instead. \n"
-    return out_text
+        out_text = f"I can't help you change {param_names} " \
+                   f"because they aren't valid mutable parameters in this model. \n"
+        flag = 'invalid'
+    return out_text, flag
+
 
 
 def get_completion_from_messages_withfn(messages, model="gpt-3.5-turbo-16k"):
@@ -340,12 +349,12 @@ def get_completion_from_messages_withfn(messages, model="gpt-3.5-turbo-16k"):
     return response
 
 
-def gpt_function_call(ai_response, model):
+def gpt_function_call(ai_response, param_names_aval, model):
     fn_call = ai_response["choices"][0]["message"]["function_call"]
     fn_name = fn_call["name"]
     arguments = fn_call["arguments"]
     if fn_name == "solve_the_model":
         param_names = eval(arguments).get("param_names")
-        return solve_the_model(param_names, model), fn_name
+        return solve_the_model(param_names, param_names_aval, model), fn_name
     else:
         return
