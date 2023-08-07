@@ -277,9 +277,12 @@ def replace_obj(iis_param, model):
 def resolve(model):
     opt = SolverFactory('gurobi')
     opt.options['nonConvex'] = 2
-    opt.options['TimeLimit'] = 300
+    opt.options['TimeLimit'] = 60
     results = opt.solve(model, tee=True)
-    return str(results.solver.termination_condition)
+    termination_condition = results.solver.termination_condition
+    if termination_condition == "maxTimeLimit" and 'Upper bound' in results.Problem[0]:
+        termination_condition = 'optimal'    
+    return str(termination_condition)
 
 
 def generate_slack_text(iis_param, model):
@@ -288,9 +291,9 @@ def generate_slack_text(iis_param, model):
         slack_var_pos = eval("model.slack_pos_" + p + ".value")
         slack_var_neg = eval("model.slack_neg_" + p + ".value")
 
-        if slack_var_pos > 0:
+        if slack_var_pos > 1e-5:
             text = text + f"increase {p} by {slack_var_pos} unit; "
-        elif slack_var_neg > 0:
+        elif slack_var_neg > 1e-5:
             text = text + f"decrease {p} by {slack_var_neg} unit; "
     return text
 
