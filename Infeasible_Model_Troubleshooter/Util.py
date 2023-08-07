@@ -277,7 +277,7 @@ def replace_obj(iis_param, model):
 def resolve(model):
     opt = SolverFactory('gurobi')
     opt.options['nonConvex'] = 2
-    opt.options['TimeLimit'] = 60
+    opt.options['TimeLimit'] = 300  # 5min time limit
     results = opt.solve(model, tee=True)
     termination_condition = results.solver.termination_condition
     if termination_condition == "maxTimeLimit" and 'Upper bound' in results.Problem[0]:
