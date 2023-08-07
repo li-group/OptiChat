@@ -297,7 +297,7 @@ def generate_slack_text(iis_param, model):
 
 def solve_the_model(param_names: list[str], param_names_aval, model) -> str:
     if all(param_name in param_names_aval for param_name in param_names):
-        model_copy = model.clone()  ####todo change it back to self.model if you need to use in gui_v4.py
+        model_copy = model.clone()
         is_slack_added = add_slack(param_names, model_copy)
         # all_const_in_model = find_const_in_model(model_copy)
         iis_param, replacements_list = generate_replacements(param_names, model_copy)
