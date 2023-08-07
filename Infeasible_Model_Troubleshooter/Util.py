@@ -113,16 +113,20 @@ def add_eg(summary):
 
 
 def read_iis(ilp_file, model):
-    command = "grep : " + ilp_file + " | awk -F\":\" '{print $1}'"
-    iis_const = os.popen(command).readlines()
-    iis_const = [const.strip().replace("(", "[").replace(")", "]") for const in iis_const]
-    const_names = [const.split("[")[0] for const in iis_const]
-    # keep the unique constaint types
-    const_names = list(set(const_names))
+    with open(ilp_file, 'r') as file:
+        ilp_string = file.read()
+    file.close()
+    ilp_lines = ilp_string.split("\n")
+    constr_names = []
+    for iis_line in ilp_lines:
+        if ":" in iis_line:
+            constr_name = iis_line.split(":")[0].split("(")[0]
+            if constr_name not in constr_names:
+                constr_names.append(constr_name)
 
     iis_dict = {}
     param_names = []
-    for const_name in const_names:
+    for const_name in constr_names:
         iis_dict.update({const_name: []})
         consts = eval('model.' + const_name)
         for const_idx in consts:
@@ -136,7 +140,7 @@ def read_iis(ilp_file, model):
                     iis_dict[const_name].append(p_name)
 
     param_names = list(set(param_names))
-    return const_names, param_names, iis_dict
+    return constr_names, param_names, iis_dict
 
 
 def param_in_const(iis_dict):

@@ -30,7 +30,7 @@ class OutLabel(QLabel):
         super().__init__(parent)
         self.setStyleSheet('''
             QLabel {
-                font-size: 14px; 
+                font-size: 20px; 
                 border-radius: 5px; 
                 padding: 10px;
             }
@@ -257,6 +257,7 @@ class InfeasibleModelTroubleshooter(QMainWindow):
         self.lbl_model.setText(f"GPT responded.")
         self.lbl_model.setStyleSheet("color: black;")
         self.txt_in.setReadOnly(False)
+        self.txt_in.setPlaceholderText("Enter")
 
     def add_message(self, role, message, fn_name=None):
         role_style = {
