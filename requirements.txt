@@ -1,0 +1,6 @@
+pyomo
+gurobipy
+openai
+python-dotenv
+tiktoken
+PySide6
