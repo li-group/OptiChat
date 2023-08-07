@@ -113,9 +113,11 @@ class InGroupBox(QGroupBox):
 
 
 class ProcessThread(QThread):
+    table_signal = Signal(str)
     summary_signal = Signal(str)
     infeasibility_report_signal = Signal(str)
     iis_relation_signal = Signal(str)
+    param_names_signal = Signal(list)
 
     def __init__(self, py_path, ilp_path, model):
         super().__init__()
@@ -125,7 +127,9 @@ class ProcessThread(QThread):
 
     def run(self):
         const_list, param_list, var_list, PYOMO_CODE = extract_component(self.model, self.py_path)
+        self.param_names_signal.emit(param_list)
         summary = extract_summary(var_list, param_list, const_list, PYOMO_CODE)
+        self.table_signal.emit(summary)
         summary_response = add_eg(summary)
         self.summary_signal.emit(summary_response)
 
@@ -142,9 +146,10 @@ class ChatThread(QThread):
     fn_message_signal = Signal(str)
     fn_name_signal = Signal(str)
 
-    def __init__(self, chatbot_messages, model):
+    def __init__(self, chatbot_messages, param_names_aval, model):
         super().__init__()
         self.chatbot_messages = chatbot_messages
+        self.param_names_aval = param_names_aval
         self.model = model
 
     def run(self):
@@ -153,15 +158,28 @@ class ChatThread(QThread):
             ai_message = response["choices"][0]["message"]["content"]
             self.ai_message_signal.emit(ai_message)
         else:
-            fn_message, fn_name = gpt_function_call(response, self.model)
+            (fn_message, flag), fn_name = gpt_function_call(response, self.param_names_aval, self.model)
             orig_message = {'role': 'function', 'name': fn_name, 'content': fn_message}
             self.chatbot_messages.append(orig_message)
-            expl_message = {'role': 'system',
-                            'content': 'If the model becomes feasible, '
-                                       'replace the parameter symbol in the text with its physical meaning'
-                                       'and provide brief explanation. '
-                                       'If the model is still infeasible, suggest other parameters that '
-                                       'the user can try. '}
+            if flag == 'feasible':
+                expl_message = {'role': 'system',
+                                'content': 'Tell the user that you made some changed to the code and ran it, and '
+                                           'the model becomes feasible. '
+                                           'Replace the parameter symbol in the text with its physical meaning '
+                                           '(for example, you could say "increasing the amount of cost invested" '
+                                           'instead of saying "increasing c") '
+                                           'and provide brief explanation.'}
+            elif flag == 'infeasible':
+                expl_message = {'role': 'system',
+                                'content': 'Tell the user that you made some changed to the code and ran it, but '
+                                           'the model is still infeasible. '
+                                           'Explain why it does not become feasible and '
+                                           'suggest other parameters that the user can try.'}
+            elif flag == 'invalid':
+                expl_message = {'role': 'system',
+                                'content': 'Tell the user that you cannot change the things they requested. '
+                                           'Explain why users instruction is invalid and '
+                                           'suggest the parameters that the user can try.'}
             self.chatbot_messages.append(expl_message)
             response = get_completion_from_messages_withfn(self.chatbot_messages)
             ai_message = response["choices"][0]["message"]["content"]
@@ -207,14 +225,25 @@ class InfeasibleModelTroubleshooter(QMainWindow):
         py_path, ilp_path, model = self.py_path, self.ilp_path, self.model
         self.process_thread = ProcessThread(py_path, ilp_path, model)
 
+        self.process_thread.table_signal.connect(self.process_table)
         self.process_thread.summary_signal.connect(self.process_summary)
+        self.process_thread.param_names_signal.connect(self.process_names)
         self.process_thread.iis_relation_signal.connect(self.process_relation)
         self.process_thread.infeasibility_report_signal.connect(self.process_report)
         self.process_thread.finished.connect(self.process_finished)
         self.process_thread.start()
 
+    def process_table(self, table):
+        self.table = table
+        self.chatbot_messages.append({'role': 'system', 'content': self.table})
+
     def process_summary(self, summary):
         self.summary = summary
+
+    def process_names(self, names):
+        self.param_names = names
+        print(f"type of param_names: {type(self.param_names)}")
+        print(f"names of param_names: {self.param_names}")
 
     def process_relation(self, relation):
         self.relation = relation
@@ -252,8 +281,8 @@ class InfeasibleModelTroubleshooter(QMainWindow):
         user_message = self.txt_in.toPlainText()
         self.add_message('user', user_message)
         self.txt_in.clear()
-        chatbot_messages, model = self.chatbot_messages, self.model
-        self.chat_thread = ChatThread(chatbot_messages, model)
+        chatbot_messages, param_names_aval, model = self.chatbot_messages, self.param_names, self.model
+        self.chat_thread = ChatThread(chatbot_messages, param_names_aval, model)
 
         self.chat_thread.ai_message_signal.connect(self.chat_ai_message)
         self.chat_thread.fn_message_signal.connect(self.chat_fn_message)
