@@ -13,9 +13,10 @@ import tiktoken
 from dotenv import load_dotenv, find_dotenv
 _ = load_dotenv(find_dotenv())  # read local .env file
 openai.api_key = os.environ['OPENAI_API_KEY']
+gpt_model = "gpt-4"
+# gpt_model = "gpt-3.5-turbo-16k"
 
-
-def get_completion_standalone(prompt, model="gpt-3.5-turbo-16k"):
+def get_completion_standalone(prompt, model=gpt_model):
     messages = [{"role": "user", "content": prompt}]
     response = openai.ChatCompletion.create(
         model=model,
@@ -26,7 +27,7 @@ def get_completion_standalone(prompt, model="gpt-3.5-turbo-16k"):
 
 
 
-def get_completion_from_messages(messages, model="gpt-3.5-turbo-16k"):
+def get_completion_from_messages(messages, model=gpt_model):
     response = openai.ChatCompletion.create(
         model=model,
         messages=messages,
@@ -326,7 +327,7 @@ def solve_the_model(param_names: list[str], param_names_aval, model) -> str:
 
 
 
-def get_completion_from_messages_withfn(messages, model="gpt-3.5-turbo-16k"):
+def get_completion_from_messages_withfn(messages, model=gpt_model):
     functions = [
         {
             "name": "solve_the_model",
