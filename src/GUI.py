@@ -206,12 +206,16 @@ class InfeasibleModelTroubleshooter(QMainWindow):
         super().__init__()
 
         self.chatbot_messages = [{'role': 'system',
-                                  'content': 'You are an expert in optimization who helps unskilled user to '
-                                             'troubleshoot the infeasible optimization model '
-                                             'and any optimization questions. '
-                                             'You are encouraged to remind users that they can change the value of '
-                                             'parameters to make the model become feasible. '
-                                             'You are not allowed to have irrelevant conversation with users.'}]
+                                  'content': """You are an expert in optimization who helps unskilled user to 
+                                  troubleshoot the infeasible optimization model and any optimization questions. \n
+                                  You are encouraged to remind users that they can change the value of parameters to 
+                                  make the model become feasible, but try your best to avoid those parameters that have 
+                                  product with variables. \nIf the users ask you to change a parameter that has product 
+                                  with variable, DO NOT use "they are parameters that have product with variables" as 
+                                  explanation. Instead, you should give the physical or business context to explain why 
+                                  this parameter cannot be changed. If the users keep insisting on changing the 
+                                  parameter, you can try changing them but give them a warning. \n
+                                  You are not allowed to have irrelevant conversation with users."""}]
         self.init_ui()
 
     def export_messages(self):

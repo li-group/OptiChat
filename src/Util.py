@@ -66,7 +66,11 @@ def extract_summary(var_list, param_list, const_list, PYOMO_CODE, gpt_model):
     - <Name of the parameter> | <physical meaning of the parameter>. \n\n
     (4) We identified that it includes constraints: {const_list} please output a table and each row is in a style of 
     - <Name of the constraint> | <physical meaning of the constraint>. 
-    You need to cover the physical meaning of each term in the constraint expression and give a detailed explanation. \n
+    You need to cover the physical meaning of each term in the constraint expression and give a detailed explanation. \n\n
+    (5) Identify the parameters that have product with variables in constraints. 
+    For example, suppose "a" is a parameter and "b" is a variable, if a*b is in the constraint, then a is the parameter that 
+    has product with variables in constraints.
+    
     Pyomo Model Code: ```{PYOMO_CODE}```"""
     summary_response = get_completion_standalone(prompt, gpt_model)
     return summary_response
@@ -175,31 +179,20 @@ def infer_infeasibility(const_names, param_names, summary, gpt_model):
              P1. The molecular weight of a molecule A
              P2. the demand of customers 
              P3. the storage capacity"
-    C. Tell the user they might want to change some data involved in {', '.join(param_names)} to make the model feasible. \
-        For this step B, you should provide the user with an recommendation. To decide which parameters to recommend
-        there are two rules of thumb you should consider:\
-            First, in general, recommend parameters that can be \
-            easily change in the physical world. For example, if I have the molecular weight of a molecule and the demand of \
-                customers in the parameters, you should only recommend the demand of the customers to be changed\
-                    because the molecular weight is a physical property that cannot be changed.\
-                Second, recommend the parameters that DO NOT have product with another variable in the constraints.\
-                For example, suppose "a" is a parameters that corresponds to the coefficient of a mass/energy balance equation, 
-                "b" is a variable that correspond to a material/energy flow rate,\
-                if a*b is in the constraint, you should not recommend "a" to be changed because usually it corresponds to \
-                some physical parameters that cannot be changed.\
-                The second rule of thumb usually applies to all the problems! \
-                If the parameters  {', '.join(param_names)} have a product with another variable in the constraints, \
-                you should not recommend them to be changed because in the real-world it cannot be changed.\
-                However, DO NOT mention that "we recommend changing parameters a, b, c,.. etc because they do not have a product with another variable."\
-                Use a different explanation instead, an explanation correpsonding to the physical meaning of the parameters that makes them a good candidate.\
-                On the other hand, if the users ask you to change a parameter that has a product with another variable, \
-                DO NOT use the second rule of thumb as an explanation. Instead, you should give the physical/business context\
-                to explain why this parameter cannot be changed.\
-                If the user keep insisting on changing the parameter, you can try changing them but give them a warning\
-                 With these two rules of thumb,  an example answer would be 
-                "Based on my interpretation of your data,
-                you might want to change the demand of the customers and expand your storage capacity
-                 to make the model feasible."
+    C. Tell the user they might want to change some data involved in {', '.join(param_names)} to make the model feasible, 
+       but skip the parameters that have product with another variable in the constraints.\
+       For this step, you should provide the user with an recommendation. To decide which parameters to recommend
+        there is a rule of thumb you should consider:\
+        In general, recommend parameters that can be easily change in the physical world. 
+            For example, if I have the molecular weight of a molecule and the demand of customers in the parameters, 
+            you should only recommend the demand of the customers to be changed because the molecular weight is a 
+            physical property that cannot be changed.\
+            
+            DO NOT mention that "we don't recommend changing parameters a, b, c,.. etc because they have product with variables." \
+            Use an explanation corresponding to the physical meaning of the parameters that makes them a good candidate. \
+            An example answer would be
+            "Based on my interpretation of your data, you might want to change the demand of the customers and expand 
+            your storage capacity to make the model feasible."
             """
     explanation = get_completion_standalone(prompt, gpt_model)
     return explanation
