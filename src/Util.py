@@ -13,25 +13,16 @@ import tiktoken
 from dotenv import load_dotenv, find_dotenv
 _ = load_dotenv(find_dotenv())  # read local .env file
 openai.api_key = os.environ['OPENAI_API_KEY']
-gpt_model = "gpt-4"
+# gpt_model = "gpt-4"
 # gpt_model = "gpt-3.5-turbo-16k"
 
-def get_completion_standalone(prompt, model=gpt_model):
+
+def get_completion_standalone(prompt, gpt_model):
     messages = [{"role": "user", "content": prompt}]
     response = openai.ChatCompletion.create(
-        model=model,
+        model=gpt_model,
         messages=messages,
         temperature=0,
-    )
-    return response.choices[0].message["content"]
-
-
-
-def get_completion_from_messages(messages, model=gpt_model):
-    response = openai.ChatCompletion.create(
-        model=model,
-        messages=messages,
-        temperature=0
     )
     return response.choices[0].message["content"]
 
@@ -66,7 +57,7 @@ def extract_component(model, pyomo_file):
     return const_list, param_list, var_list, PYOMO_CODE
 
 
-def extract_summary(var_list, param_list, const_list, PYOMO_CODE):
+def extract_summary(var_list, param_list, const_list, PYOMO_CODE, gpt_model):
     prompt = f"""Here is an optimization model written in Pyomo, which is delimited by triple backticks. 
     Your task is to 
     (1): use plain English to describe the objective funtion of this model. \n\n
@@ -78,11 +69,11 @@ def extract_summary(var_list, param_list, const_list, PYOMO_CODE):
     - <Name of the constraint> | <physical meaning of the constraint>. 
     You need to cover the physical meaning of each term in the constraint expression and give a detailed explanation. \n
     Pyomo Model Code: ```{PYOMO_CODE}```"""
-    summary_response = get_completion_standalone(prompt)
+    summary_response = get_completion_standalone(prompt, gpt_model)
     return summary_response
 
 
-def add_eg(summary):
+def add_eg(summary, gpt_model):
     prompt = f"""I will give you a decription of an optimization model with parameters, variables, constraints and objective. 
     First introduce this model to the user using the following four steps. However, DO NOT write bullets 1-4\
         make it more sounds like coherent paragraph:
@@ -109,7 +100,7 @@ def add_eg(summary):
                                         "given these decisions and constraints, we would like to find the items to be filled in the knapsack that 
                                         have the total largest values"               
     Model Description: ```{summary}```"""
-    summary_response = get_completion_standalone(prompt)
+    summary_response = get_completion_standalone(prompt, gpt_model)
     return summary_response
 
 
@@ -160,7 +151,7 @@ def param_in_const(iis_dict):
     return final_text
 
 
-def infer_infeasibility(const_names, param_names, summary):
+def infer_infeasibility(const_names, param_names, summary, gpt_model):
     prompt = f"""Optimization experts are troubleshooting an infeasible optimization model. 
     They found that {', '.join(const_names)} constraints are in the Irreducible infeasible set.
     and that  {', '.join(param_names)} are the parameters involved in the Irreducible infeasible set.
@@ -194,7 +185,7 @@ def infer_infeasibility(const_names, param_names, summary):
                 you might want to change the demand of the customers and expand your storage capacity
                  to make the model feasible."
             """
-    explanation = get_completion_standalone(prompt)
+    explanation = get_completion_standalone(prompt, gpt_model)
     return explanation
 
 
@@ -327,7 +318,7 @@ def solve_the_model(param_names: list[str], param_names_aval, model) -> str:
 
 
 
-def get_completion_from_messages_withfn(messages, model=gpt_model):
+def get_completion_from_messages_withfn(messages, gpt_model):
     functions = [
         {
             "name": "solve_the_model",
@@ -349,7 +340,7 @@ def get_completion_from_messages_withfn(messages, model=gpt_model):
         }
     ]
     response = openai.ChatCompletion.create(
-        model=model,
+        model=gpt_model,
         messages=messages,
         functions=functions,
         function_call='auto'
