@@ -5,3 +5,4 @@ python-dotenv
 tiktoken
 PySide6
 networkx
+matplotlib
