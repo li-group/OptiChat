@@ -30,7 +30,6 @@ class OutLabel(QLabel):
         super().__init__(parent)
         self.setStyleSheet('''
             QLabel {
-                font-size: 20px; 
                 border-radius: 5px; 
                 padding: 10px;
             }
@@ -72,7 +71,7 @@ class InTextEdit(QTextEdit):
             QTextEdit {
                 min-height: 50px;
                 max-height: 100px;
-                font-size: 14px; 
+                font-size: 16px; 
                 background-color: white; 
                 border: 2px solid white;
                 border-radius: 5px;
@@ -261,9 +260,9 @@ class InfeasibleModelTroubleshooter(QMainWindow):
 
     def add_message(self, role, message, fn_name=None):
         role_style = {
-            'function': "background-color: white; border: 2px solid white",
-            'assistant': "background-color: white; border: 2px solid white",
-            'user': "background-color: silver; border: 2px solid silver;"
+            'function': "font-size: 16px; background-color: white; border: 2px solid white",
+            'assistant': "font-size: 16px; background-color: white; border: 2px solid white",
+            'user': "font-size: 16px; background-color: silver; border: 2px solid silver;"
         }
         if role == 'function':
             self.chatbot_messages.append({'role': role, 'name': f"{fn_name}", 'content': f"{message}"})
@@ -339,7 +338,9 @@ class InfeasibleModelTroubleshooter(QMainWindow):
         self.txt_in.textChanged.connect(self.toggle_btn_enter)
         self.btn_enter = EnterButton(self)
         self.btn_enter.setFixedSize(40, 40)
-        icon = QIcon(os.path.abspath('enter.png'))
+        # icon = QIcon(os.path.abspath('enter.png'))
+        # print(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'enter.png'))
+        icon = QIcon(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'enter.png'))
         self.btn_enter.setIcon(icon)
         self.btn_enter.clicked.connect(self.enter)
         self.btn_enter.setDisabled(True)
