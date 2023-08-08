@@ -339,6 +339,7 @@ class InfeasibleModelTroubleshooter(QMainWindow):
         self.combobox = Combobox()
         self.combobox.setFixedWidth(180)
         self.combobox.addItem("gpt-4")
+        self.combobox.addItem("gpt-3.5-turbo")
         self.combobox.addItem("gpt-3.5-turbo-16k")
         self.combobox.setCurrentIndex(0)
         self.lbl_model = QLabel("Selected File: ", self)

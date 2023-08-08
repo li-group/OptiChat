@@ -13,8 +13,7 @@ import tiktoken
 from dotenv import load_dotenv, find_dotenv
 _ = load_dotenv(find_dotenv())  # read local .env file
 openai.api_key = os.environ['OPENAI_API_KEY']
-# gpt_model = "gpt-4"
-# gpt_model = "gpt-3.5-turbo-16k"
+
 
 
 def get_completion_standalone(prompt, gpt_model):
@@ -158,7 +157,7 @@ def infer_infeasibility(const_names, param_names, summary, gpt_model):
     To understand what the parameters and the constraints mean, Here's the  Model Summary \
         in a Markdown Table ```{summary}```\
     Now, given these information, your job is to do the following steps. Try to use plain
-    english! Do not show A-C, show the answers in three papagraphs:
+    english! DO NOT show "A-C", show the answers in three papagraphs:
     A. Tell the user something like "The following constraints are causing the model to be infeasible". 
     Then provide the list constraints ( {', '.join(const_names)}) and their physical meaning in an itemized list.
     You can refer to the Model Summary I gave you to get the meaning of the constraints. Avoid using any
