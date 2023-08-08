@@ -1,5 +1,5 @@
 # Overview of OptiChat
-A chatbox for diagonosing infeasible optimization problems. A GUI application powered by GPT LLM, equipped with custom tools, and aimed at helping unskilled operators and business people use plain English to troubleshoot infeasible optimization models.
+A chatbot for diagnosing infeasible optimization problems. A GUI application powered by GPT LLM, equipped with custom tools, and aimed at helping unskilled operators and business people use plain English to troubleshoot infeasible optimization models.
 
 # Installation
 1. Install python3 and pip
