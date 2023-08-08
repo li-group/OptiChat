@@ -338,8 +338,6 @@ class InfeasibleModelTroubleshooter(QMainWindow):
         self.txt_in.textChanged.connect(self.toggle_btn_enter)
         self.btn_enter = EnterButton(self)
         self.btn_enter.setFixedSize(40, 40)
-        # icon = QIcon(os.path.abspath('enter.png'))
-        # print(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'enter.png'))
         icon = QIcon(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'enter.png'))
         self.btn_enter.setIcon(icon)
         self.btn_enter.clicked.connect(self.enter)
