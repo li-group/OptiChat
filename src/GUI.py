@@ -224,7 +224,8 @@ class InfeasibleModelTroubleshooter(QMainWindow):
         if file_path:
             with open(file_path, 'w') as file:
                 for message in self.chatbot_messages:
-                    chat_his = chat_his + '<<< ' + message['role'] + ": " + message['content'] + "\n\n\n\n"
+                    if message['role'] != "system":
+                        chat_his = chat_his + '<<< ' + message['role'] + ": " + message['content'] + "\n\n\n\n"
                 file.write(chat_his)
         self.lbl_model.setText(f"Chat history exported.")
 
