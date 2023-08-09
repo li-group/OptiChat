@@ -6,3 +6,4 @@ tiktoken
 PySide6
 networkx
 matplotlib
+pytest
