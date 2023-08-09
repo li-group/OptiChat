@@ -28,6 +28,17 @@ def test_openai_api_key_valid_gpt4():
         pytest.fail(f"API error OPENAI_API_KEY is invalid for gpt-4: {e}")
 
 
+from pyomo.environ import *
 
 
+def test_gurobi_solve():
+    model = ConcreteModel()
+    model.x = Var(within=NonNegativeReals)
+    model.obj = Objective(expr=model.x, sense=minimize)
+    solver = SolverFactory('gurobi')
+    try:
+        results = solver.solve(model)
+    except Exception as e:
+        pytest.fail(f"Gurobi not installed properly {e}")
 
+    assert results.solver.termination_condition == TerminationCondition.optimal, "Gurobi solver failed to solve the model to optimality"
