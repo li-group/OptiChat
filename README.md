@@ -7,7 +7,8 @@ A chatbot for diagnosing infeasible optimization problems. A GUI application pow
 3. Install Gurobi following the instructions in the youtube videos  [here](https://support.gurobi.com/hc/en-us/articles/4534161999889). For windows without admin access, follow the instructions
 [here](https://support.gurobi.com/hc/en-us/articles/360060996432-How-do-I-install-Gurobi-on-Windows-without-administrator-credentials-)
 4. Apply for an OpenAI API key [here](https://platform.openai.com/). Add the key to your environment variables as ```OPENAI_API_KEY```
-5. Run GUI.py in the src folder ```python GUI.py``` to use the chatbot
+5. To check whether the installation of gurobi and GPT is successful, at the root directory, run ```pytest tests/```. If the test passes, you are good to go. 
+6. Run GUI.py in the src folder ```python GUI.py``` to use the chatbot
 
 # Tutorial
 Browse: Select your infeasible model (only support pyomo version .py file).
