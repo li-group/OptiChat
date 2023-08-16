@@ -40,7 +40,7 @@ You don't need to implement any code or read any code, just state something like
 Ask follow-up questions once the model becomes feasible.
 
 # Model Library:
-
+The model libary is located in the Pyomo_Model_Lib folder.
 
 
 
