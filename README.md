@@ -59,8 +59,61 @@ The model libary is located in the Pyomo_Model_Lib folder.
 
 # Build Your Own (Infeasibile) Model and Test it:
 <a name="build-your-own-model-and-test-it"></a>
-At the current stage, OptiChat only supports optimization models written in Pyomo. A typical Pyomo model example is given as follows: 
+At the current stage, OptiChat only supports optimization models written in Pyomo. A typical Pyomo model example is given as follows. 
+**Please remember to set parameters "mutable=True" unless you are entirely certain that a parameter cannot be altered in any manner (eg. task duration in scheduling).**
+<pre>
+from pyomo.environ import *
 
+model = ConcreteModel()
+
+# Set
+model.t = Set(initialize=[1, 2, 3, 4, 5])  # Time periods (weeks)
+
+# Parameters
+# Worker productivity (units per worker)
+model.rho = Param(initialize=8, mutable=True)
+# Trainer capability (workers per trainer)
+model.alpha = Param(initialize=6, mutable=True)
+# Worker wages ($ per week per worker)
+model.wage = Param(initialize=100, mutable=True)
+# Initial stock of goods (units)
+model.si = Param(model.t, initialize={1: 10}, mutable=True)  
+# Initial number of workers (workers)
+model.wi = Param(model.t, initialize={1: 20}, mutable=True)  
+# Salary on firing ($)
+model.sf = Param(model.t, initialize={5: 100}, default=0, mutable=True)  
+# Demand schedule (units)
+model.d = Param(model.t, initialize={1: 100, 2: 600, 3: 300, 4: 400, 5: 200}, mutable=True)  
+
+# Variables
+model.p = Var(model.t, within=NonNegativeReals)  # Production level in period t (units)
+model.s = Var(model.t, within=NonNegativeReals)  # Goods stored in period t (units)
+model.w = Var(model.t, within=NonNegativeReals)  # Total potential productive workers (workers)
+model.h = Var(model.t, within=NonNegativeReals)  # Workers hired (workers)
+model.f = Var(model.t, within=NonNegativeReals)  # Workers fired (workers)
+
+# Constraints
+def cb_rule(model, t):
+    if t == 1:
+        return model.s[t] == model.si[t] + model.p[t] - model.d[t]
+    else:
+        return model.s[t] == model.s[t - 1] + model.p[t] - model.d[t]
+model.cb = Constraint(model.t, rule=cb_rule)  # Commodity balance constraint
+
+def wb_rule(model, t):
+    if t == 1:
+        return model.w[t] == model.wi[t] - model.f[t] + model.h[t]
+    else:
+        return model.w[t] == model.w[t - 1] - model.f[t] + model.h[t]
+model.wb = Constraint(model.t, rule=wb_rule)  # Worker balance - between periods constraint
+
+def wd_rule(model, t):
+    return model.w[t] >= model.p[t] / model.rho + (1 + 1 / model.alpha) * model.h[t]
+model.wd = Constraint(model.t, rule=wd_rule)  # Worker balance - job differentiation constraint
+
+# Objective
+model.obj = Objective(expr=sum(10 * model.s[t] + (model.wage + model.sf[t]) * model.w[t] for t in model.t), sense=minimize)
+</pre>
 
 
 
