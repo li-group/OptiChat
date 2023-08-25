@@ -20,7 +20,7 @@ Export: Export and save the chat history.
 
 # Let's chat.
 Example: 
-![An illustrative conversation]()
+![An illustrative conversation](https://github.com/li-group/OptiChat/blob/main/images/Chatbot_eg.pdf)
 
 1. Get familiar with the model, you can ...
 
