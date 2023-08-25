@@ -19,6 +19,9 @@ Export: Export and save the chat history.
 
 
 # Let's chat.
+Example: 
+![An illustrative conversation]()
+
 1. Get familiar with the model, you can ...
 
 Ask general questions if you don't know optimization well.
