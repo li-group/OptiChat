@@ -1,7 +1,7 @@
 # OptiChat: Diagnosing Infeasible Optimization Problems Using Large Language Models
 Welcome to the [OptiChat paper](https://arxiv.org/abs/2308.12923) page. OptiChat is a chatbot powered by GPT LLM, equipped with custom tools, and aimed at helping unskilled operators and business people use plain English to troubleshoot infeasible optimization models.
 
-We aspire for this project to provide some valuable insights into **linking explanation/troubleshooting methodologies in optimization with LLM**, thereby facilitating the identification of the infeasibility sources and streamlining the troubleshooting process by non-experts. 
+We aspire for this project to provide some valuable insights into **linking explanation/troubleshooting methodologies in optimization with LLM**, thereby facilitating the identification of the infeasibility sources and streamlining the troubleshooting process by non-experts 🚀. 
 
 If you found this work useful, please cite this [preprint](https://arxiv.org/abs/2308.12923) as:
 ```bibtex
@@ -62,7 +62,7 @@ In the future work, we will add more functionalities such as specifying changes 
 ## Chat Example
 <a name="chat-example"></a>
 <p align="center">
-<img src="images/Chatbot_eg.png" alt="drawing" width="700"/>
+<img src="images/Chatbot_eg_highPPI.png" alt="drawing" width="700"/>
 </p>
 
 1. Get familiar with the model, you can ...
@@ -150,6 +150,7 @@ model.obj = Objective(expr=sum(10 * model.s[t] + (model.wage + model.sf[t]) * mo
 
 # Citation
 <a name="citation"></a>
+Cite us ❤️
 ```bibtex
 @misc{chen2023diagnosing,
     title={Diagnosing Infeasible Optimization Problems Using Large Language Models},
