@@ -1,13 +1,30 @@
-# Overview of OptiChat
-A chatbot for diagnosing infeasible optimization problems. A GUI application powered by GPT LLM, equipped with custom tools, and aimed at helping unskilled operators and business people use plain English to troubleshoot infeasible optimization models.
+# OptiChat: Diagnosing Infeasible Optimization Problems Using Large Language Models
+Welcome to the [OptiChat paper](https://arxiv.org/abs/2308.12923) page. OptiChat is a chatbot powered by GPT LLM, equipped with custom tools, and aimed at helping unskilled operators and business people use plain English to troubleshoot infeasible optimization models.
+
+We aspire for this project to provide some valuable insights into **linking explanation/troubleshooting methodologies in optimization with LLM**, thereby facilitating the identification of the infeasibility sources and streamlining the troubleshooting process by non-experts. 
 
 ## Table of Contents
+- [Overview](#overview)
 - [Installation](#installation)
 - [Tutorial](#tutorial)
 - [Chat Example](#chat-example)
 - [Model Library](#model-library)
 - [Build Your Own (Infeasibile) Model and Test it](#build-your-own-model-and-test-it)
+- [Citation](#citation)
 
+# Overview
+<a name="overview"></a>
+## Motivation
+Mathematical optimization models are extensively utilized to solve decision-making problems across various fields,, but there may exist no solution that satisfies all the constraints. This situation often arises in practice and stands as key obstacles in the implementation by industrial operators. It becomes important that anyone without much knowledge of mathematical programming can understand the infeasibility and relate it to potential strategies in the real world, rather than involving an expert in the code and digging the infeasibility sources. 
+
+Please read our [OptiChat paper](https://arxiv.org/abs/2308.12923) for more motivation and details about how the OptiChat works.
+
+## Scope
+Model: OptiChat supports infeasible optimization model written in [Pyomo](http://www.pyomo.org).
+
+Troubleshoot: OptiChat supports request for the changes in terms of parameters (and constraints) and automates the identification of strategy that requires the minimal effort to make the model feasible. 
+
+In the future work, we will add more functionalities such as specifying changes for particular indices.
 
 # Installation
 <a name="installation"></a>
@@ -21,14 +38,16 @@ A chatbot for diagnosing infeasible optimization problems. A GUI application pow
 
 # Tutorial
 <a name="tutorial"></a>
-Browse: Select your infeasible model (only support pyomo version .py file). There are a number of infeasible models in Pyomo_Model_Lib folder for you to test. 
+1. Browse: Select your infeasible model (only support pyomo version .py file). There are a number of infeasible models in **Pyomo_Model_Lib** folder for you to test.
 
-Process: Load your model and provide you with the first, preliminary report of your model. This step usually takes a few minutes, please wait until the "Loading the model..." prompt becomes "GPT responded."
+2. Process: Load your model and provide you with the first, preliminary report of your model. **This step usually takes a few minutes**, please wait until the "Loading the model..." prompt becomes "GPT responded."
 
-Export: Export and save the chat history.
+3. Chat: Diagnose and troubleshoot through a natural-language conversation ([Chat Example](#chat-example))
+
+4. Export: Export and save the chat history.
 
 
-# Chat Example
+## Chat Example
 <a name="chat-example"></a>
 ![An illustrative conversation](https://github.com/li-group/OptiChat/blob/main/images/Chatbot_eg.png)
 
@@ -43,9 +62,9 @@ Ask for suggestions if you feel overwhelmed with information.
 
 2. Let GPT troubleshoot, you only need to ...
 
-Provide your request for changes in certain parameters that you believe may be relevant to addressing infeasibility.
+Provide your request for changes in certain parameters that you believe may be relevant for addressing infeasibility.
 
-You don't need to implement any code or read any code, just state something like: please help me change _____ and see if the model works or not now.
+You don't need to implement any code or read any code, just state something like: **please help me change _____ and see if the model works or not now**.
 
 
 3. Understand the feasibility, you can ...
@@ -55,7 +74,7 @@ Provide additional requests for changes in other parameters that you find releva
 
 # Model Library:
 <a name="model-library"></a>
-The model libary is located in the Pyomo_Model_Lib folder.
+The model libary is located in the **Pyomo_Model_Lib** folder.
 
 # Build Your Own (Infeasibile) Model and Test it:
 <a name="build-your-own-model-and-test-it"></a>
@@ -115,6 +134,18 @@ model.wd = Constraint(model.t, rule=wd_rule)  # Worker balance - job differentia
 model.obj = Objective(expr=sum(10 * model.s[t] + (model.wage + model.sf[t]) * model.w[t] for t in model.t), sense=minimize)
 </pre>
 
-
-
+# Citation
+<a name="citation"></a>
+<pre>
+```bibtex
+@misc{chen2023diagnosing,
+    title={Diagnosing Infeasible Optimization Problems Using Large Language Models},
+    author={Hao Chen and Gonzalo E. Constante-Flores and Can Li},
+    year={2023},
+    eprint={2308.12923},
+    archivePrefix={arXiv},
+    primaryClass={cs.HC}
+}
+```
+</pre>
 
