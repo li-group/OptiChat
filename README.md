@@ -3,6 +3,18 @@ Welcome to the [OptiChat paper](https://arxiv.org/abs/2308.12923) page. OptiChat
 
 We aspire for this project to provide some valuable insights into **linking explanation/troubleshooting methodologies in optimization with LLM**, thereby facilitating the identification of the infeasibility sources and streamlining the troubleshooting process by non-experts. 
 
+If you found this work useful, please cite this [preprint](https://arxiv.org/abs/2308.12923) as:
+```bibtex
+@misc{chen2023diagnosing,
+    title={Diagnosing Infeasible Optimization Problems Using Large Language Models},
+    author={Hao Chen and Gonzalo E. Constante-Flores and Can Li},
+    year={2023},
+    eprint={2308.12923},
+    archivePrefix={arXiv},
+    primaryClass={cs.HC}
+}
+```
+
 ## Table of Contents
 - [Overview](#overview)
 - [Installation](#installation)
@@ -49,7 +61,9 @@ In the future work, we will add more functionalities such as specifying changes 
 
 ## Chat Example
 <a name="chat-example"></a>
-![An illustrative conversation](https://github.com/li-group/OptiChat/blob/main/images/Chatbot_eg.png)
+<p align="center">
+<img src="images/Chatbot_eg.png" alt="drawing" width="700"/>
+</p>
 
 1. Get familiar with the model, you can ...
 
@@ -80,7 +94,7 @@ The model libary is located in the **Pyomo_Model_Lib** folder.
 <a name="build-your-own-model-and-test-it"></a>
 At the current stage, OptiChat only supports optimization models written in Pyomo. A typical Pyomo model example is given as follows. 
 **Please remember to set parameters "mutable=True" unless you are entirely certain that a parameter cannot be altered in any manner (eg. task duration in scheduling).**
-<pre>
+```python
 from pyomo.environ import *
 
 model = ConcreteModel()
@@ -132,11 +146,10 @@ model.wd = Constraint(model.t, rule=wd_rule)  # Worker balance - job differentia
 
 # Objective
 model.obj = Objective(expr=sum(10 * model.s[t] + (model.wage + model.sf[t]) * model.w[t] for t in model.t), sense=minimize)
-</pre>
+```
 
 # Citation
 <a name="citation"></a>
-<pre>
 ```bibtex
 @misc{chen2023diagnosing,
     title={Diagnosing Infeasible Optimization Problems Using Large Language Models},
@@ -147,5 +160,4 @@ model.obj = Objective(expr=sum(10 * model.s[t] + (model.wage + model.sf[t]) * mo
     primaryClass={cs.HC}
 }
 ```
-</pre>
 
