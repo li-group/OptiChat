@@ -44,7 +44,7 @@ In the future work, we will add more functionalities such as specifying changes 
 2. Install python packages ```pip install -r requirements.txt```
 3. Install Gurobi following the instructions in the youtube videos  [here](https://support.gurobi.com/hc/en-us/articles/4534161999889). For windows without admin access, follow the instructions
 [here](https://support.gurobi.com/hc/en-us/articles/360060996432-How-do-I-install-Gurobi-on-Windows-without-administrator-credentials-)
-4. Apply for an OpenAI API key [here](https://platform.openai.com/). Add the key to your environment variables as ```OPENAI_API_KEY```
+4. Apply for an OpenAI API key [here](https://platform.openai.com/).  Add the key to your environment variables as ```OPENAI_API_KEY```
 5. To check whether the installation of gurobi and GPT is successful, at the root directory, run ```pytest tests/```. If the test passes, you are good to go. 
 6. Run GUI.py in the src folder ```python GUI.py``` to use the chatbot
 
@@ -52,7 +52,7 @@ In the future work, we will add more functionalities such as specifying changes 
 <a name="tutorial"></a>
 1. Browse: Select your infeasible model (only support pyomo version .py file). There are a number of infeasible models in **Pyomo_Model_Lib** folder for you to test.
 
-2. Process: Load your model and provide you with the first, preliminary report of your model. **This step usually takes a few minutes**, please wait until the "Loading the model..." prompt becomes "GPT responded."
+2. Process: Load your model and provide you with the first, preliminary report of your model. For best performance, use the gpt-4 model. For faster speed, use gpt-3.5-turbo model. **This step usually takes a few minutes**, please wait until the "Loading the model..." prompt becomes "GPT responded."
 
 3. Chat: Diagnose and troubleshoot through a natural-language conversation ([Chat Example](#chat-example))
 
@@ -93,7 +93,7 @@ The model libary is located in the **Pyomo_Model_Lib** folder.
 # Build Your Own (Infeasibile) Model and Test it:
 <a name="build-your-own-model-and-test-it"></a>
 At the current stage, OptiChat only supports optimization models written in Pyomo. A typical Pyomo model example is given as follows. 
-**Please remember to set parameters "mutable=True" unless you are entirely certain that a parameter cannot be altered in any manner (eg. task duration in scheduling).**
+**Please remember to set parameters "mutable=True" unless you are entirely certain that a parameter cannot be altered in any manner (eg. task duration in scheduling). This is because pyomo only has the mutable parameters in symbolic form, which is essential for GPT to work well.** Try to add some comments for the parameters and variables.
 ```python
 from pyomo.environ import *
 
