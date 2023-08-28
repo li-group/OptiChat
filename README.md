@@ -27,7 +27,7 @@ If you found this work useful, please cite this [preprint](https://arxiv.org/abs
 # Overview
 <a name="overview"></a>
 ## Motivation
-Mathematical optimization models are extensively utilized to solve decision-making problems across various fields,, but there may exist no solution that satisfies all the constraints. This situation often arises in practice and stands as key obstacles in the implementation by industrial operators. It becomes important that anyone without much knowledge of mathematical programming can understand the infeasibility and relate it to potential strategies in the real world, rather than involving an expert in the code and digging the infeasibility sources. 
+Mathematical optimization models are extensively utilized to solve decision-making problems across various fields, but there may exist no solution that satisfies all the constraints. This situation often arises in practice and stands as key obstacles in the implementation by industrial operators. It becomes important that anyone without much knowledge of mathematical programming can understand the infeasibility and relate it to potential strategies in the real world, rather than involving an expert in the code and digging the infeasibility sources. 
 
 Please read our [OptiChat paper](https://arxiv.org/abs/2308.12923) for more motivation and details about how the OptiChat works.
 
