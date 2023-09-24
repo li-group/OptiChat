@@ -44,30 +44,36 @@ def extract_component(model, pyomo_file):
     const_list = []
     param_list = []
     var_list = []
+    set_list = []
     for const in model.component_objects(pe.Constraint):
         const_list.append(str(const))
     for param in model.component_objects(pe.Param):
         param_list.append(str(param))
     for var in model.component_objects(pe.Var):
         var_list.append(str(var))
+    for sett in model.component_objects(pe.Set):
+        set_list.append(str(sett))
     with open(pyomo_file, 'r') as file:
         PYOMO_CODE = file.read()
     file.close()
-    return const_list, param_list, var_list, PYOMO_CODE
+    return const_list, param_list, var_list, set_list, PYOMO_CODE
 
 
-def extract_summary(var_list, param_list, const_list, PYOMO_CODE, gpt_model):
+def extract_summary(var_list, param_list, const_list, set_list, PYOMO_CODE, gpt_model):
     prompt = f"""Here is an optimization model written in Pyomo, which is delimited by triple backticks. 
     Your task is to 
     (1): use plain English to describe the objective funtion of this model. \n\n
     (2): We identified that it includes variables: {var_list}, please output a table and each row is in a style of 
     - <Name of the variable> | <physical meaning of the variable>. \n\n
     (3) We identified that it includes parameters: {param_list}, please output a table and each row is in a style of
-    - <Name of the parameter> | <physical meaning of the parameter>. \n\n
+    - <Name of the parameter> | <physical meaning of the parameter>. | <the index sets of the parameter> \n\n
     (4) We identified that it includes constraints: {const_list} please output a table and each row is in a style of 
     - <Name of the constraint> | <physical meaning of the constraint>. 
     You need to cover the physical meaning of each term in the constraint expression and give a detailed explanation. \n\n
-    (5) Identify the parameters that have product with variables in constraints. 
+    (5) We identified that it includes sets: {set_list} please output a table and each row is in a style of 
+    - <Name of the set> | <size of the set> | <physical meaning of the set>.
+    You need to cover the physical meaning of each set and give a detailed explanation. \n\n
+    (6) Identify the parameters that have product with variables in constraints. 
     For example, suppose "a" is a parameter and "b" is a variable, if a*b is in the constraint, then a is the parameter that 
     has product with variables in constraints.
     
@@ -219,6 +225,23 @@ def add_slack(param_names, model):
 
     return is_slack_added
 
+def add_slack_indexed(param_names, idx, model):
+    """
+    use <param_names> to add slack for index <idx> 
+    """
+    is_slack_added = {}
+    for p in param_names:
+        if eval("model." + p + ".is_indexed()"):
+            is_slack_added[p] = {}
+            for index in eval("model." + p + ".index_set()"):
+                if str(idx) in str(index).replace("(", "[").replace(")", "]"):
+                    is_slack_added[p][index] = True
+                    exec("model.slack_pos_" + p + "_".join([str(_) for _ in index]) + f"=pe.Var(model.{p}[{index}], within=pe.NonNegativeReals)")
+                    exec("model.slack_neg_" + p + "_".join([str(_) for _ in index]) + f"=pe.Var(model.{p}[{index}], within=pe.NonNegativeReals)")
+        else:
+            is_slack_added[p] = False
+            exec("model.slack_pos_" + p + "=pe.Var(within=pe.NonNegativeReals)")
+            exec("model.slack_neg_" + p + "=pe.Vaxr(within=pe.NonNegativeReals)")
 
 def generate_replacements(param_names, model):
     iis_param = []
@@ -244,8 +267,30 @@ def generate_replacements(param_names, model):
             replacements_list.append(replacements)
     return iis_param, replacements_list
 
+def generate_replacement_indexed(param_names, idx, model):
+    """
+    Generates the replacements for parameters
+    """
+    iis_param = []
+    replacements_list = []
+    for p_name in param_names:
+        for id in eval(f"model.{p_name}.index_set()"):
+            p_index = str(id).replace("(", "[").replace(")", "]")
+            if p_index == str(idx):
+                p_name_index = p_name + "_".join(p_index)
+                
+                iis_param.append(p_name_index)
+                expr_p = eval(f"model.{p_name}[{idx}]")
+                slack_var_pos = eval(f"model.slack_pos_{p_name_index}")
+                slack_var_neg = eval(f"model.slack_neg_{p_name_index}")
+                replacements = {id(expr_p): expr_p + slack_var_pos - slack_var_neg}
+                replacements_list.append(replacements)
+    return iis_param, replacements_list
 
 def replace_const(replacements_list, model):
+    """
+    Replaces the constraints
+    """
     const_list = []
     for const in model.component_objects(pe.Constraint):
         const_list.append(str(const))
@@ -325,6 +370,26 @@ def solve_the_model(param_names: list[str], param_names_aval, model) -> str:
         flag = 'invalid'
     return out_text, flag
 
+def solve_the_model_indexed(param_names: list[str], idx: list[str], param_names_aval, model) -> str:
+    if all(param_name in param_names_aval for param_name in param_names):
+        model_copy = model.clone()
+        is_slack_added = add_slack_indexed(param_names, idx, model_copy)
+        iis_param, replacements_list = generate_replacement_indexed(param_names, idx, model_copy)
+        replace_const(replacements_list, model_copy)
+        replace_obj(iis_param, model_copy)
+        termination_condition = resolve(model_copy)
+        if termination_condition == 'optimal':
+            out_text = generate_slack_text(iis_param, model_copy)
+            flag = 'feasible'
+        else:
+            out_text = f"Changing {param_names} is not sufficient to make this model feasible, \n" \
+                       f"Try other potential mutable parameters instead. \n"
+            flag = 'infeasible'
+    else:
+        out_text = f"I can't help you change {param_names} " \
+                   f"because they aren't valid mutable parameters in this model. \n"
+        flag = 'invalid'
+    return out_text, flag
 
 
 def get_completion_from_messages_withfn(messages, gpt_model):
@@ -357,6 +422,43 @@ def get_completion_from_messages_withfn(messages, gpt_model):
     return response
 
 
+def get_completion_from_messages_withfn_indexed(messages, gpt_model):
+    functions = [
+        {
+            "name": "solve_the_model_indexed",
+            "description": "Given the parameters and the index at which it should be changed, re-solve the model and report the extent of the changes",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "param_names": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "description": "A parameter name"
+                        },
+                        "description": "List of the parameter names to be changed in order to re-solve the model"
+                    },
+                    "idx": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "description": "An index"
+                        },
+                        "description": "A valid index for the given parameter name to change at in order to re-solve the model"
+                    }
+                },
+                "required": ["param_names", "idx"]
+            }
+        }
+    ]
+    response = openai.ChatCompletion.create(
+        model=gpt_model,
+        messages=messages,
+        functions=functions,
+        function_call='auto'
+    )
+    return response
+
 def gpt_function_call(ai_response, param_names_aval, model):
     fn_call = ai_response["choices"][0]["message"]["function_call"]
     fn_name = fn_call["name"]
@@ -364,5 +466,10 @@ def gpt_function_call(ai_response, param_names_aval, model):
     if fn_name == "solve_the_model":
         param_names = eval(arguments).get("param_names")
         return solve_the_model(param_names, param_names_aval, model), fn_name
+    elif fn_name == "solve_the_model_indexed":
+        param_names = eval(arguments).get("param_names")
+        idx = eval(arguments).get("idx")
+        print("$$$$", idx)
+        return solve_the_model_indexed(param_names, idx, param_names_aval, model), fn_name
     else:
         return

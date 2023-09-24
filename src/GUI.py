@@ -8,7 +8,7 @@ from PySide6.QtGui import QTextCursor, QColor, QBrush
 
 from Util import load_model, extract_component, add_eg, read_iis
 from Util import infer_infeasibility, param_in_const, extract_summary
-from Util import get_completion_from_messages_withfn, gpt_function_call
+from Util import get_completion_from_messages_withfn, gpt_function_call, get_completion_from_messages_withfn_indexed
 
 
 class Combobox(QComboBox):
@@ -140,9 +140,9 @@ class ProcessThread(QThread):
         self.gpt_model = gpt_model
 
     def run(self):
-        const_list, param_list, var_list, PYOMO_CODE = extract_component(self.model, self.py_path)
+        const_list, param_list, var_list, set_list, PYOMO_CODE = extract_component(self.model, self.py_path)
         self.param_names_signal.emit(param_list)
-        summary = extract_summary(var_list, param_list, const_list, PYOMO_CODE, self.gpt_model)
+        summary = extract_summary(var_list, param_list, const_list, set_list, PYOMO_CODE, self.gpt_model)
         self.table_signal.emit(summary)
         summary_response = add_eg(summary, self.gpt_model)
         self.summary_signal.emit(summary_response)
@@ -168,7 +168,10 @@ class ChatThread(QThread):
         self.gpt_model = gpt_model
 
     def run(self):
-        response = get_completion_from_messages_withfn(self.chatbot_messages, self.gpt_model)
+        # response = get_completion_from_messages_withfn(self.chatbot_messages, self.gpt_model)
+        response = get_completion_from_messages_withfn_indexed(self.chatbot_messages, self.gpt_model)
+        print("$$$$$")
+        print(response)
         if "function_call" not in response["choices"][0]["message"]:
             ai_message = response["choices"][0]["message"]["content"]
             self.ai_message_signal.emit(ai_message)
