@@ -225,24 +225,6 @@ def add_slack(param_names, model):
 
     return is_slack_added
 
-def add_slack_indexed(param_names, idx, model):
-    """
-    use <param_names> to add slack for index <idx> 
-    """
-    is_slack_added = {}
-    for p in param_names:
-        if eval("model." + p + ".is_indexed()"):
-            is_slack_added[p] = {}
-            for index in eval("model." + p + ".index_set()"):
-                if str(idx) in str(index).replace("(", "[").replace(")", "]"):
-                    is_slack_added[p][index] = True
-                    exec("model.slack_pos_" + p + "_".join([str(_) for _ in index]) + f"=pe.Var(model.{p}[{index}], within=pe.NonNegativeReals)")
-                    exec("model.slack_neg_" + p + "_".join([str(_) for _ in index]) + f"=pe.Var(model.{p}[{index}], within=pe.NonNegativeReals)")
-        else:
-            is_slack_added[p] = False
-            exec("model.slack_pos_" + p + "=pe.Var(within=pe.NonNegativeReals)")
-            exec("model.slack_neg_" + p + "=pe.Vaxr(within=pe.NonNegativeReals)")
-
 def generate_replacements(param_names, model):
     iis_param = []
     replacements_list = []
@@ -265,26 +247,6 @@ def generate_replacements(param_names, model):
 
             replacements = {id(expr_p): expr_p + slack_var_pos - slack_var_neg}
             replacements_list.append(replacements)
-    return iis_param, replacements_list
-
-def generate_replacement_indexed(param_names, idx, model):
-    """
-    Generates the replacements for parameters
-    """
-    iis_param = []
-    replacements_list = []
-    for p_name in param_names:
-        for id in eval(f"model.{p_name}.index_set()"):
-            p_index = str(id).replace("(", "[").replace(")", "]")
-            if p_index == str(idx):
-                p_name_index = p_name + "_".join(p_index)
-                
-                iis_param.append(p_name_index)
-                expr_p = eval(f"model.{p_name}[{idx}]")
-                slack_var_pos = eval(f"model.slack_pos_{p_name_index}")
-                slack_var_neg = eval(f"model.slack_neg_{p_name_index}")
-                replacements = {id(expr_p): expr_p + slack_var_pos - slack_var_neg}
-                replacements_list.append(replacements)
     return iis_param, replacements_list
 
 def replace_const(replacements_list, model):
@@ -371,27 +333,6 @@ def solve_the_model(param_names: list[str], param_names_aval, model) -> str:
         flag = 'invalid'
     return out_text, flag
 
-def solve_the_model_indexed(param_names: list[str], idx: list[str], param_names_aval, model) -> str:
-    if all(param_name in param_names_aval for param_name in param_names):
-        model_copy = model.clone()
-        is_slack_added = add_slack_indexed(param_names, idx, model_copy)
-        iis_param, replacements_list = generate_replacement_indexed(param_names, idx, model_copy)
-        replace_const(replacements_list, model_copy)
-        replace_obj(iis_param, model_copy)
-        termination_condition = resolve(model_copy)
-        if termination_condition == 'optimal':
-            out_text = generate_slack_text(iis_param, model_copy)
-            flag = 'feasible'
-        else:
-            out_text = f"Changing {param_names} is not sufficient to make this model feasible, \n" \
-                       f"Try other potential mutable parameters instead. \n"
-            flag = 'infeasible'
-    else:
-        out_text = f"I can't help you change {param_names} " \
-                   f"because they aren't valid mutable parameters in this model. \n"
-        flag = 'invalid'
-    return out_text, flag
-
 
 def get_completion_from_messages_withfn(messages, gpt_model):
     functions = [
@@ -422,46 +363,6 @@ def get_completion_from_messages_withfn(messages, gpt_model):
     )
     return response
 
-
-def get_completion_from_messages_withfn_indexed(messages, gpt_model):
-    functions = [
-        {
-            "name": "solve_the_model",
-            "description": "Given the parameters to be changed, re-solve the model and report the extent of the changes",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "param_names": {
-                        "type": "array",
-                        "items": {
-                            "type": "string",
-                            "description": "A parameter name"
-                        },
-                        "description": "List of parameter names to be changed in order to re-solve the model"
-                    }
-                },
-                "required": ["param_names"]
-            }
-        }
-    ]
-    response = openai.ChatCompletion.create(
-        model=gpt_model,
-        messages=messages,
-        functions=functions,
-        function_call='auto'
-    )
-    # fn_call = response["choices"][0]["message"]["function_call"]
-    # fn_name = fn_call["name"]
-    # arguments = fn_call["arguments"]
-    # param_names = eval(arguments).get("param_names")
-    # model_info = get_parameters_n_indices(model)
-    # for param_name in param_names:
-    #     if eval(f"model.{param_name}.is_indexed()"):
-    #         new_response = get_completion_for_index(messages[-1], model_info, PYOMO_CODE, gpt_model)
-    #     else:
-    #         new_response = response
-    return response
-
 def get_parameters_n_indices(model):
     params = {}
     for param in model.component_objects(pe.Param):
@@ -474,6 +375,30 @@ def get_parameters_n_indices(model):
             "index_set": idx_set
         }
     return params
+
+
+def get_completion_detailed(user_prompt, model_info, PYOMO_CODE, gpt_model):
+    messages = []
+    system_message = {
+        "role": "system",
+        "content": f"""You are a Pyomo expert. You will be given a pyomo code file written in python, enclosed between
+        triple back quotes. Your task is to understand the code and come up with a simple real-world optimization
+        problem that the model is trying to solve. User will ask you questions about it and you should be able to answer them.
+        You are also given a json object {model_info} which contains the parameters of the model. You should be able
+        to access the values of the model parameters at the suitable indices when the user gives you a query based on
+        the story that you tell about what this optimization problem does. User query can involve multiple paramters 
+        and each of them can possibly have different indices. ONLY GENERATE WHAT IS ASKED. NO EXTRA TEXT.
+        ```{PYOMO_CODE}```"""
+    }
+    messages.append(system_message)
+    messages.append(user_prompt)
+    response = openai.ChatCompletion.create(
+        model=gpt_model,
+        messages=messages,
+        temperature=0,
+    )
+    return response
+
 
 def get_completion_for_index(user_prompt, model_info, PYOMO_CODE, gpt_model, auto=None):
     functions = [
@@ -526,15 +451,12 @@ def get_completion_for_index(user_prompt, model_info, PYOMO_CODE, gpt_model, aut
     }
     messages.append(system_message)
     messages.append(user_prompt)
-    # response = get_completion_standalone(user_prompt, GPT_MODEL, system_prompt)
-    # response_message = response["choices"][0]["message"]
-    # messages.append({"role": "assistant", "content": response_message})
+   
     if auto:
         response = openai.ChatCompletion.create(
         model=gpt_model,
         messages = messages,
         functions = functions,
-        # function_call = {"name": "get_index"}
         function_call = "auto"
     )
     else:
@@ -543,11 +465,8 @@ def get_completion_for_index(user_prompt, model_info, PYOMO_CODE, gpt_model, aut
         messages = messages,
         functions = functions,
         function_call = {"name": "get_index"}
-        # function_call = "auto"
     )
     return response
-
-
 
 def gpt_function_call(ai_response, param_names_aval, model):
     fn_call = ai_response["choices"][0]["message"]["function_call"]
@@ -556,10 +475,6 @@ def gpt_function_call(ai_response, param_names_aval, model):
     if fn_name == "solve_the_model":
         param_names = eval(arguments).get("param_names")
         return solve_the_model(param_names, param_names_aval, model), fn_name
-    elif fn_name == "solve_the_model_indexed":
-        param_names = eval(arguments).get("param_names")
-        idx = eval(arguments).get("idx")
-        return solve_the_model_indexed(param_names, idx, param_names_aval, model), fn_name
     elif fn_name == "get_index":
         args = json.loads(arguments)
         return solve_the_model_indexed_new(args, model), "solve_the_model_indexed_new"
@@ -569,8 +484,6 @@ def gpt_function_call(ai_response, param_names_aval, model):
 def add_slack_indexed_new(objs, model):
     is_slack_added = {}  # indicator: is slack added to constraints?
     # define slack parameters
-    param_names = [i['parameter'] for i in objs]
-    indicess = [i['indices'][0] for i in objs]
     for i in objs:
         param_name = i['parameter']
         indices = i['indices']
@@ -614,8 +527,6 @@ def solve_the_model_indexed_new(args, model):
     model_copy = model.clone()
     is_slack_added = add_slack_indexed_new(args['index'], model_copy)
     iis_param, replacements_list = generate_replacements_indexed_new(args['index'], model_copy)
-    import pdb
-    pdb.set_trace()
     replace_const(replacements_list, model_copy)
     replace_obj(iis_param, model_copy)
     termination_condition = resolve(model_copy)
@@ -655,11 +566,11 @@ def evaluate_gpt_response(question, answer, model_info, PYOMO_CODE, gpt_model):
     temperature=0)
     return response["choices"][0]["message"]["content"]
 
-def classify_question(question, gpt_model):
+def classify_question(question, answer, model_info, gpt_model):
     evaluation_prompt = []
     evaluation_prompt.append({
         "role": "system",
-        "content": """You are an expert in optimization models and pyomo. You will be given a user query.
+        "content": f"""You are an expert in optimization models and pyomo. You will be given a user query, and an AI assistant's response.
         You have to determine to whom this query is to be forwarded. There are two experts whose description
         is given as follows:
         
@@ -674,10 +585,16 @@ def classify_question(question, gpt_model):
         of each and every python variable, the indices of each and every model parameter etc. But he doesn't know the physical meanings
         of them.
         
+
+        You have access to a json object {model_info} which has all the pyomo model details. Verify the answer of the AI model with this info, and if it is incorret,
+        forward the query to expert 2.
         As an expert, you have to decide to whom the user query is to be forwarded. Answer `1` if you want to forward it to Expert 1.
-        Otherwise answer `2`. GENERATE ONLY WHAT IS ASKED, AND NOTHING ELSE!!"""
+        Otherwise answer `2`. GENERATE ONLY WHAT IS ASKED, AND NOTHING ELSE!! Please take your time to properly think it out"""
     })
     evaluation_prompt.append(question)
+    answer['role'] = "user"
+    answer['content'] = f"""The AI assistant says: {answer['content']}"""
+    evaluation_prompt.append(answer)
     response = openai.ChatCompletion.create(
     model=gpt_model,
     messages=evaluation_prompt,

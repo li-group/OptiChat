@@ -7,8 +7,8 @@ from PySide6.QtGui import QIcon, QKeySequence, QShortcut
 from PySide6.QtGui import QTextCursor, QColor, QBrush
 
 from Util import load_model, extract_component, add_eg, read_iis
-from Util import infer_infeasibility, param_in_const, extract_summary, evaluate_gpt_response, classify_question
-from Util import get_completion_from_messages_withfn, gpt_function_call, get_completion_from_messages_withfn_indexed, get_parameters_n_indices, get_completion_for_index
+from Util import infer_infeasibility, param_in_const, extract_summary, evaluate_gpt_response, classify_question, get_completion_detailed
+from Util import get_completion_from_messages_withfn, gpt_function_call, get_parameters_n_indices, get_completion_for_index
 
 
 class Combobox(QComboBox):
@@ -168,18 +168,24 @@ class ChatThread(QThread):
         self.py_path = py_path
 
     def run(self):
-        # response = get_completion_from_messages_withfn(self.chatbot_messages, self.gpt_model)
         _, _, _, _, PYOMO_CODE = extract_component(self.model, self.py_path)
         model_info = get_parameters_n_indices(self.model)
-        response = get_completion_from_messages_withfn_indexed(self.chatbot_messages, self.gpt_model)
+        response = get_completion_from_messages_withfn(self.chatbot_messages, self.gpt_model)
         if "function_call" not in response["choices"][0]["message"]:
             answer = response['choices'][0]["message"]["content"]
-            # evaluation = evaluate_gpt_response(self.chatbot_messages[-1], answer, model_info, PYOMO_CODE, self.gpt_model)
-            # print("evaluation", evaluation)
-            eva = classify_question(self.chatbot_messages[-1], self.gpt_model)
-            # print("eva", eva)
+            print("################")
+            print("initial answer", answer)
+            print("################")
+            evaluation = evaluate_gpt_response(self.chatbot_messages[-1], response['choices'][0]["message"], model_info, PYOMO_CODE, self.gpt_model)
+            print("evaluation", evaluation)
+            eva = classify_question(self.chatbot_messages[-1], response['choices'][0]["message"], model_info, self.gpt_model)
+            print("eva", eva)
             if eva == '2':
-                new_response = get_completion_for_index(self.chatbot_messages[-1], model_info, PYOMO_CODE, self.gpt_model, auto=True)
+                new_response = get_completion_detailed(self.chatbot_messages[-1], model_info, PYOMO_CODE, self.gpt_model)
+                print("############$$$$$$$$$$$#########")
+                print("new answer", new_response)
+                print("################$$$$$$$$$$$$###########")
+                # new_response = get_completion_for_index(self.chatbot_messages[-1], model_info, PYOMO_CODE, self.gpt_model, auto=True)
                 ai_message = new_response["choices"][0]["message"]["content"]
                 self.ai_message_signal.emit(ai_message)
             elif eva == '1':
