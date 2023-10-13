@@ -7,8 +7,8 @@ from PySide6.QtGui import QIcon, QKeySequence, QShortcut
 from PySide6.QtGui import QTextCursor, QColor, QBrush
 
 from Util import load_model, extract_component, add_eg, read_iis
-from Util import infer_infeasibility, param_in_const, extract_summary
-from Util import get_completion_from_messages_withfn, gpt_function_call, get_completion_from_messages_withfn_indexed
+from Util import infer_infeasibility, param_in_const, extract_summary, evaluate_gpt_response, classify_question
+from Util import get_completion_from_messages_withfn, gpt_function_call, get_completion_from_messages_withfn_indexed, get_parameters_n_indices, get_completion_for_index
 
 
 class Combobox(QComboBox):
@@ -140,9 +140,9 @@ class ProcessThread(QThread):
         self.gpt_model = gpt_model
 
     def run(self):
-        const_list, param_list, var_list, set_list, PYOMO_CODE = extract_component(self.model, self.py_path)
-        self.param_names_signal.emit(param_list)
-        summary = extract_summary(var_list, param_list, const_list, set_list, PYOMO_CODE, self.gpt_model)
+        const_list, param_list, idx_param_list, var_list, PYOMO_CODE = extract_component(self.model, self.py_path)
+        self.param_names_signal.emit(param_list + idx_param_list)
+        summary = extract_summary(var_list, param_list, idx_param_list, const_list, PYOMO_CODE, self.gpt_model)
         self.table_signal.emit(summary)
         summary_response = add_eg(summary, self.gpt_model)
         self.summary_signal.emit(summary_response)
@@ -150,7 +150,6 @@ class ProcessThread(QThread):
         const_names, param_names, iis_dict = read_iis(self.ilp_path, self.model)
         iis_relation = param_in_const(iis_dict)
         self.iis_relation_signal.emit(iis_relation)
-        # print(const_names, param_names, iis_dict)
         infeasibility_report = infer_infeasibility(const_names, param_names, summary, self.gpt_model)
         self.infeasibility_report_signal.emit(infeasibility_report)
 
@@ -160,23 +159,44 @@ class ChatThread(QThread):
     fn_message_signal = Signal(str)
     fn_name_signal = Signal(str)
 
-    def __init__(self, chatbot_messages, param_names_aval, model, gpt_model):
+    def __init__(self, chatbot_messages, param_names_aval, model, gpt_model, py_path):
         super().__init__()
         self.chatbot_messages = chatbot_messages
         self.param_names_aval = param_names_aval
         self.model = model
         self.gpt_model = gpt_model
+        self.py_path = py_path
 
     def run(self):
         # response = get_completion_from_messages_withfn(self.chatbot_messages, self.gpt_model)
+        _, _, _, _, PYOMO_CODE = extract_component(self.model, self.py_path)
+        model_info = get_parameters_n_indices(self.model)
         response = get_completion_from_messages_withfn_indexed(self.chatbot_messages, self.gpt_model)
-        print("$$$$$")
-        print(response)
         if "function_call" not in response["choices"][0]["message"]:
-            ai_message = response["choices"][0]["message"]["content"]
-            self.ai_message_signal.emit(ai_message)
+            answer = response['choices'][0]["message"]["content"]
+            # evaluation = evaluate_gpt_response(self.chatbot_messages[-1], answer, model_info, PYOMO_CODE, self.gpt_model)
+            # print("evaluation", evaluation)
+            eva = classify_question(self.chatbot_messages[-1], self.gpt_model)
+            # print("eva", eva)
+            if eva == '2':
+                new_response = get_completion_for_index(self.chatbot_messages[-1], model_info, PYOMO_CODE, self.gpt_model, auto=True)
+                ai_message = new_response["choices"][0]["message"]["content"]
+                self.ai_message_signal.emit(ai_message)
+            elif eva == '1':
+                self.ai_message_signal.emit(answer)
         else:
-            (fn_message, flag), fn_name = gpt_function_call(response, self.param_names_aval, self.model)
+            fn_call = response["choices"][0]["message"]["function_call"]
+            fn_name = fn_call["name"]
+            arguments = fn_call["arguments"]
+            param_names = eval(arguments).get("param_names")
+            model_info = get_parameters_n_indices(self.model)
+            for param_name in param_names:
+                if eval(f"self.model.{param_name}.is_indexed()"):
+                    new_response = get_completion_for_index(self.chatbot_messages[-1], model_info, PYOMO_CODE, self.gpt_model)
+                    break
+                else:
+                    new_response = response
+            (fn_message, flag), fn_name = gpt_function_call(new_response, self.param_names_aval, self.model)
             orig_message = {'role': 'function', 'name': fn_name, 'content': fn_message}
             self.chatbot_messages.append(orig_message)
             if flag == 'feasible':
@@ -306,7 +326,7 @@ class InfeasibleModelTroubleshooter(QMainWindow):
         self.add_message('user', user_message)
         self.txt_in.clear()
         chatbot_messages, param_names_aval, model, gpt_model = self.chatbot_messages, self.param_names, self.model, self.combobox.currentText()
-        self.chat_thread = ChatThread(chatbot_messages, param_names_aval, model, gpt_model)
+        self.chat_thread = ChatThread(chatbot_messages, param_names_aval, model, gpt_model, self.py_path)
 
         self.chat_thread.ai_message_signal.connect(self.chat_ai_message)
         self.chat_thread.fn_message_signal.connect(self.chat_fn_message)
