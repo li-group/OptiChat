@@ -36,8 +36,13 @@ def load_model(pyomo_file):
     module = importlib.import_module(filename_wo_extension)
     model = module.model  # access the pyomo model (remember to name your model as 'model' eg. model = RTN)
     print(f'Model {pyomo_file} loaded')
-    ilp_name = write_iis(model, filename_wo_extension + ".ilp", solver="gurobi")
-    ilp_path = os.path.abspath(filename_wo_extension + ".ilp")
+    try:
+        ilp_name = write_iis(model, filename_wo_extension + ".ilp", solver="gurobi")
+        ilp_path = os.path.abspath(filename_wo_extension + ".ilp")
+    except Exception as e:
+        print(e.message)
+        if e.message ==  "Cannot compute IIS on a feasible model":
+            ilp_path = ""
     return model, ilp_path
 
 
@@ -114,33 +119,53 @@ def add_eg(summary, gpt_model):
 
 
 def read_iis(ilp_file, model):
-    with open(ilp_file, 'r') as file:
-        ilp_string = file.read()
-    file.close()
-    ilp_lines = ilp_string.split("\n")
     constr_names = []
-    for iis_line in ilp_lines:
-        if ":" in iis_line:
-            constr_name = iis_line.split(":")[0].split("(")[0]
-            if constr_name not in constr_names:
-                constr_names.append(constr_name)
-
     iis_dict = {}
     param_names = []
-    for const_name in constr_names:
-        iis_dict.update({const_name: []})
-        consts = eval('model.' + const_name)
-        for const_idx in consts:
-            const = consts[const_idx]
-            expr_parameters = identify_mutable_parameters(const.expr)
-            for p in expr_parameters:
-                p_name = p.name.split("[")[0]
-                param_names.append(p_name)
+    try:
+        with open(ilp_file, 'r') as file:
+            ilp_string = file.read()
+        file.close()
+        ilp_lines = ilp_string.split("\n")
+        for iis_line in ilp_lines:
+            if ":" in iis_line:
+                constr_name = iis_line.split(":")[0].split("(")[0]
+                if constr_name not in constr_names:
+                    constr_names.append(constr_name)
 
-                if p_name not in iis_dict[const_name]:
-                    iis_dict[const_name].append(p_name)
+        for const_name in constr_names:
+            iis_dict.update({const_name: []})
+            consts = eval('model.' + const_name)
+            for const_idx in consts:
+                const = consts[const_idx]
+                expr_parameters = identify_mutable_parameters(const.expr)
+                for p in expr_parameters:
+                    p_name = p.name.split("[")[0]
+                    param_names.append(p_name)
 
-    param_names = list(set(param_names))
+                    if p_name not in iis_dict[const_name]:
+                        iis_dict[const_name].append(p_name)
+
+        param_names = list(set(param_names))
+    except Exception as e:
+        # Model is feasible
+        print(e)
+        for constr in model.component_objects(pe.Constraint):
+            constr_names.append(constr._name)
+        for const_name in constr_names:
+            iis_dict.update({const_name: []})
+            consts = eval('model.' + const_name)
+            for const_idx in consts:
+                const = consts[const_idx]
+                expr_parameters = identify_mutable_parameters(const.expr)
+                for p in expr_parameters:
+                    p_name = p.name.split("[")[0]
+                    param_names.append(p_name)
+
+                    if p_name not in iis_dict[const_name]:
+                        iis_dict[const_name].append(p_name)
+
+        param_names = list(set(param_names))
     return constr_names, param_names, iis_dict
 
 
@@ -159,8 +184,35 @@ def param_in_const(iis_dict):
     final_text = ', '.join(text_list) + '.\n'
     return final_text
 
+def infer_feasibility(const_names, param_names, summary, gpt_model):
+    prompt = f"""Optimization experts are troubleshooting an optimization model. They found that the model is 
+    feasible. They found that {', '.join(const_names)} constraints are present in the model and that
+    {', '.join(param_names)} are the parameters involved in these constraints. To understand what the parameters
+    and the constraints mean, here's the model summary in a Markdown Table ```{summary}```\
+    Now, given these information, your job is to do the following steps. Try to use plain english!
+    DO NOT show "A-B", show the answers in two paragraphs:
+    A. Tell the user something like "The following constraints are present in the model. Then provide the list
+    of constraints ({', '.join(const_names)}) and their physical meaning in an itemized list. You can refer to the
+    model summary I gave you to get the meaning of the constraints. Avoid using any symbols of the constraints, use
+    natural language. For example, answer to this step can be
+    "The following constraints are present in the model:
+    C1. The mass balance constraints that specify the level of the storage vessel at a give time point\
+        is equal to the
+    C2. The storage level should be less than its maximum capacity.
+    "
+    B. Tell the user all the parameters, {', '.join(param_names)} \
+        involved in the constraints and their physical meaning in an itemized list.
+        You can refer to the model summary I gave you to get the meaning of the parameters. \
+            Avoid using any symbols of the parameters. For example, answer to this step can be
+            "The following input data are involved in the constraints:
+            P1. The molecular weight of a molecule A
+            P2. the demand of customers
+            P3. the storage capacity"
+    """
+    explanation = get_completion_standalone(prompt, gpt_model)
+    return explanation
 
-def infer_infeasibility(const_names, param_names, summary, gpt_model):
+def infer_infeasibility(const_names, param_names, summary, gpt_model, model):
     prompt = f"""Optimization experts are troubleshooting an infeasible optimization model. 
     They found that {', '.join(const_names)} constraints are in the Irreducible infeasible set.
     and that  {', '.join(param_names)} are the parameters involved in the Irreducible infeasible set.
@@ -200,7 +252,11 @@ def infer_infeasibility(const_names, param_names, summary, gpt_model):
             "Based on my interpretation of your data, you might want to change the demand of the customers and expand 
             your storage capacity to make the model feasible."
             """
-    explanation = get_completion_standalone(prompt, gpt_model)
+    status = resolve(model)
+    if status == "optimal":
+        return infer_feasibility(const_names, param_names, summary, gpt_model)
+    else:
+        explanation = get_completion_standalone(prompt, gpt_model)
     return explanation
 
 
@@ -670,15 +726,17 @@ def generate_replacements_indexed_new(objs, model):
 
 def solve_sensitivity_indexed(args, model):
     model.dual = pe.Suffix(direction=pe.Suffix.IMPORT)
-    model_copy = model.clone()
+    # model_copy = model.clone()
     dual_values = {}
-    model_copy.dual = pe.Suffix(direction=pe.Suffix.IMPORT)
+    model.dual = pe.Suffix(direction=pe.Suffix.IMPORT)
     solver = SolverFactory("gurobi")
     # solver.solve(model_copy, tee=False)
-    for var in model_copy.component_objects(pe.Var):
+    for var in model.component_objects(pe.Var):
         for index in var.index_set():
             var[index].domain = pe.NonNegativeReals
-    results = solver.solve(model_copy, tee=False)
+    results = solver.solve(model, tee=False)
+    # import pdb
+    # pdb.set_trace()
     termination_condition = results.solver.termination_condition
     if termination_condition == "maxTimeLimit" and 'Upper bound' in results.Problem[0]:
         termination_condition = 'optimal'
@@ -693,7 +751,7 @@ def solve_sensitivity_indexed(args, model):
                 c_name_index = c_name + idx
                 dual_value = eval(f"model.dual[model.{c_name_index}]")
                 dual_values[c_name].append((idx, dual_value))
-        out_text = generate_sensitivity_text(dual_values, model_copy)
+        out_text = generate_sensitivity_text(dual_values, model)
         flag = "feasible"
         return out_text, flag
     else:

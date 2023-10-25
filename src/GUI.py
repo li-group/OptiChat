@@ -150,7 +150,9 @@ class ProcessThread(QThread):
         const_names, param_names, iis_dict = read_iis(self.ilp_path, self.model)
         iis_relation = param_in_const(iis_dict)
         self.iis_relation_signal.emit(iis_relation)
-        infeasibility_report = infer_infeasibility(const_names, param_names, summary, self.gpt_model)
+        import pdb
+        pdb.set_trace()
+        infeasibility_report = infer_infeasibility(const_names, param_names, summary, self.gpt_model, self.model)
         self.infeasibility_report_signal.emit(infeasibility_report)
 
 
