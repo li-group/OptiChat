@@ -309,6 +309,12 @@ def generate_slack_text(iis_param, model):
             text = text + f"decrease {p} by {slack_var_neg} unit; "
     return text
 
+def generate_sensitivity_text(dual_values, model):
+    text = "The optimal value increases at the following rates: "
+    for c in dual_values.keys():
+        for values in dual_values[c]:
+            text = text + f"{values[1]} for the constraint {c} at {values[0]}; "
+    return text
 
 def solve_the_model(param_names: list[str], param_names_aval, model) -> str:
     if all(param_name in param_names_aval for param_name in param_names):
@@ -353,6 +359,62 @@ def get_completion_from_messages_withfn(messages, gpt_model):
                 },
                 "required": ["param_names"]
             }
+        },
+        # {
+        #     "name": "get_completion_detailed",
+        #     "description": f"""This is an API call to an LLM that answer's the user's query. The LLM has access to the
+        #     pyomo code file written in python, and using the comments given in the code, the LLM will come up with a simple
+        #     real-world optimizatin problem that the given pyomo model is trying to solve. User will ask questions about it and the
+        #     LLM will answer it. The LLM also has access to a json object `model_info`, which contains all the information about
+        #     the parameters of the model, their dimension and their indices. The LLM can access the values of the model parameters at 
+        #     the suitable indices as per the user's query and based on the story that theh LLM tells about what this optimization problem does. 
+        #     User query can involve multiple paramters and each of them can possibly have different indices. """,
+        #     "parameters": {
+        #         "type": "object",
+        #         "properties": {
+        #             "user_prompt": {
+        #                 "type": "string",
+        #                 "description": "The query asked by the user"
+        #             }
+        #         },
+        #         "required": ["user_prompt"]
+        #     }
+        # },
+        # {
+        #     "name": "get_completion_with_context",
+        #     "description": """This is an API call to an LLM that answer's the user's query. This LLM is acting like an infeasibility
+        #     troubleshooter and is an expert in pyomo, linear and mixed integer programming problems. It knows the real world
+        #     story about the optimization problem at hand, and knows all information about the model's solution, i.e.
+        #     things like the infeasibility set, all the constraints, all the parameters and their physical meanings etc.
+        #     But it doesn't know the exact dependencies of each of the model parameters. """,
+        #     "parameters": {
+        #         "type": "object",
+        #         "properties": {
+        #             "user_prompt": {
+        #                 "type": "string",
+        #                 "description": "The query asked by the user"
+        #             }
+        #         },
+        #         "required": ["user_prompt"]
+        #     }
+        # },
+        {
+            "name": "sensitivity_analysis",
+            "description": """Given the constraints to be changed, find the sensitivity coefficients for each of the constraints and report the values""",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "constraint_names": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "description": "A constraint name"
+                        },
+                        "description": "List of parameter names to be changed in order to re-solve the model"
+                    }
+                },
+                "required": ["constraint_names"]
+            }
         }
     ]
     response = openai.ChatCompletion.create(
@@ -376,6 +438,18 @@ def get_parameters_n_indices(model):
         }
     return params
 
+def get_constraints_n_indices(model):
+    constraints = {}
+    for constraint in model.component_objects(pe.Constraint):
+        is_indexed = constraint.is_indexed()
+        dim = constraint.dim
+        idx_set = [_ for _ in constraint.index_set()]
+        constraints[constraint._name] = {
+            "is_indexed": is_indexed,
+            "index_dim": dim,
+            "index_set": idx_set
+        }
+    return  constraints
 
 def get_completion_detailed(user_prompt, model_info, PYOMO_CODE, gpt_model):
     messages = []
@@ -396,6 +470,75 @@ def get_completion_detailed(user_prompt, model_info, PYOMO_CODE, gpt_model):
         model=gpt_model,
         messages=messages,
         temperature=0,
+    )
+    return response
+
+
+def get_completion_for_index_sensitivity(user_prompt, model_info, PYOMO_CODE, gpt_model, auto=None):
+    functions = [
+        {
+            "name": "get_index_sensitivity",
+            "description": "Get the actual index(s) of the model constraint(s) requested in natural language by the user, based on the json object",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "index": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "constraint": {
+                                    "type": "string", 
+                                    "description": "the constraint name"
+                                },
+                                "indices": {
+                                    "type": "array", 
+                                    "items": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": ["number", "string", "null"],
+                                            "description": "Index corresponding to a dimension of the multi-dimensional index."
+                                        },
+                                        "description": "An index for the above constraint (as the index can be multi-dimensional)."
+                                    }
+                                }
+                            },
+                        },
+                        "description": "The correct indices of the model constraint as per the user's query"
+                    }
+                },
+                "required": ["index"]
+            }
+        }
+    ]
+    messages = []
+    system_message = {
+        "role": "system",
+        "content": f"""You are a Pyomo expert. You will be given a pyomo code file written in python, enclosed between
+        triple back quotes. Your task is to understand the code and come up with a simple real-world optimization
+        problem that the model is trying to solve. User will ask you questions about it and you should be able to answer them.
+        You are also given a json object {model_info} which contains the constraints of the model. You should be able
+        to access the values of the model constraints at the suitable indices when the user gives you a query based on
+        the story that you tell about what this optimization problem does. User query can involve multiple paramters 
+        and each of them can possibly have different indices. ONLY GENERATE WHAT IS ASKED. NO EXTRA TEXT.
+        ```{PYOMO_CODE}```"""
+    }
+    messages.append(system_message)
+    messages.append(user_prompt)
+   
+    if auto:
+        response = openai.ChatCompletion.create(
+        model=gpt_model,
+        messages = messages,
+        functions = functions,
+        function_call = "auto"
+    )
+    else:
+        response = openai.ChatCompletion.create(
+        model=gpt_model,
+        messages = messages,
+        functions = functions,
+        function_call = {"name": "get_index_sensitivity"}
     )
     return response
 
@@ -478,6 +621,9 @@ def gpt_function_call(ai_response, param_names_aval, model):
     elif fn_name == "get_index":
         args = json.loads(arguments)
         return solve_the_model_indexed_new(args, model), "solve_the_model_indexed_new"
+    elif fn_name == "get_index_sensitivity":
+        args = json.loads(arguments)
+        return solve_sensitivity_indexed(args, model), "solve_sensitivity_indexed"
     else:
         return
 
@@ -522,6 +668,38 @@ def generate_replacements_indexed_new(objs, model):
             replacements_list.append(replacements)
     return iis_param, replacements_list
 
+def solve_sensitivity_indexed(args, model):
+    model.dual = pe.Suffix(direction=pe.Suffix.IMPORT)
+    model_copy = model.clone()
+    dual_values = {}
+    model_copy.dual = pe.Suffix(direction=pe.Suffix.IMPORT)
+    solver = SolverFactory("gurobi")
+    # solver.solve(model_copy, tee=False)
+    for var in model_copy.component_objects(pe.Var):
+        for index in var.index_set():
+            var[index].domain = pe.NonNegativeReals
+    results = solver.solve(model_copy, tee=False)
+    termination_condition = results.solver.termination_condition
+    if termination_condition == "maxTimeLimit" and 'Upper bound' in results.Problem[0]:
+        termination_condition = 'optimal'
+    
+    if termination_condition == "optimal":
+        for arg in args['index']:
+            c_name = arg['constraint']
+            indices = arg['indices']
+            dual_values[c_name] = []
+            for idx in indices:
+                idx = str(idx)
+                c_name_index = c_name + idx
+                dual_value = eval(f"model.dual[model.{c_name_index}]")
+                dual_values[c_name].append((idx, dual_value))
+        out_text = generate_sensitivity_text(dual_values, model_copy)
+        flag = "feasible"
+        return out_text, flag
+    else:
+        out_text = f"Since the model is infeasible, it is not possile to answer the above question\n"
+        flag = "infeasible"
+        return out_text, flag
 
 def solve_the_model_indexed_new(args, model):
     model_copy = model.clone()
