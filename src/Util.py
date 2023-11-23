@@ -16,6 +16,13 @@ _ = load_dotenv(find_dotenv())  # read local .env file
 openai.api_key = os.environ['OPENAI_API_KEY']
 
 
+def get_completion_general(messages, gpt_model):
+    response = openai.ChatCompletion.create(
+        model=gpt_model,
+        messages = messages,
+        temperature=0
+    )
+    return response['choices'][0]["message"]["content"]
 
 def get_completion_standalone(prompt, gpt_model):
     messages = [{"role": "user", "content": prompt}]
@@ -395,6 +402,64 @@ def solve_the_model(param_names: list[str], param_names_aval, model) -> str:
         flag = 'invalid'
     return out_text, flag
 
+def get_completion_from_messages_withfn_its(messages, gpt_model):
+    functions = [
+        {
+            "name": "solve_the_model",
+            "description": "Given the parameters to be changed, re-solve the model and report the extent of the changes",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "param_names": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "description": "A parameter name"
+                        },
+                        "description": "List of parameter names to be changed in order to re-solve the model"
+                    }
+                },
+                "required": ["param_names"]
+            }
+        },
+    ]
+    response = openai.ChatCompletion.create(
+        model=gpt_model,
+        messages=messages,
+        functions=functions,
+        function_call='auto'
+    )
+    return response
+
+def get_completion_from_messaged_withfn_sen(messages, gpt_model):
+    # TODO: get the constant factor also from every constraint
+    functions = [
+        {
+            "name": "sensitivity_analysis",
+            "description": """Given the constraints to be changed, find the sensitivity coefficients for each of the constraints and report the values""",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "constraint_names": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "description": "A constraint name"
+                        },
+                        "description": "List of constraint names to be changed in order to find sensitivity coefficients"
+                    }
+                },
+                "required": ["constraint_names"]
+            }
+        },
+    ]
+    response = openai.ChatCompletion.create(
+        model=gpt_model,
+        messages=messages,
+        functions=functions,
+        function_call='auto'
+    )
+    return response
 
 def get_completion_from_messages_withfn(messages, gpt_model):
     functions = [
@@ -454,6 +519,7 @@ def get_completion_from_messages_withfn(messages, gpt_model):
         #         "required": ["user_prompt"]
         #     }
         # },
+        # additional gpt call
         {
             "name": "sensitivity_analysis",
             "description": """Given the constraints to be changed, find the sensitivity coefficients for each of the constraints and report the values""",
@@ -466,7 +532,7 @@ def get_completion_from_messages_withfn(messages, gpt_model):
                             "type": "string",
                             "description": "A constraint name"
                         },
-                        "description": "List of parameter names to be changed in order to re-solve the model"
+                        "description": "List of constraint names to be changed in order to find sensitivity coefficients"
                     }
                 },
                 "required": ["constraint_names"]
@@ -533,7 +599,7 @@ def get_completion_detailed(user_prompt, model_info, PYOMO_CODE, gpt_model):
 def get_completion_for_index_sensitivity(user_prompt, model_info, PYOMO_CODE, gpt_model, auto=None):
     functions = [
         {
-            "name": "get_index_sensitivity",
+            "name": "sensitivity_analysis",
             "description": "Get the actual index(s) of the model constraint(s) requested in natural language by the user, based on the json object",
             "parameters": {
                 "type": "object",
@@ -575,7 +641,7 @@ def get_completion_for_index_sensitivity(user_prompt, model_info, PYOMO_CODE, gp
         problem that the model is trying to solve. User will ask you questions about it and you should be able to answer them.
         You are also given a json object {model_info} which contains the constraints of the model. You should be able
         to access the values of the model constraints at the suitable indices when the user gives you a query based on
-        the story that you tell about what this optimization problem does. User query can involve multiple paramters 
+        the story that you tell about what this optimization problem does. User query can involve multiple constraints 
         and each of them can possibly have different indices. ONLY GENERATE WHAT IS ASKED. NO EXTRA TEXT.
         ```{PYOMO_CODE}```"""
     }
@@ -594,8 +660,11 @@ def get_completion_for_index_sensitivity(user_prompt, model_info, PYOMO_CODE, gp
         model=gpt_model,
         messages = messages,
         functions = functions,
-        function_call = {"name": "get_index_sensitivity"}
+        function_call = {"name": "sensitivity_analysis"}
     )
+    print("#############%%%%%%%%%%%%%%%%%%%%%%%%$################")
+    print(response)
+    print("#############%%%%%%%%%%%%%%%%%%%%%%%%$################")
     return response
 
 
@@ -677,7 +746,7 @@ def gpt_function_call(ai_response, param_names_aval, model):
     elif fn_name == "get_index":
         args = json.loads(arguments)
         return solve_the_model_indexed_new(args, model), "solve_the_model_indexed_new"
-    elif fn_name == "get_index_sensitivity":
+    elif fn_name == "sensitivity_analysis":
         args = json.loads(arguments)
         return solve_sensitivity_indexed(args, model), "solve_sensitivity_indexed"
     else:
@@ -728,12 +797,21 @@ def solve_sensitivity_indexed(args, model):
     model.dual = pe.Suffix(direction=pe.Suffix.IMPORT)
     # model_copy = model.clone()
     dual_values = {}
-    model.dual = pe.Suffix(direction=pe.Suffix.IMPORT)
+    import pdb
+    pdb.set_trace()
+    # model.dual = pe.Suffix(direction=pe.Suffix.IMPORT)
     solver = SolverFactory("gurobi")
-    # solver.solve(model_copy, tee=False)
+    solver.solve(model, tee=True)
     for var in model.component_objects(pe.Var):
         for index in var.index_set():
-            var[index].domain = pe.NonNegativeReals
+            try:
+                if not var[index].is_continuous():
+                    val = pe.value(var[index])
+                    var[index].fix(val)
+                    var[index].fixed = True
+            except:
+                print("!@#$%^&*()")
+            # var[index].domain = pe.NonNegativeReals
     results = solver.solve(model, tee=False)
     # import pdb
     # pdb.set_trace()
@@ -746,11 +824,15 @@ def solve_sensitivity_indexed(args, model):
             c_name = arg['constraint']
             indices = arg['indices']
             dual_values[c_name] = []
-            for idx in indices:
-                idx = str(idx)
-                c_name_index = c_name + idx
-                dual_value = eval(f"model.dual[model.{c_name_index}]")
-                dual_values[c_name].append((idx, dual_value))
+            if len(indices) or indices[0] == 'null':
+                for idx in indices:
+                    idx = str(idx)
+                    c_name_index = c_name + idx
+                    dual_value = eval(f"model.dual[model.{c_name_index}]")
+                    dual_values[c_name].append((idx, dual_value))
+            else:
+                dual_value = eval(f"model.dual[model.{c_name}]")
+                dual_values[c_name].append(dual_value)
         out_text = generate_sensitivity_text(dual_values, model)
         flag = "feasible"
         return out_text, flag
@@ -802,37 +884,231 @@ def evaluate_gpt_response(question, answer, model_info, PYOMO_CODE, gpt_model):
     temperature=0)
     return response["choices"][0]["message"]["content"]
 
-def classify_question(question, answer, model_info, gpt_model):
+# def classify_question(question, answer, model_info, gpt_model):
+#     evaluation_prompt = []
+#     evaluation_prompt.append({
+#         "role": "system",
+#         "content": f"""You are an expert in optimization models and pyomo. You will be given a user query, and an AI assistant's response.
+#         You have to determine to whom this query is to be forwarded. There are two experts whose description
+#         is given as follows:
+        
+#         1. Expert 1: He is an expert in pyomo and infeasibility troubleshooting. He knows the real world
+#         story about the optimization problem, and he knows all information about the model's solution, i.e.
+#         things like the infeasibility set, all the constraints, all the parameters and their physical meanings etc.
+#         But he doesn't know the exact dependencies of each of the model parameters. For example, he knows that
+#         a particular parameter depends on the number of tasks, but he doesn't know what those tasks are.
+
+#         2. Expert 2: He is a python programming expert. He has access to the pyomo code of the model (which has detailed doc string and comments),
+#         and he also has the fine-grained information of the optimization model as a json object. For example, he knows the values
+#         of each and every python variable, the indices of each and every model parameter etc. But he doesn't know the physical meanings
+#         of them.
+        
+
+#         You have access to a json object {model_info} which has all the pyomo model details. Verify the answer of the AI model with this info, and if it is incorret,
+#         forward the query to expert 2.
+#         As an expert, you have to decide to whom the user query is to be forwarded. Answer `1` if you want to forward it to Expert 1.
+#         Otherwise answer `2`. GENERATE ONLY WHAT IS ASKED, AND NOTHING ELSE!! Please take your time to properly think it out"""
+#     })
+#     evaluation_prompt.append(question)
+#     answer['role'] = "user"
+#     answer['content'] = f"""The AI assistant says: {answer['content']}"""
+#     evaluation_prompt.append(answer)
+#     response = openai.ChatCompletion.create(
+#     model=gpt_model,
+#     messages=evaluation_prompt,
+#     temperature=0)
+#     return response["choices"][0]["message"]["content"]
+
+def classify_question(question, gpt_model):
     evaluation_prompt = []
     evaluation_prompt.append({
         "role": "system",
-        "content": f"""You are an expert in optimization models and pyomo. You will be given a user query, and an AI assistant's response.
-        You have to determine to whom this query is to be forwarded. There are two experts whose description
-        is given as follows:
+        "content": f"""You are an AI-assistant who has an expert domain knowledge on linear programming optimization
+        problems and mixed integer linear programming optimization problems. 
+        As you know, there are various things that can be done when we are posed with an LP problem.
+        You have to assist the user in deciding which of the following things are to be done in order to answer
+        his query.
         
-        1. Expert 1: He is an expert in pyomo and infeasibility troubleshooting. He knows the real world
-        story about the optimization problem, and he knows all information about the model's solution, i.e.
-        things like the infeasibility set, all the constraints, all the parameters and their physical meanings etc.
-        But he doesn't know the exact dependencies of each of the model parameters. For example, he knows that
-        a particular parameter depends on the number of tasks, but he doesn't know what those tasks are.
+        1. We can do infeasibility troubleshooting. What this means is that we will check if any of the constraints
+        of the optimization model are making it infeasible, and we will identify what are the parameters that are involved
+        in these constraints. We add slack variables to these parameters and try to resolve the model. Example queries of this kind
+        are:
+            
+            a) "Why can't I find a solution to my production planning problem even though I've listed out all my constraints? Are any of them conflicting with each other?"
+            b) "I've set up an optimal staffing schedule to minimize costs, but the solver says there's no feasible solution. Can we figure out which staffing requirement is causing the issue?"
+            c) "I'm trying to optimize the routing for my delivery trucks, but it's not working out. Could there be any route or time constraints that are impossible to meet together?"
+            d) "My inventory optimization model was working fine last month. This month, I can't get a solution. What might have changed in the demand or supply constraints that's causing this?"
+            e) "I've modeled a diet plan to minimize costs while meeting all nutrient requirements. However, I can't find a feasible diet. Are there any nutrient requirements that are contradicting each other or impossible to meet with the given food items?"
 
-        2. Expert 2: He is a python programming expert. He has access to the pyomo code of the model (which has detailed doc string and comments),
-        and he also has the fine-grained information of the optimization model as a json object. For example, he knows the values
-        of each and every python variable, the indices of each and every model parameter etc. But he doesn't know the physical meanings
-        of them.
+        2. We can do sensitivity analysis. Sensitivity analysis in linear programming (LP) refers to the study of how changes in the coefficients and
+        parameters of a linear program impact the optimal solution. In business and engineering, this analysis is crucial 
+        because it provides insight into the robustness and reliability of an optimal solution under various scenarios.
+        Some example queries of this kind are:
+
+            a) "If we can get an extra hour of machine time each day, how much more profit can we expect? Is it worth paying overtime for the workers?"
+            b) "How much more would our transportation costs increase if fuel prices went up by 10%? Should we consider negotiating long-term fuel contracts now?"
+            c) "Suppose there's a slight decrease in the yield of our main crop due to unexpected weather changes. How would this affect our yearly revenue? Should we consider diversifying our crops next season?"
+            d) "If we allocate an additional $10,000 to our marketing budget, how much more revenue can we expect? Is it a better return on investment than, say, investing in product development?"
+            e) "How would extending our customer service hours by two hours every day affect our monthly operating costs? And if we did extend the hours, would it significantly improve our customer satisfaction ratings?"
         
+        3. We already have the information on what constraints of the model are causing it to be infeasible. We also know what are the parameters of the model that are in these infeasible constriants. We also know the background story of the optimization model
+        and the real-world meaning of the model constraints, parameters and variables. With all this information, we will just answer the user queries without re-solving/troubleshooting the model for infeasibility.
+        Example queries of this kind are:
 
-        You have access to a json object {model_info} which has all the pyomo model details. Verify the answer of the AI model with this info, and if it is incorret,
-        forward the query to expert 2.
-        As an expert, you have to decide to whom the user query is to be forwarded. Answer `1` if you want to forward it to Expert 1.
-        Otherwise answer `2`. GENERATE ONLY WHAT IS ASKED, AND NOTHING ELSE!! Please take your time to properly think it out"""
+            a) "What are the constraints that are causing my model to be not feasible?"
+            b) "What physical quantities are making the model infeasible?"
+            c) "What are the parameters that I need to change to make the model feasible?"
+        
+        4. We have access to the pyomo code of the model (which has detailed doc string and comments) and also has a concise summary of the
+        model parameters, whether they are indexed, and if indexed then their dimension and all the indices etc as a json object. So we have information that can be obtained only
+        by looking up the pyomo code file and with the knowledge of the python programming language. But however, we do not know their physical meaning/the complete background story like the category "3." above.
+        Example queries of this kind are:
+
+            a) "What are the indexed parameters present in the model?"
+            b) "If ('a', 1) a valid index for demand?"
+            c) "What are the indices of the parameter `ship_class`?"
+            d) "How many different kinds of ships are there? What are their capacities?"
+            e) "What are the different kinds of ships we have?"
+
+        If you think it is related to infeasibility troubleshooting, generate "1". If you think it is related to sensitivity analysis, generate "2", and so on for other categoriers.
+        GENERATE ONLY WHAT IS ASKED. DO NOT GENERATE ANY EXTRA TEXT. CHOOSE THE BEST AND MOST APPROPRIATE CATEGORY FROM THE ABOVE AND NOTHING ELSE.
+        """
     })
     evaluation_prompt.append(question)
-    answer['role'] = "user"
-    answer['content'] = f"""The AI assistant says: {answer['content']}"""
-    evaluation_prompt.append(answer)
     response = openai.ChatCompletion.create(
     model=gpt_model,
     messages=evaluation_prompt,
     temperature=0)
     return response["choices"][0]["message"]["content"]
+
+def convert_to_standard_form(model):
+    var_replacements = []
+    var_list = [v for v in model.component_objects(pe.Var)]
+    for var in var_list:
+        # print(var.name)
+        if var.is_indexed():
+            flag = False
+            for idx in var.index_set():
+                if var[idx].is_fixed():
+                    continue
+                else:
+                    if not var[idx].has_lb() and not var[idx].has_ub():
+                        indices = [_ for _ in var.index_set()]
+                        name = var.name
+                        exec(f"model.free_pos_{name} = pe.Var({indices}, within=pe.NonNegativeReals)")
+                        exec(f"model.free_neg_{name} = pe.Var({indices}, within=pe.NonNegativeReals)")
+                        flag = True
+                        break
+                    
+            if flag:
+                for idx in var.index_set():
+                    var_name = var.name
+                    var_idx = str(idx).replace(')', ']').replace('(', '[')
+                    var_name_idx = var_name + var_idx
+                    print(var_name_idx)
+                    expr_v = eval(f"model.{var_name_idx}")
+                    pos_v = eval(f"model.free_pos_{var_name_idx}")
+                    neg_v = eval(f"model.free_neg_{var_name_idx}")
+    
+                    var_replacements.append({id(expr_v): pos_v - neg_v})
+                flag = False
+        else:
+            if var.is_fixed():
+                continue
+            else:
+                if not var.has_lb() and not var.has_ub():
+                    name = var.name
+                    print(name)
+                    exec(f"model.free_pos_{name} = pe.Var(within=pe.NonNegativeReals)")
+                    exec(f"model.free_neg_{name} = pe.Var(within=pe.NonNegativeReals)")
+                    expr_v = eval(f"model.{name}")
+                    pos_v = eval(f"model.free_pos_{name}")
+                    neg_v = eval(f"model.free_neg_{name}")
+    
+                    var_replacements.append({id(expr_v): pos_v - neg_v})
+    
+    # from pyomo.core.expr import current as EXPR
+    from pyomo.core.expr.visitor import replace_expressions, clone_expression
+    from pyomo.core.expr import visitor as EXPR
+    for constr in model.component_objects(pe.Constraint):
+        if constr.is_indexed():
+            flag = None
+            for idx in constr.index_set():
+                if constr[idx].equality:
+                    flag = "EQ"
+                    print("nice")
+                    break
+                elif constr[idx].has_lb():
+                    flag = "LB"
+                    break
+                elif constr[idx].has_ub():
+                    flag = "UB"
+                    break
+            indices = [_ for _ in constr.index_set()]
+            print(flag)
+            if flag == "UB":
+                exec(f"model.slack_vars_{constr.name} = pe.Var({indices}, within=pe.NonNegativeReals)")
+                for idx in constr.index_set():
+                    try:
+                        new_expr = clone_expression(constr[idx].expr)
+                    except:
+                        print(constr[idx].expr)
+                    for replacement in var_replacements:
+                        new_expr = replace_expressions(new_expr, replacement)
+                    expr_c = constr[idx].expr
+                    lhs, rhs = expr_c.args
+                    slack_var = eval(f"model.slack_vars_{constr.name}[idx]")
+                    lhs += slack_var
+                    constr[idx].set_value(lhs == rhs)
+            elif flag == "LB":
+                exec(f"model.surplus_vars_{constr.name} = pe.Var({indices}, within=pe.NonNegativeReals)")
+                for idx in constr.index_set():
+                    try:
+                        new_expr = clone_expression(constr[idx].expr)
+                    except:
+                        print(constr[idx].expr)
+                    for replacement in var_replacements:
+                        new_expr = replace_expressions(new_expr, replacement)
+                    expr_c = constr[idx].expr
+                    lhs, rhs = expr_c.args
+                    surplus_var = eval(f"model.surplus_vars_{constr.name}[idx]")
+                    lhs -= surplus_var
+                    constr[idx].set_value(lhs == rhs)
+            elif flag == "EQ":
+                print("much nicer")
+        else:
+            new_expr = clone_expression(constr.expr)
+            for replacement in var_replacements:
+                new_expr = replace_expressions(new_expr, replacement)
+            
+            if constr.equality:
+                print("nice & nice")
+            elif constr.has_ub():
+                exec(f"model.slack_vars_{constr.name} = pe.Var(within=pe.NonNegativeReals)")
+                expr_c = constr.expr
+                lhs, rhs = expr_c.args
+                slack_var = eval(f"model.slack_vars_{constr.name}")
+                lhs += slack_var
+                constr.set_value(lhs == rhs)
+            elif constr.has_lb():
+                exec(f"model.surplus_vars_{constr.name} = pe.Var(within=pe.NonNegativeReals)")
+                expr_c = constr.expr
+                lhs, rhs = expr_c.args
+                surplus_var = eval(f"model.surplus_vars_{constr.name}")
+                lhs -= surplus_var
+                constr.set_value(lhs == rhs)
+            else:
+                print("omg")
+    model.dual = pe.Suffix(direction=pe.Suffix.IMPORT)
+    solver_persistant = pe.SolverFactory('gurobi_persistent')
+    solver_persistant.set_instance(model)
+    solver_persistant.solve(model)
+    m = solver_persistant._solver_model
+    m.optimize()
+    try:
+        m_fixed = m.fixed()
+    except:
+        m_fixed = m
+    m_fixed.optimize()
+
+    return model, m_fixed
