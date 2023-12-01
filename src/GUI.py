@@ -7,7 +7,7 @@ from PySide6.QtGui import QIcon, QKeySequence, QShortcut
 from PySide6.QtGui import QTextCursor, QColor, QBrush
 
 from Util import load_model, extract_component, add_eg, read_iis
-from Util import infer_infeasibility, param_in_const, extract_summary, evaluate_gpt_response, classify_question, get_completion_detailed, convert_to_standard_form
+from Util import infer_infeasibility, param_in_const, extract_summary, evaluate_gpt_response, classify_question, get_completion_detailed, convert_to_standard_form, get_constraints_n_parameters
 from Util import get_completion_from_messages_withfn, gpt_function_call, get_parameters_n_indices, get_completion_for_index, get_completion_for_index_sensitivity, get_constraints_n_indices, get_completion_general, get_completion_from_messages_withfn_its
 
 from enum import Enum
@@ -17,6 +17,7 @@ class Question_Type(Enum):
     SEN = "2"
     GEN = "3"
     DET = "4"
+    OTH = "5"
 
 class InvalidGPTResponse(Exception):
     pass
@@ -181,17 +182,22 @@ class ChatThread(QThread):
         _, _, _, _, self.PYOMO_CODE = extract_component(self.model, self.py_path)
         self.model_info = get_parameters_n_indices(self.model)
         self.model_constraint_info = get_constraints_n_indices(self.model)
+        self.model_constraint_parameters_info = get_constraints_n_parameters(self.model)
 
     def run(self):
-        import pdb
-        pdb.set_trace()
+        # import pdb
+        # pdb.set_trace()
         classification = classify_question(self.chatbot_messages[-1], self.gpt_model)
 
         if classification == Question_Type.ITS.value:
             response = get_completion_from_messages_withfn_its(self.chatbot_messages, self.gpt_model)
-            fn_call = response["choices"][0]["message"]["function_call"]
-            fn_name = fn_call["name"]
-            arguments = fn_call["arguments"]
+            print("33333333")
+            print(response)
+            # import pdb
+            # pdb.set_trace()
+            fn_call = response.choices[0].message.tool_calls[0]
+            fn_name = fn_call.function.name
+            arguments = fn_call.function.arguments
             param_names = eval(arguments).get("param_names")
             for param_name in param_names:
                 if eval(f"self.model.{param_name}.is_indexed()"):
@@ -226,17 +232,17 @@ class ChatThread(QThread):
             ai_message = response
             self.ai_message_signal.emit(ai_message)
         elif classification == Question_Type.SEN.value:
-            import pdb
-            pdb.set_trace()
+            # import pdb
+            # pdb.set_trace()
             # self.model, m_fixed = convert_to_standard_form(self.model)
-            new_response = get_completion_for_index_sensitivity(self.chatbot_messages[-1], self.model_constraint_info, self.PYOMO_CODE, self.gpt_model)
+            new_response = get_completion_for_index_sensitivity(self.chatbot_messages[-1], self.model_constraint_info, self.model_constraint_parameters_info, self.PYOMO_CODE, self.gpt_model)
             (fn_message, flag), fn_name = gpt_function_call(new_response, self.param_names_aval, self.model)
             orig_message = {'role': 'function', 'name': fn_name, 'content': fn_message}
             self.chatbot_messages.append(orig_message)
             if flag == 'feasible':
+                #  TODO: Done
                 expl_message = {'role': 'system',
-                                'content': 'Tell the user that you made some changes to the code and ran it, and '
-                                           'the model becomes feasible and therefore did sensitivity analysis. '
+                                'content': 'Tell the user that you did sensitivity analysis for the parameter they asked'
                                            'Replace the parameter symbol in the text with its physical meaning '
                                            '(for example, you could say "changing the number of men in each port" '
                                            'instead of saying "increasing demand_rule") '
@@ -261,10 +267,22 @@ class ChatThread(QThread):
             self.ai_message_signal.emit(ai_message)
         elif classification == Question_Type.DET.value:
             new_response = get_completion_detailed(self.chatbot_messages[-1], self.model_info, self.PYOMO_CODE, self.gpt_model)
-            ai_message = new_response["choices"][0]["message"]["content"]
+            ai_message = new_response.choices[0].message.content
             self.ai_message_signal.emit(ai_message)
         else:
-            raise InvalidGPTResponse("Invalid Classification Type")
+            # TODO: General query answering/respond "I dont know"
+            expl_message = {
+                'role': 'system',
+                'content': """Tell the user that you do not have the capability to answer this kind of queries yet.
+                Explain it to the user that you can help with any other queries regarding the model information general,
+                infeasibility troubleshooting and sensitivity analysis"""
+
+            }
+            self.chatbot_messages.append(expl_message)
+            response = get_completion_general(self.chatbot_messages, self.gpt_model)
+            ai_message = response
+            self.ai_message_signal.emit(ai_message)
+            # raise InvalidGPTResponse("Invalid Classification Type")
         
         # response = get_completion_from_messages_withfn(self.chatbot_messages, self.gpt_model)
         # print("#####################!!!!!!!!!!!!!!!!!!!!!!######################")

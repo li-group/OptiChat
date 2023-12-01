@@ -8,30 +8,30 @@ from pyomo.opt import SolverFactory
 from pyomo.contrib.iis import *
 from pyomo.core.expr.visitor import identify_mutable_parameters, replace_expressions, clone_expression
 # GPT
-import openai
+from openai import OpenAI
+
+client = OpenAI(api_key=os.environ['OPENAI_API_KEY'])
 import tiktoken
 import json
 from dotenv import load_dotenv, find_dotenv
 _ = load_dotenv(find_dotenv())  # read local .env file
-openai.api_key = os.environ['OPENAI_API_KEY']
+
 
 
 def get_completion_general(messages, gpt_model):
-    response = openai.ChatCompletion.create(
-        model=gpt_model,
-        messages = messages,
-        temperature=0
-    )
-    return response['choices'][0]["message"]["content"]
+    client = OpenAI(api_key=os.environ['OPENAI_API_KEY'])
+    response = client.chat.completions.create(model=gpt_model,
+    messages = messages,
+    temperature=0)
+    return response.choices[0].message.content
 
 def get_completion_standalone(prompt, gpt_model):
+    client = OpenAI(api_key=os.environ['OPENAI_API_KEY'])
     messages = [{"role": "user", "content": prompt}]
-    response = openai.ChatCompletion.create(
-        model=gpt_model,
-        messages=messages,
-        temperature=0,
-    )
-    return response.choices[0].message["content"]
+    response = client.chat.completions.create(model=gpt_model,
+    messages=messages,
+    temperature=0)
+    return response.choices[0].message.content
 
 
 def load_model(pyomo_file):
@@ -403,8 +403,11 @@ def solve_the_model(param_names: list[str], param_names_aval, model) -> str:
     return out_text, flag
 
 def get_completion_from_messages_withfn_its(messages, gpt_model):
-    functions = [
+    client = OpenAI(api_key=os.environ['OPENAI_API_KEY'])
+    tools = [
         {
+            "type": "function",
+            "function": {
             "name": "solve_the_model",
             "description": "Given the parameters to be changed, re-solve the model and report the extent of the changes",
             "parameters": {
@@ -421,20 +424,25 @@ def get_completion_from_messages_withfn_its(messages, gpt_model):
                 },
                 "required": ["param_names"]
             }
-        },
+        }
+        }
     ]
-    response = openai.ChatCompletion.create(
-        model=gpt_model,
-        messages=messages,
-        functions=functions,
-        function_call='auto'
+    response = client.chat.completions.create(model=gpt_model,
+    messages=messages,
+    tools=tools,
+    tool_choice={"type": "function", "function": {"name": "solve_the_model"}}
     )
+    # import pdb
+    # pdb.set_trace()
     return response
 
 def get_completion_from_messaged_withfn_sen(messages, gpt_model):
     # TODO: get the constant factor also from every constraint
-    functions = [
+    client = OpenAI(api_key=os.environ['OPENAI_API_KEY'])
+    tools = [
         {
+            "type": "function",
+            "function": {
             "name": "sensitivity_analysis",
             "description": """Given the constraints to be changed, find the sensitivity coefficients for each of the constraints and report the values""",
             "parameters": {
@@ -451,17 +459,61 @@ def get_completion_from_messaged_withfn_sen(messages, gpt_model):
                 },
                 "required": ["constraint_names"]
             }
-        },
+        }
+        }
     ]
-    response = openai.ChatCompletion.create(
-        model=gpt_model,
-        messages=messages,
-        functions=functions,
-        function_call='auto'
-    )
+    response = client.chat.completions.create(model=gpt_model,
+    messages=messages,
+    tools=tools,
+     tool_choice={"type": "function", "function": {"name": "sensitivity_analysis"}})
     return response
 
 def get_completion_from_messages_withfn(messages, gpt_model):
+    client = OpenAI(api_key=os.environ['OPENAI_API_KEY'])
+    tools = [
+        {
+            "type": "function",
+            "function": {
+                "name": "solve_the_model",
+                "description": "Given the parameters to be changed, re-solve the model and report the extent of the changes",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "param_names": {
+                            "type": "array",
+                            "items": {
+                                "type": "string",
+                                "description": "A parameter name"
+                            },
+                            "description": "List of parameter names to be changed in order to re-solve the model"
+                        }
+                    },
+                    "required": ["param_names"]
+                }
+            },
+        },
+        {
+            "type": "function",
+            "function": {
+            "name": "sensitivity_analysis",
+            "description": """Given the constraints to be changed, find the sensitivity coefficients for each of the constraints and report the values""",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "constraint_names": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "description": "A constraint name"
+                        },
+                        "description": "List of constraint names to be changed in order to find sensitivity coefficients"
+                    }
+                },
+                "required": ["constraint_names"]
+            }
+        }
+        }
+    ]
     functions = [
         {
             "name": "solve_the_model",
@@ -539,12 +591,10 @@ def get_completion_from_messages_withfn(messages, gpt_model):
             }
         }
     ]
-    response = openai.ChatCompletion.create(
-        model=gpt_model,
-        messages=messages,
-        functions=functions,
-        function_call='auto'
-    )
+    response = client.chat.completions.create(model=gpt_model,
+    messages=messages,
+    functions=functions,
+    function_call='auto')
     return response
 
 def get_parameters_n_indices(model):
@@ -552,7 +602,7 @@ def get_parameters_n_indices(model):
     for param in model.component_objects(pe.Param):
         is_indexed = param.is_indexed()
         dim = param.dim
-        idx_set = [_ for _ in param.index_set()]
+        idx_set = [_ for _ in param.keys()]
         params[str(param)] = {
             "is_indexed": is_indexed,
             "index_dim": dim,
@@ -565,13 +615,23 @@ def get_constraints_n_indices(model):
     for constraint in model.component_objects(pe.Constraint):
         is_indexed = constraint.is_indexed()
         dim = constraint.dim
-        idx_set = [_ for _ in constraint.index_set()]
+        idx_set = [_ for _ in constraint.keys()]
         constraints[constraint._name] = {
             "is_indexed": is_indexed,
             "index_dim": dim,
             "index_set": idx_set
         }
     return  constraints
+
+def get_constraints_n_parameters(model):
+    constraints_parameters = {}
+    for con in model.component_objects(pe.Constraint):
+        params = set()
+        for idx in con.keys():
+            for v in identify_mutable_parameters(con[idx].expr):
+                params.add(str(v).split('[')[0])
+        constraints_parameters[con] = list(params)
+    return constraints_parameters
 
 def get_completion_detailed(user_prompt, model_info, PYOMO_CODE, gpt_model):
     messages = []
@@ -588,19 +648,17 @@ def get_completion_detailed(user_prompt, model_info, PYOMO_CODE, gpt_model):
     }
     messages.append(system_message)
     messages.append(user_prompt)
-    response = openai.ChatCompletion.create(
-        model=gpt_model,
-        messages=messages,
-        temperature=0,
-    )
+    response = client.chat.completions.create(model=gpt_model,
+    messages=messages,
+    temperature=0)
     return response
 
 
-def get_completion_for_index_sensitivity(user_prompt, model_info, PYOMO_CODE, gpt_model, auto=None):
+def get_completion_for_index_sensitivity(user_prompt, model_info, constraints_parameters, PYOMO_CODE, gpt_model, auto=None):
     functions = [
         {
             "name": "sensitivity_analysis",
-            "description": "Get the actual index(s) of the model constraint(s) requested in natural language by the user, based on the json object",
+            "description": "Get the actual index(s) of the model constraint(s) (ONLY CONSTRAINTS, NOT OBJECTIVES) requested in natural language by the user, based on the json object",
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -639,29 +697,29 @@ def get_completion_for_index_sensitivity(user_prompt, model_info, PYOMO_CODE, gp
         "content": f"""You are a Pyomo expert. You will be given a pyomo code file written in python, enclosed between
         triple back quotes. Your task is to understand the code and come up with a simple real-world optimization
         problem that the model is trying to solve. User will ask you questions about it and you should be able to answer them.
-        You are also given a json object {model_info} which contains the constraints of the model. You should be able
-        to access the values of the model constraints at the suitable indices when the user gives you a query based on
-        the story that you tell about what this optimization problem does. User query can involve multiple constraints 
-        and each of them can possibly have different indices. ONLY GENERATE WHAT IS ASKED. NO EXTRA TEXT.
+        You are given two json objects. (1) {model_info} which contains the constraints of the model. (2) {constraints_parameters}
+        which contains the list of constraints and the pyomo model parameters present in those constraints. 
+        The user gives you a query to perform sensitivity analysis on model parameters based on the story that you 
+        tell about what this optimization problem does. You should return all the constraints that have these parameters,
+        and the suitable indices with the help of the two json objects and the PYOMO code that you have access. User query can 
+        involve multiple constraints and each of them can possibly have different indices. 
+        CHECK IF THE CONSTRAINT NAME IS PRESENT IN THE JSON OBJECT PROVIDED.
+        GENERATE THE CONSTRAINT NAME AND ITS SUITABLE INDICES ONLY IF IT IS PRESENT IN THE JSON OBJECT. ONLY GENERATE WHAT IS ASKED. NO EXTRA TEXT.
         ```{PYOMO_CODE}```"""
     }
     messages.append(system_message)
     messages.append(user_prompt)
    
     if auto:
-        response = openai.ChatCompletion.create(
-        model=gpt_model,
+        response = client.chat.completions.create(model=gpt_model,
         messages = messages,
         functions = functions,
-        function_call = "auto"
-    )
+        function_call = "auto")
     else:
-        response = openai.ChatCompletion.create(
-        model=gpt_model,
+        response = client.chat.completions.create(model=gpt_model,
         messages = messages,
         functions = functions,
-        function_call = {"name": "sensitivity_analysis"}
-    )
+        function_call = {"name": "sensitivity_analysis"})
     print("#############%%%%%%%%%%%%%%%%%%%%%%%%$################")
     print(response)
     print("#############%%%%%%%%%%%%%%%%%%%%%%%%$################")
@@ -721,25 +779,23 @@ def get_completion_for_index(user_prompt, model_info, PYOMO_CODE, gpt_model, aut
     messages.append(user_prompt)
    
     if auto:
-        response = openai.ChatCompletion.create(
-        model=gpt_model,
+        response = client.chat.completions.create(model=gpt_model,
         messages = messages,
         functions = functions,
-        function_call = "auto"
-    )
+        function_call = "auto")
     else:
-        response = openai.ChatCompletion.create(
-        model=gpt_model,
+        response = client.chat.completions.create(model=gpt_model,
         messages = messages,
         functions = functions,
-        function_call = {"name": "get_index"}
-    )
+        function_call = {"name": "get_index"})
     return response
 
 def gpt_function_call(ai_response, param_names_aval, model):
-    fn_call = ai_response["choices"][0]["message"]["function_call"]
-    fn_name = fn_call["name"]
-    arguments = fn_call["arguments"]
+    # import pdb
+    # pdb.set_trace()
+    fn_call = ai_response.choices[0].message.function_call
+    fn_name = fn_call.name
+    arguments = fn_call.arguments
     if fn_name == "solve_the_model":
         param_names = eval(arguments).get("param_names")
         return solve_the_model(param_names, param_names_aval, model), fn_name
@@ -794,16 +850,16 @@ def generate_replacements_indexed_new(objs, model):
     return iis_param, replacements_list
 
 def solve_sensitivity_indexed(args, model):
-    model.dual = pe.Suffix(direction=pe.Suffix.IMPORT)
+    model.dual = pe.Suffix(direction=pe.Suffix.IMPORT_EXPORT)
     # model_copy = model.clone()
     dual_values = {}
-    import pdb
-    pdb.set_trace()
+    # import pdb
+    # pdb.set_trace()
     # model.dual = pe.Suffix(direction=pe.Suffix.IMPORT)
     solver = SolverFactory("gurobi")
     solver.solve(model, tee=True)
     for var in model.component_objects(pe.Var):
-        for index in var.index_set():
+        for index in var.keys():
             try:
                 if not var[index].is_continuous():
                     val = pe.value(var[index])
@@ -824,7 +880,9 @@ def solve_sensitivity_indexed(args, model):
             c_name = arg['constraint']
             indices = arg['indices']
             dual_values[c_name] = []
-            if len(indices) or indices[0] == 'null':
+            # import pdb
+            # pdb.set_trace()
+            if len(indices):
                 for idx in indices:
                     idx = str(idx)
                     c_name_index = c_name + idx
@@ -878,8 +936,7 @@ def evaluate_gpt_response(question, answer, model_info, PYOMO_CODE, gpt_model):
         "role": "user",
         "content": "Did the junior assistant answer correctly what is being asked? If you think its answer is out of scope for you, then say YES."
     })
-    response = openai.ChatCompletion.create(
-    model=gpt_model,
+    response = client.chat.completions.create(model=gpt_model,
     messages=evaluation_prompt,
     temperature=0)
     return response["choices"][0]["message"]["content"]
@@ -958,7 +1015,8 @@ def classify_question(question, gpt_model):
             a) "What are the constraints that are causing my model to be not feasible?"
             b) "What physical quantities are making the model infeasible?"
             c) "What are the parameters that I need to change to make the model feasible?"
-        
+            d) "Which staffing requirements make my work schedule optimization model infeasible?"
+
         4. We have access to the pyomo code of the model (which has detailed doc string and comments) and also has a concise summary of the
         model parameters, whether they are indexed, and if indexed then their dimension and all the indices etc as a json object. So we have information that can be obtained only
         by looking up the pyomo code file and with the knowledge of the python programming language. But however, we do not know their physical meaning/the complete background story like the category "3." above.
@@ -969,17 +1027,18 @@ def classify_question(question, gpt_model):
             c) "What are the indices of the parameter `ship_class`?"
             d) "How many different kinds of ships are there? What are their capacities?"
             e) "What are the different kinds of ships we have?"
+        
 
         If you think it is related to infeasibility troubleshooting, generate "1". If you think it is related to sensitivity analysis, generate "2", and so on for other categoriers.
-        GENERATE ONLY WHAT IS ASKED. DO NOT GENERATE ANY EXTRA TEXT. CHOOSE THE BEST AND MOST APPROPRIATE CATEGORY FROM THE ABOVE AND NOTHING ELSE.
+        GENERATE ONLY WHAT IS ASKED. DO NOT GENERATE ANY EXTRA TEXT. CHOOSE THE BEST AND MOST APPROPRIATE CATEGORY FROM THE ABOVE. IF YOU ARE NOT ABLE TO CHOOSE ANY CATEGORY FROM THE ABOVE, RETURN 5.
         """
     })
     evaluation_prompt.append(question)
-    response = openai.ChatCompletion.create(
-    model=gpt_model,
+    response = client.chat.completions.create(model=gpt_model,
     messages=evaluation_prompt,
-    temperature=0)
-    return response["choices"][0]["message"]["content"]
+    temperature=0,
+    seed=42)
+    return response.choices[0].message.content
 
 def convert_to_standard_form(model):
     var_replacements = []
