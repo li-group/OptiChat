@@ -179,7 +179,7 @@ class ChatThread(QThread):
         self.model = model
         self.gpt_model = gpt_model
         self.py_path = py_path
-        _, _, _, _, self.PYOMO_CODE = extract_component(self.model, self.py_path)
+        _, _, _, self.PYOMO_CODE = extract_component(self.model, self.py_path)
         self.model_info = get_parameters_n_indices(self.model)
         self.model_constraint_info = get_constraints_n_indices(self.model)
         self.model_constraint_parameters_info = get_constraints_n_parameters(self.model)

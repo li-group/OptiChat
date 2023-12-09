@@ -30,6 +30,7 @@ def test_openai_api_key_valid_gpt4():
 
 from pyomo.environ import *
 import os
+import json
 
 def test_load_model():
     file_name = "./Pyomo_Model_Lib/bid_v4.py"
@@ -44,7 +45,317 @@ def test_load_model():
     assert ilp_path == ""
     assert isinstance(model, ConcreteModel)
 
+def test_extract_components():
+    file_name = "./Pyomo_Model_Lib/bid_v4.py"
+    abs_path = os.path.abspath(file_name)
+    model, ilp_path = load_model(abs_path)
 
+    const_list, param_list, var_list, PYOMO_CODE = extract_component(model, abs_path)
+
+    true_const_list = ['subset_purchase', 'oneonly', 'maxpl', 'minpl', 'costdef', 'demand']
+    true_param_list = ['setup', 'price', 'qmin', 'qmax', 'req']
+    true_var_list = ['c', 'pl', 'plb']
+    with open(abs_path, "r") as f:
+        true_pyomo_code = f.read()
+    
+    for const in true_const_list:
+        assert const in const_list
+    
+    for par in true_param_list:
+        assert par in param_list
+
+    for var in true_var_list:
+        assert var in var_list
+    
+    assert true_pyomo_code == PYOMO_CODE
+
+def test_get_parameters_n_indices():
+    file_name = "./Pyomo_Model_Lib/bid_v4.py"
+    abs_path = os.path.abspath(file_name)
+    model, ilp_path = load_model(abs_path)
+
+    model_info = get_parameters_n_indices(model)
+    
+    idxes = [('a', 1), ('b', 1), ('b', 2), ('b', 3), ('b', 4), ('c', 1), ('d', 1), ('e', 1), ('e', 2)]
+    
+    true_info = {
+        'setup': {
+            'is_indexed': True,
+            'index_dim': 2,
+            'index_set': idxes
+        },
+        'price': {
+            'is_indexed': True,
+            'index_dim': 2,
+            'index_set': idxes
+        },
+        'qmin': {
+            'is_indexed': True,
+            'index_dim': 2,
+            'index_set': idxes
+        },
+        'qmax': {
+            'is_indexed': True,
+            'index_dim': 2,
+            'index_set': idxes
+        },
+        'req': {
+            'is_indexed': False,
+            'index_dim': 0,
+            'index_set': [None]
+        }
+    }
+
+    assert model_info == true_info
+
+def test_get_constraints_n_indices():
+    file_name = "./Pyomo_Model_Lib/bid_v4.py"
+    abs_path = os.path.abspath(file_name)
+    model, ilp_path = load_model(abs_path)
+
+    model_info = get_constraints_n_indices(model)
+
+    idxes = [('a', 1), ('b', 1), ('b', 2), ('b', 3), ('b', 4), ('c', 1), ('d', 1), ('e', 1), ('e', 2)]
+    
+    true_info = {
+        'demand': {
+            'is_indexed': False, 
+            'index_dim': 0, 
+            'index_set': [None]
+        },
+        'costdef': {
+            'is_indexed': False, 
+            'index_dim': 0, 
+            'index_set': [None]
+        }, 
+        'minpl': {
+            'is_indexed': True, 
+            'index_dim': 2, 
+            'index_set': idxes
+        }, 
+        'maxpl': {
+            'is_indexed': True, 
+            'index_dim': 2, 
+            'index_set': idxes
+        }, 
+        'oneonly': {
+        'is_indexed': True, 
+        'index_dim': 1, 
+        'index_set': ['a', 'b', 'c', 'd', 'e']
+        }, 
+        'subset_purchase': {
+            'is_indexed': False, 
+            'index_dim': 0, 
+            'index_set': [None]
+        }
+    }
+    assert model_info == true_info
+
+def test_get_constraints_n_parameters():
+    file_name = "./Pyomo_Model_Lib/bid_v4.py"
+    abs_path = os.path.abspath(file_name)
+    model, ilp_path = load_model(abs_path)
+    
+    model_info = get_constraints_n_parameters(model)
+
+    true_info = {
+        'demand': ['req'], 
+        'costdef': ['price', 'setup'], 
+        'minpl': ['qmin'], 
+        'maxpl': ['qmax'], 
+        'oneonly': [None], 
+        'subset_purchase': [None]
+    }
+
+    print(model_info, true_info)
+    assert model_info == true_info
+
+def test_get_completion_for_index():
+    file_name = "./Pyomo_Model_Lib/bid_v4.py"
+    abs_path = os.path.abspath(file_name)
+    model, ilp_path = load_model(abs_path)
+
+    _, _, _, PYOMO_CODE = extract_component(model, abs_path)
+    model_info = get_parameters_n_indices(model)
+
+    objs = [
+{
+    'input': {'user_prompt': 'How can I adjust the price for the vendor "a" in the 1st segment?'},
+    'output': { 'index': [{'parameter': 'price', 'indices': [['a', 1]]}] }
+}
+,
+{
+    'input': {'user_prompt': 'What if I want to change the maximum quantity for the 1st vendor and 1st segment?'},
+    'output': { 'index': [{'parameter': 'qmax', 'indices': [['a', 1]]}] }
+}
+,
+{
+    'input': {'user_prompt': 'Can I alter the setup cost for "b" in the 3rd segment?'},
+    'output': { 'index': [{'parameter': 'setup', 'indices': [['b', 3]]}] }
+}
+,
+{
+    'input': {'user_prompt': 'What is the process of modifying the minimum quantity from the 3rd vendor for 1st segment?'},
+    'output': { 'index': [{'parameter': 'qmin', 'indices': [['c', 1]]}] }
+}
+,
+{
+    'input': {'user_prompt': 'I want to modify the price for "d" in the first segment.' },
+    'output': { 'index': [{'parameter': 'price', 'indices': [['d', 1]]}] }
+}
+,
+{
+    'input': {'user_prompt': 'Is it possible to change the maximum quantity for the 4th vendor in the 1st segment?'},
+    'output': { 'index': [{'parameter': 'qmax', 'indices': [['d', 1]]}] }
+}
+,
+{
+    'input': {'user_prompt': 'How do I change the setup cost for "e" in the second segment?'},
+    'output': { 'index': [{'parameter': 'setup', 'indices': [['e', 2]]}] }
+}
+,
+{
+    'input': {'user_prompt': 'Is it possible to adjust the minimum quantity for the 5th vendor and 2nd segment sector?'},
+    'output': { 'index': [{'parameter': 'qmin', 'indices': [['e', 2]]}] }
+}
+,
+{
+    'input': {'user_prompt': 'I want to alter the price for "b" in the fourth segment.' },
+    'output': { 'index': [{'parameter': 'price', 'indices': [['b', 4]]}] }
+}
+,
+# {
+#     'input': {'user_prompt': 'Can I change the requirements?'},
+#     'output': { 'index': [{'parameter': 'req', 'indices': [None]}] }
+# }
+]
+
+    for obj in objs:
+        content = obj['input']['user_prompt']
+        chatbot_messages = {'role': 'user', 'content': content}
+        response = get_completion_for_index(chatbot_messages, model_info,PYOMO_CODE, 'gpt-4')
+        fn_call = response.choices[0].message.function_call
+        fn_name = fn_call.name
+        arguments = fn_call.arguments
+
+        assert fn_name == 'get_index'
+
+        args = json.loads(arguments)
+
+        true_response = obj['output']
+
+        assert json.dumps(args, sort_keys=True) == json.dumps(true_response, sort_keys=True)
+
+def test_get_completion_for_index_sensitivity():
+    file_name = "./Pyomo_Model_Lib/feasibleproblems/bid_v0.py"
+    abs_path = os.path.abspath(file_name)
+    model, ilp_path = load_model(abs_path)
+
+    _, _, _, PYOMO_CODE = extract_component(model, abs_path)
+    model_constraint_info = get_constraints_n_indices(model)
+    model_constraint_param_info = get_constraints_n_parameters(model)
+
+    args = """
+        [
+            {
+                "input": {
+                    "user_prompt": "What happens if the minimum purchase level for vendor C increases?"
+                },
+                "output": {
+                    "index": [{"constraint": "minpl", "indices": [["c", 1]]}]
+                }
+            },
+            {
+                "input": {
+                    "user_prompt": "How will the setup cost affect my total cost?"
+                },
+                "output": {
+                    "index": [{"constraint": "costdef", "indices": [null]}]
+                }
+            },
+            {
+                "input": {
+                    "user_prompt": "Will changing the price for vendor B in the 3rd segment affect my total cost?"
+                },
+                "output": {
+                    "index": [{"constraint": "costdef", "indices": [null]}]
+                }
+            },
+            {
+                "input": {
+                    "user_prompt": "If vendor D increases their maximum purchase level, how will it affect my purchases?"
+                },
+                "output": {
+                    "index": [{"constraint": "maxpl", "indices": [["d", 1]]}]
+                }
+            },
+            {
+                "input": {
+                    "user_prompt": "How does the minimum purchase level for vendor E in the 2nd segment affect my purchases?"
+                },
+                "output": {
+                    "index": [{"constraint": "minpl", "indices": [["e", 2]]}]
+                }
+            },
+            {
+                "input": {
+                    "user_prompt": "Will purchasing from vendor A affect my total cost?"
+                },
+                "output": {
+                    "index": [{"constraint": "costdef", "indices": [null]}]
+                }
+            },
+            {
+                "input": {
+                    "user_prompt": "How does the maximum purchase level for vendor A affect my purchases?"
+                },
+                "output": {
+                    "index": [{"constraint": "maxpl", "indices": [["a", 1]]}]
+                }
+            }
+        ]
+    """
+
+    objs = json.loads(args)
+
+    for obj in objs:
+        content = obj['input']['user_prompt']
+        chatbot_messages = {
+            'role': 'user',
+            'content': content
+        }
+        response = get_completion_for_index_sensitivity(chatbot_messages, model_constraint_info, model_constraint_param_info, PYOMO_CODE, 'gpt-4')
+
+        # print(response)
+
+        fn_call = response.choices[0].message.function_call
+        fn_name = fn_call.name
+        arguments = fn_call.arguments
+
+        assert fn_name == 'sensitivity_analysis'
+
+        args = json.loads(arguments)
+
+        true_response = obj['output']
+        print(content, json.dumps(args, sort_keys=True), json.dumps(true_response, sort_keys=True))
+
+        assert json.dumps(args, sort_keys=True) == json.dumps(true_response, sort_keys=True)
+
+def test_add_slack():
+    file_name = "./Pyomo_Model_Lib/feasibleproblems/bid_v0.py"
+    abs_path = os.path.abspath(file_name)
+    model, ilp_path = load_model(abs_path)
+
+    is_slack_added = add_slack(['setup', 'qmax'], model)
+
+    idxes = [('a', 1), ('b', 1), ('b', 2), ('b', 3), ('b', 4), ('c', 1), ('d', 1), ('e', 1), ('e', 2)]
+
+    for p in ['setup', 'qmax']:
+        for idx in idxes:
+            assert is_slack_added[p][idx] == False
+
+def test_generate_replacements():
+    test_add_slack()
 
 def test_gurobi_solve():
     model = ConcreteModel()
@@ -132,9 +443,9 @@ def test_classify_question():
    'gpt_model': 'curie'},
   'output': '4'},
  {'input': {'question': {'role': 'user',
-    'content': 'How is the fuel efficiency of our fleet impacting the overall costs? Is there a way to optimize it?'},
+    'content': 'How is the fuel efficiency of our fleet impacting the overall costs?'},
    'gpt_model': 'curie'},
-  'output': '1'},
+  'output': '2'},
  {'input': {'question': {'role': 'user',
     'content': "I'm confused about the constraint 'max_supply' in our production model. Could you explain its role?"},
    'gpt_model': 'curie'},

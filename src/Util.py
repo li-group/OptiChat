@@ -57,7 +57,6 @@ def extract_component(model, pyomo_file):
     const_list = []
     param_list = []
     var_list = []
-    idx_param_list = []
     for const in model.component_objects(pe.Constraint):
         const_list.append(str(const))
     for param in model.component_objects(pe.Param):
@@ -71,7 +70,7 @@ def extract_component(model, pyomo_file):
     with open(pyomo_file, 'r') as file:
         PYOMO_CODE = file.read()
     file.close()
-    return const_list, param_list, idx_param_list, var_list, PYOMO_CODE
+    return const_list, param_list, var_list, PYOMO_CODE
 
 
 def extract_summary(var_list, param_list, idx_param_list, const_list, PYOMO_CODE, gpt_model):
@@ -601,7 +600,7 @@ def get_parameters_n_indices(model):
     params = {}
     for param in model.component_objects(pe.Param):
         is_indexed = param.is_indexed()
-        dim = param.dim
+        dim = param.dim()
         idx_set = [_ for _ in param.keys()]
         params[str(param)] = {
             "is_indexed": is_indexed,
@@ -614,14 +613,14 @@ def get_constraints_n_indices(model):
     constraints = {}
     for constraint in model.component_objects(pe.Constraint):
         is_indexed = constraint.is_indexed()
-        dim = constraint.dim
+        dim = constraint.dim()
         idx_set = [_ for _ in constraint.keys()]
         constraints[constraint._name] = {
             "is_indexed": is_indexed,
             "index_dim": dim,
             "index_set": idx_set
         }
-    return  constraints
+    return constraints
 
 def get_constraints_n_parameters(model):
     constraints_parameters = {}
@@ -630,7 +629,10 @@ def get_constraints_n_parameters(model):
         for idx in con.keys():
             for v in identify_mutable_parameters(con[idx].expr):
                 params.add(str(v).split('[')[0])
-        constraints_parameters[con] = list(params)
+        if len(params):
+            constraints_parameters[str(con)] = list(params)
+        else:
+            constraints_parameters[str(con)] = [None]
     return constraints_parameters
 
 def get_completion_detailed(user_prompt, model_info, PYOMO_CODE, gpt_model):
@@ -653,12 +655,12 @@ def get_completion_detailed(user_prompt, model_info, PYOMO_CODE, gpt_model):
     temperature=0)
     return response
 
-
+# TODO: Handle it manually
 def get_completion_for_index_sensitivity(user_prompt, model_info, constraints_parameters, PYOMO_CODE, gpt_model, auto=None):
     functions = [
         {
             "name": "sensitivity_analysis",
-            "description": "Get the actual index(s) of the model constraint(s) (ONLY CONSTRAINTS, NOT OBJECTIVES) requested in natural language by the user, based on the json object",
+            "description": "Get the actual index(s) of the model constraint(s) (ONLY CONSTRAINTS, NOT OBJECTIVES) requested in natural language by the user, based on the json objects",
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -676,7 +678,14 @@ def get_completion_for_index_sensitivity(user_prompt, model_info, constraints_pa
                                     "items": {
                                         "type": "array",
                                         "items": {
-                                            "type": ["number", "string", "null"],
+                                            "anyOf": [
+                                                {
+                                                    "type": ["number", "string"]
+                                                },
+                                                {
+                                                    "type": "null"
+                                                }
+                                            ],
                                             "description": "Index corresponding to a dimension of the multi-dimensional index."
                                         },
                                         "description": "An index for the above constraint (as the index can be multi-dimensional)."
@@ -702,9 +711,12 @@ def get_completion_for_index_sensitivity(user_prompt, model_info, constraints_pa
         The user gives you a query to perform sensitivity analysis on model parameters based on the story that you 
         tell about what this optimization problem does. You should return all the constraints that have these parameters,
         and the suitable indices with the help of the two json objects and the PYOMO code that you have access. User query can 
-        involve multiple constraints and each of them can possibly have different indices. 
+        involve multiple constraints and each of them can possibly have different indices. If the constraint is not indexed, give the index as null.
         CHECK IF THE CONSTRAINT NAME IS PRESENT IN THE JSON OBJECT PROVIDED.
         GENERATE THE CONSTRAINT NAME AND ITS SUITABLE INDICES ONLY IF IT IS PRESENT IN THE JSON OBJECT. ONLY GENERATE WHAT IS ASKED. NO EXTRA TEXT.
+
+        IF THE PARAMETER INVOLVES AN INDEX AND THE CONSTRAINT TO WHICH IT BELONGS DOESN'T, THEN GIVE "indices":[null] FOR THAT CONSTRAINT. RETURN THE
+        CONSTRAINTS TO WHICH THE PARAMETER IN THE QUERY BELONGS, AND NOTHING ELSE. IF THE CONSTRAINT DOESN'T HAVE AN INDEX, GIVE NULL i.e. 'indices':[null]
         ```{PYOMO_CODE}```"""
     }
     messages.append(system_message)
@@ -720,9 +732,7 @@ def get_completion_for_index_sensitivity(user_prompt, model_info, constraints_pa
         messages = messages,
         functions = functions,
         function_call = {"name": "sensitivity_analysis"})
-    print("#############%%%%%%%%%%%%%%%%%%%%%%%%$################")
-    print(response)
-    print("#############%%%%%%%%%%%%%%%%%%%%%%%%$################")
+  
     return response
 
 
@@ -772,7 +782,7 @@ def get_completion_for_index(user_prompt, model_info, PYOMO_CODE, gpt_model, aut
         You are also given a json object {model_info} which contains the parameters of the model. You should be able
         to access the values of the model parameters at the suitable indices when the user gives you a query based on
         the story that you tell about what this optimization problem does. User query can involve multiple paramters 
-        and each of them can possibly have different indices. ONLY GENERATE WHAT IS ASKED. NO EXTRA TEXT.
+        and each of them can possibly have different indices. If the parameter is not indexed, then give the index as null. ONLY GENERATE WHAT IS ASKED. NO EXTRA TEXT.
         ```{PYOMO_CODE}```"""
     }
     messages.append(system_message)
@@ -806,7 +816,7 @@ def gpt_function_call(ai_response, param_names_aval, model):
         args = json.loads(arguments)
         return solve_sensitivity_indexed(args, model), "solve_sensitivity_indexed"
     else:
-        return
+        raise Exception("invalid function name")
 
 def add_slack_indexed_new(objs, model):
     is_slack_added = {}  # indicator: is slack added to constraints?
