@@ -2,6 +2,7 @@
 import typing
 import os
 import sys
+import re
 import importlib
 import pyomo.environ as pe
 from pyomo.opt import SolverFactory
@@ -19,14 +20,14 @@ _ = load_dotenv(find_dotenv())  # read local .env file
 
 
 def get_completion_general(messages, gpt_model):
-    client = OpenAI(api_key=os.environ['OPENAI_API_KEY'])
+    # client = OpenAI(api_key=os.environ['OPENAI_API_KEY'])
     response = client.chat.completions.create(model=gpt_model,
     messages = messages,
     temperature=0)
     return response.choices[0].message.content
 
 def get_completion_standalone(prompt, gpt_model):
-    client = OpenAI(api_key=os.environ['OPENAI_API_KEY'])
+    # client = OpenAI(api_key=os.environ['OPENAI_API_KEY'])
     messages = [{"role": "user", "content": prompt}]
     response = client.chat.completions.create(model=gpt_model,
     messages=messages,
@@ -73,7 +74,7 @@ def extract_component(model, pyomo_file):
     return const_list, param_list, var_list, PYOMO_CODE
 
 
-def extract_summary(var_list, param_list, idx_param_list, const_list, PYOMO_CODE, gpt_model):
+def extract_summary(var_list, param_list, const_list, PYOMO_CODE, gpt_model):
     prompt = f"""Here is an optimization model written in Pyomo, which is delimited by triple backticks. 
     Your task is to 
     (1): use plain English to describe the objective funtion of this model. \n\n
@@ -371,11 +372,37 @@ def generate_slack_text(iis_param, model):
             text = text + f"decrease {p} by {slack_var_neg} unit; "
     return text
 
+def generate_sensitivity_text_quantitative(new_optimal_value, old_optimal_value, args, resps, model):
+    text = "The optimal value increases by " + str(new_optimal_value - old_optimal_value) + " after the following change: "
+    for resp, param in zip(resps, args['right_hand_side']):
+        finish_reason = resp.choices[0].finish_reason
+        if finish_reason == "tool_calls":
+            fn_name = resp.choices[0].message.tool_calls[0].function.name
+            fn_arguments = resp.choices[0].message.tool_calls[0].function.arguments
+            fn_args = json.loads(fn_arguments)
+            if fn_name == "assign_value_to_parameter":
+                delta = fn_args['value']
+            else:
+                delta = fn_args['delta']
+            param_name = param['parameter']
+            indices = param['indices']
+            flag = False
+            if fn_name == "change_parameter_value_percentage":
+                flag = True
+            if flag:
+                text += f"change {param_name} by {delta}% at {indices}; "
+            else:
+                text += f"change {param_name} by {delta} at {indices};"
+            flag = False
+        else:
+            pass
+    return text
+
 def generate_sensitivity_text(dual_values, model):
     text = "The optimal value increases at the following rates: "
     for c in dual_values.keys():
         for values in dual_values[c]:
-            text = text + f"{values[1]} for the constraint {c} at {values[0]}; "
+            text = text + f"{values[1]} for the parameter {c} at {values[0]}; "
     return text
 
 def solve_the_model(param_names: list[str], param_names_aval, model) -> str:
@@ -605,8 +632,21 @@ def get_parameters_n_indices(model):
         params[str(param)] = {
             "is_indexed": is_indexed,
             "index_dim": dim,
-            "index_set": idx_set
+            "index_set": idx_set,
+            "lhs_or_rhs": "None"
         }
+    
+    for constraint in model.component_objects(pe.Constraint):
+        if constraint.is_indexed():
+            for idx in constraint.keys():
+                for param in identify_mutable_parameters(constraint[idx].expr):
+                    # print(param.name)
+                    # print(str(param).split('[')[0])
+                    side = find_parameter_side(constraint[idx].expr.to_string(), str(param).split('[')[0])
+                    params[str(param).split('[')[0]]['lhs_or_rhs'] = side
+                    print(side, str(param).split('[')[0])
+                    break
+    
     return params
 
 def get_constraints_n_indices(model):
@@ -622,6 +662,19 @@ def get_constraints_n_indices(model):
         }
     return constraints
 
+def get_variables_n_indices(model):
+    variables = {}
+    for variable in model.component_objects(pe.Var):
+        is_indexed = variable.is_indexed()
+        dim = variable.dim()
+        idx_set = [_ for _ in variable.keys()]
+        variables[variable._name] = {
+            "is_indexed": is_indexed,
+            "index_dim": dim,
+            "index_set": idx_set
+        }
+    return variables
+
 def get_constraints_n_parameters(model):
     constraints_parameters = {}
     for con in model.component_objects(pe.Constraint):
@@ -631,9 +684,36 @@ def get_constraints_n_parameters(model):
                 params.add(str(v).split('[')[0])
         if len(params):
             constraints_parameters[str(con)] = list(params)
-        else:
+        else:   
             constraints_parameters[str(con)] = [None]
     return constraints_parameters
+
+def get_parameters_n_constraints(model):
+    constraints_parameters = get_constraints_n_parameters(model)
+    print('c-1', constraints_parameters)
+    parameters_constraints = {}
+    for key, values in constraints_parameters.items():
+        for value in values:
+            if value in parameters_constraints:
+                parameters_constraints[value].append(key)
+            else:
+                parameters_constraints[value] = [key]
+    print('c0', parameters_constraints)
+    return parameters_constraints
+
+
+def get_completion_optimal_value(user_prompt, model_info, PYOMO_CODE, gpt_model):
+    messages = []
+    system_message = {
+        "role": "system",
+        "content": f""""""
+    }
+    messages.append(system_message)
+    messages.append(user_prompt)
+    response = client.chat.completions.create(model=gpt_model,
+    messages=messages,
+    temperature=0)
+    return response
 
 def get_completion_detailed(user_prompt, model_info, PYOMO_CODE, gpt_model):
     messages = []
@@ -655,88 +735,290 @@ def get_completion_detailed(user_prompt, model_info, PYOMO_CODE, gpt_model):
     temperature=0)
     return response
 
-# TODO: Handle it manually
-def get_completion_for_index_sensitivity(user_prompt, model_info, constraints_parameters, PYOMO_CODE, gpt_model, auto=None):
-    functions = [
+def assign_value_to_parameter(value, param_name, indices, model):
+    param = eval("model." + param_name)
+    for idx in indices:
+        if idx is None:
+            eval(f"model.{param_name}.set_value({value})")
+        else:
+            eval(f"model.{param_name}[{idx}].set_value({value})")
+    return None
+
+def change_parameter_value_percentage(delta, param_name, indices, model):
+    param = eval("model." + param_name)
+    for idx in indices:
+        if idx is None:
+            eval(f"model.{param_name}.set_value({param.value * (1 + delta / 100)})")
+        else:
+            eval(f"model.{param_name}[{idx}].set_value({param[idx].value * (1 + delta / 100)})")
+    return None
+
+def change_parameter_value_absolute(delta, param_name, indices, model):
+    param = eval("model." + param_name)
+    for idx in indices:
+        if idx is None:
+            eval(f"model.{param_name}.set_value({param.value + delta})")
+        else:
+            eval(f"model.{param_name}[{idx}].set_value({param[idx].value + delta})")
+    return None
+
+
+def get_completion_for_index_variables(user_prompt, variables_info, PYOMO_CODE, gpt_model):
+    tools = [
         {
-            "name": "sensitivity_analysis",
-            "description": "Get the actual index(s) of the model constraint(s) (ONLY CONSTRAINTS, NOT OBJECTIVES) requested in natural language by the user, based on the json objects",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "index": {
-                        "type": "array",
-                        "items": {
-                            "type": "object",
-                            "properties": {
-                                "constraint": {
-                                    "type": "string", 
-                                    "description": "the constraint name"
-                                },
-                                "indices": {
-                                    "type": "array", 
-                                    "items": {
+            "type": "function",
+            "function": {
+                "name": "get_variables_value_at_indices",
+                "description": "Get the value of the variables at the given indices",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "variables": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "variable": {
+                                        "type": "string",
+                                        "description": "The pyomo model variable (pyomo.environ.Var objects) whose value needs to be evaluated"
+                                    },
+                                    "indices": {
                                         "type": "array",
                                         "items": {
-                                            "anyOf": [
-                                                {
-                                                    "type": ["number", "string"]
-                                                },
-                                                {
-                                                    "type": "null"
-                                                }
-                                            ],
-                                            "description": "Index corresponding to a dimension of the multi-dimensional index."
-                                        },
-                                        "description": "An index for the above constraint (as the index can be multi-dimensional)."
-                                    }
+                                            "type": "array",
+                                            "items": {
+                                                "anyOf": [
+                                                    {
+                                                        "type": ["number", "string"]
+                                                    },
+                                                    {
+                                                        "type": "null"
+                                                    }
+                                                ],
+                                                "description": "Variable Index corresponding to a dimension of the multi-dimensional index."
+                                            },
+                                            "description": "An index for the above variable (as the index can be multi-dimensional)."
+                                        }
+                                    },
                                 }
-                            },
+                            }
                         },
-                        "description": "The correct indices of the model constraint as per the user's query"
-                    }
-                },
-                "required": ["index"]
+                    },
+                    "required": ["variables"]
+                }
+            }
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "get_objective_value",
+                "description": "Get the value of the objective function",
+                "parameters": {
+                    "type": "object",
+                    "properties": {},
+                    "required": []
+                }
             }
         }
     ]
+
     messages = []
     system_message = {
         "role": "system",
         "content": f"""You are a Pyomo expert. You will be given a pyomo code file written in python, enclosed between
         triple back quotes. Your task is to understand the code and come up with a simple real-world optimization
         problem that the model is trying to solve. User will ask you questions about it and you should be able to answer them.
-        You are given two json objects. (1) {model_info} which contains the constraints of the model. (2) {constraints_parameters}
-        which contains the list of constraints and the pyomo model parameters present in those constraints. 
-        The user gives you a query to perform sensitivity analysis on model parameters based on the story that you 
-        tell about what this optimization problem does. You should return all the constraints that have these parameters,
-        and the suitable indices with the help of the two json objects and the PYOMO code that you have access. User query can 
-        involve multiple constraints and each of them can possibly have different indices. If the constraint is not indexed, give the index as null.
-        CHECK IF THE CONSTRAINT NAME IS PRESENT IN THE JSON OBJECT PROVIDED.
-        GENERATE THE CONSTRAINT NAME AND ITS SUITABLE INDICES ONLY IF IT IS PRESENT IN THE JSON OBJECT. ONLY GENERATE WHAT IS ASKED. NO EXTRA TEXT.
+        You are also given a json object {variables_info} which contains the variables of the model (objects of type pyomo.environ.Var). You should be able
+        to access the values of the model variables at the suitable indices when the user gives you a query based on
+        the story that you tell about what this optimization problem does. User query can involve multiple variables
+        and each of them can possibly have different indices. If the variable is not indexed, then give the index as null. 
+        
+        The user query can also ask about the optimal value of the objective function. In that situation you should make a call to the
+        `get_objective_value` function.
 
-        IF THE PARAMETER INVOLVES AN INDEX AND THE CONSTRAINT TO WHICH IT BELONGS DOESN'T, THEN GIVE "indices":[null] FOR THAT CONSTRAINT. RETURN THE
-        CONSTRAINTS TO WHICH THE PARAMETER IN THE QUERY BELONGS, AND NOTHING ELSE. IF THE CONSTRAINT DOESN'T HAVE AN INDEX, GIVE NULL i.e. 'indices':[null]
+        ONLY GENERATE WHAT IS ASKED. NO EXTRA TEXT.
+        ```{PYOMO_CODE}```"""
+    }
+    messages.append(system_message)
+    messages.append(user_prompt)
+
+    response = client.chat.completions.create(
+        model=gpt_model,
+        messages = messages,
+        tools = tools,
+        tool_choice="auto",
+        temperature=0
+    )
+    print("get_completion_for_index_variables", response)
+    return response
+
+# TODO: change the parameter value directly
+
+def get_completion_for_quantity_sensitivity(user_prompt, parameter_name, indices, gpt_model):
+    tools = [
+        {
+            "type": "function",
+            "function": {
+                "name": "change_parameter_value_percentage",
+                "description": "Change the pyomo model parameter values and re-solve the model to find the new optimal value",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "delta": {
+                            "type": "number",
+                            "description": "The percentage change in the parameter value, e.g. 10 for 10% increase and -10 for 10% decrease"
+                        },
+                    },
+                    "required": ["delta"]
+                }
+            }
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "change_parameter_value_absolute",
+                "description": "Change the pyomo model parameter values and re-solve the model to find the new optimal value",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "delta": {
+                            "type": "number",
+                            "description": "The absolute change in the parameter value"
+                        },
+                    },
+                    "required": ["delta"]
+                }
+            }
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "assign_value_to_parameter",
+                "description": "Assign the value to the pyomo model parameter and re-solve the model to find the new optimal value",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "value": {
+                            "type": "number",
+                            "description": "The value to be assigned to the parameter"
+                    }
+                },
+                "required": ["value"]
+                }
+            }
+        }
+    ]
+    messages = []
+    # TODO: Get back to it
+    
+    system_message = {
+        "role": "system",
+        "content": f"""
+        You are a helpful and expert programmer assistant in Pyomo named Jeff. Your task is to transform the user query into a python function call from the tools provided to you.
+        Generally, the user will ask you to change the value of one or more parameters, either by certain percentage or by absolute value.
+        For your context, you will be given the following information:
+        
+        1. The Parameter Names: {parameter_name} whose value needs to be changed.
+        2. The corresponding multi-dimensional indices: {indices} of the above parameter whose value needs to be changed.
+
+        Here are some example queries:
+        a) What is the optimal value of my model if I change the requirement by 30%?
+        b) Will my model still be feasible if I increase the due time by 10s?
+        c) What is the new value of the objective function if I make the number of ships to be 10 instead of 5?
+
+
+        """
+    }
+    
+    messages.append(system_message)
+    messages.append(user_prompt)
+
+    response = client.chat.completions.create(
+        model=gpt_model,
+        messages = messages,
+        tools = tools,
+        tool_choice="auto",
+        temperature=0
+    )
+    print("get_completion_for_quantity_sensitivity", response)
+    return response
+
+
+# TODO: Handle it manually
+def get_completion_for_index_sensitivity(user_prompt, model_info, constraints_parameters, PYOMO_CODE, gpt_model, auto=None):
+    tools = [
+        {
+            "type": "function",
+            "function": {
+                "name": "right_hand_side_sensitivity",
+                "description": "Perform sensitivity analysis on the right hand side of the constraints",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "right_hand_side": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "parameter": {
+                                        "type": "string",
+                                        "description": "The pyomo model parameter (pyomo.environ.Param objects) which is on the right hand side of the constraint"
+                                    },
+                                    "indices": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "array",
+                                            "items": {
+                                                "anyOf": [
+                                                    {
+                                                        "type": ["number", "string"]
+                                                    },
+                                                    {
+                                                        "type": "null"
+                                                    }
+                                                ],
+                                                "description": "Parameter Index corresponding to a dimension of the multi-dimensional index."
+                                            },
+                                            "description": "An index for the above parameter (as the index can be multi-dimensional)."
+                                        }
+                                    },
+                                }
+                            }
+                        },
+                    },
+                    "required": ["right_hand_side"]
+                }
+            }
+        }
+    ]
+    
+    messages = []
+    system_message = {
+        "role": "system",
+        "content": f"""You are a Pyomo expert. You will be given a pyomo code file written in python, enclosed between
+        triple back quotes. Your task is to understand the code and come up with a simple real-world optimization
+        problem that the model is trying to solve. User will ask you questions about it and you should be able to answer them.
+        You are also given a json object {model_info} which contains the parameters of the model (objects of type pyomo.environ.Param). You should be able
+        to access the values of the model parameters at the suitable indices when the user gives you a query based on
+        the story that you tell about what this optimization problem does. User query can involve multiple paramters 
+        and each of them can possibly have different indices. If the parameter is not indexed, then give the index as null. ONLY GENERATE WHAT IS ASKED. NO EXTRA TEXT.
         ```{PYOMO_CODE}```"""
     }
     messages.append(system_message)
     messages.append(user_prompt)
    
-    if auto:
-        response = client.chat.completions.create(model=gpt_model,
+    response = client.chat.completions.create(
+        model=gpt_model,
         messages = messages,
-        functions = functions,
-        function_call = "auto")
-    else:
-        response = client.chat.completions.create(model=gpt_model,
-        messages = messages,
-        functions = functions,
-        function_call = {"name": "sensitivity_analysis"})
-  
+        tools = tools,
+        tool_choice={"type": "function", "function": {"name": "right_hand_side_sensitivity"}},
+        temperature=0
+    )
+    print(response)
     return response
 
 
-def get_completion_for_index(user_prompt, model_info, PYOMO_CODE, gpt_model, auto=None):
+def get_completion_for_index(user_prompt, model_info, PYOMO_CODE, gpt_model):
     functions = [
         {
             "name": "get_index",
@@ -758,7 +1040,14 @@ def get_completion_for_index(user_prompt, model_info, PYOMO_CODE, gpt_model, aut
                                     "items": {
                                         "type": "array",
                                         "items": {
-                                            "type": ["number", "string", "null"],
+                                            "anyOf": [
+                                                {
+                                                    "type": ["number", "string"]
+                                                },
+                                                {
+                                                    "type": "null"
+                                                }
+                                            ],
                                             "description": "Index corresponding to a dimension of the multi-dimensional index."
                                         },
                                         "description": "An index for the above parameter (as the index can be multi-dimensional)."
@@ -779,7 +1068,7 @@ def get_completion_for_index(user_prompt, model_info, PYOMO_CODE, gpt_model, aut
         "content": f"""You are a Pyomo expert. You will be given a pyomo code file written in python, enclosed between
         triple back quotes. Your task is to understand the code and come up with a simple real-world optimization
         problem that the model is trying to solve. User will ask you questions about it and you should be able to answer them.
-        You are also given a json object {model_info} which contains the parameters of the model. You should be able
+        You are also given a json object {model_info} which contains the parameters of the model (objects of type pyomo.environ.Param). You should be able
         to access the values of the model parameters at the suitable indices when the user gives you a query based on
         the story that you tell about what this optimization problem does. User query can involve multiple paramters 
         and each of them can possibly have different indices. If the parameter is not indexed, then give the index as null. ONLY GENERATE WHAT IS ASKED. NO EXTRA TEXT.
@@ -788,33 +1077,45 @@ def get_completion_for_index(user_prompt, model_info, PYOMO_CODE, gpt_model, aut
     messages.append(system_message)
     messages.append(user_prompt)
    
-    if auto:
-        response = client.chat.completions.create(model=gpt_model,
-        messages = messages,
-        functions = functions,
-        function_call = "auto")
-    else:
-        response = client.chat.completions.create(model=gpt_model,
-        messages = messages,
-        functions = functions,
-        function_call = {"name": "get_index"})
+    response = client.chat.completions.create(model=gpt_model,
+    messages = messages,
+    functions = functions,
+    function_call = {"name": "get_index"})
     return response
 
-def gpt_function_call(ai_response, param_names_aval, model):
-    # import pdb
-    # pdb.set_trace()
-    fn_call = ai_response.choices[0].message.function_call
+def gpt_function_call(ai_response, param_names_aval, model, nature='get_index', user_query=None, gpt_model=None):
+   
+    if nature == "sensitivity_analysis":
+        fn_call = ai_response.choices[0].message.tool_calls[0].function
+    elif nature == "optimal_value":
+        fn_call = ai_response.choices[0].message.tool_calls[0].function
+    else:
+        fn_call = ai_response.choices[0].message.function_call
+
     fn_name = fn_call.name
     arguments = fn_call.arguments
     if fn_name == "solve_the_model":
         param_names = eval(arguments).get("param_names")
         return solve_the_model(param_names, param_names_aval, model), fn_name
-    elif fn_name == "get_index":
+    elif nature == "get_index":
         args = json.loads(arguments)
         return solve_the_model_indexed_new(args, model), "solve_the_model_indexed_new"
-    elif fn_name == "sensitivity_analysis":
+    elif nature == "sensitivity_analysis":
         args = json.loads(arguments)
-        return solve_sensitivity_indexed(args, model), "solve_sensitivity_indexed"
+        resps = []
+        for param in args['right_hand_side']:
+            param_name = param['parameter']
+            indices = param['indices']
+            resp = get_completion_for_quantity_sensitivity(user_query, param_name, indices, gpt_model)
+            resps.append(resp)
+        print(resps)
+        if any(resp.choices[0].finish_reason == "stop" for resp in resps):
+            return solve_sensitivity_indexed(args, model), "solve_sensitivity_indexed"
+        else:
+            return solve_sensitivity_quantitative(args, model, resps=resps), "solve_sensitivity_quantitative"
+    elif nature == "optimal_value":
+        args = json.loads(arguments)
+        return describe_optimal_solution(args, model, fn_name), "describe_optimal_solution"
     else:
         raise Exception("invalid function name")
 
@@ -859,13 +1160,187 @@ def generate_replacements_indexed_new(objs, model):
             replacements_list.append(replacements)
     return iis_param, replacements_list
 
+
+def describe_optimal_solution(args, model, fn_name):
+    variables_n_indices = get_variables_n_indices(model)
+    status = resolve(model)
+
+    if status == "optimal":
+        if fn_name == "get_objective_value":
+            out_text = f"The optimal value of the objective function is {pe.value(model.obj)}\n"
+        elif fn_name == "get_variables_value_at_indices":
+            out_text = ""
+            for variable in args['variables']:
+                variable_name = variable['variable']
+                indices = variable['indices']
+                if variable_name in variables_n_indices.keys():
+                    if variables_n_indices[variable_name]['is_indexed']:
+                        if len(indices):
+                            for idx in indices:
+                                if variables_n_indices[variable_name]['index_dim'] == 1:
+                                    idx = idx[0]
+                                elif variables_n_indices[variable_name]['index_dim'] > 1:
+                                    idx = tuple(idx)
+                                out_text += f"The value of {variable_name} at {idx} is {eval(f'model.{variable_name}[{idx}].value')}\n"
+                        else:
+                            out_text += f"The value of {variable_name} is {eval(f'model.{variable_name}.value')}\n"
+                    else:
+                        out_text += f"The value of {variable_name} is {eval(f'model.{variable_name}.value')}\n"
+                else:
+                    out_text += f"{variable_name} is not a valid variable in the model\n"
+        else:
+            raise Exception("invalid function name")
+
+        flag = "feasible"
+        return out_text, flag
+    else:
+        out_text = "The model is not feasible, hence the optimal value is not defined\n"
+        flag = "infeasible"
+        return out_text, flag
+
+
+# TODO: Limitation: Either Quantitative ONLY or Local Sensitivity ONLY
+def solve_sensitivity_quantitative(args, model, resps=None):
+    functions = {"change_parameter_value_percentage": change_parameter_value_percentage, "change_parameter_value_absolute": change_parameter_value_absolute, "assign_value_to_parameter": assign_value_to_parameter}
+    for resp, param in zip(resps, args['right_hand_side']):
+        finish_reason = resp.choices[0].finish_reason
+        if finish_reason == "tool_calls":
+            fn_name = resp.choices[0].message.tool_calls[0].function.name
+            fn_arguments = resp.choices[0].message.tool_calls[0].function.arguments
+            fn_args = json.loads(fn_arguments)
+            if fn_name == "assign_value_to_parameter":
+                delta = fn_args['value']
+            else:
+                delta = fn_args['delta']
+            param_name = param['parameter']
+            indices = param['indices']
+            functions[fn_name](delta, param_name, indices, model)
+        else:
+            pass
+    
+    original_optimal_value = pe.value(model.obj)
+    solver = SolverFactory("gurobi")
+    results = solver.solve(model, tee=False)
+
+    termination_condition = results.solver.termination_condition
+    if termination_condition == "maxTimeLimit" and 'Upper bound' in results.Problem[0]:
+        termination_condition = 'optimal'
+    
+    if termination_condition == "optimal":
+        new_optimal_value = pe.value(model.obj)
+        out_text = generate_sensitivity_text_quantitative(new_optimal_value, original_optimal_value, args, resps, model)
+        flag = "feasible"
+        return out_text, flag
+    else:
+        out_text = f"Since the model is infeasible, it is not possile to answer the above question\n"
+        flag = "infeasible"
+        return out_text, flag
+        
+
 def solve_sensitivity_indexed(args, model):
-    model.dual = pe.Suffix(direction=pe.Suffix.IMPORT_EXPORT)
-    # model_copy = model.clone()
+
+    parameters_n_constraints = get_parameters_n_constraints(model)
+
+    all_constraints = get_constraints_n_indices(model)
+    all_params = get_parameters_n_indices(model)
+    indices_to_get_duals = {}
+
+    # Check if the constraints have the same index as the parameter in the query for each parameter
+    for param in args['right_hand_side']:
+        param_name = param['parameter']
+        indices = param['indices']
+        print('c1', param_name)
+        print('c1', indices)
+        if all_params[param_name]['lhs_or_rhs'] != 'RHS':
+            flag = "invalid"
+            out_text = f"Since the parameter is not on right hand side of the constraint, it is not possile to perform sensitivity analysis using duals. Ask the user to please specify by how much to change this parameter to re-solve the model\n"
+            return out_text, flag
+        
+        if param_name in parameters_n_constraints.keys():
+            indices_to_get_duals[param_name] = {}
+            for constraint in parameters_n_constraints[param_name]:
+                if len(indices):
+                    for idx in indices:
+                        # idx = str(idx)
+                        # import pdb
+                        # pdb.set_trace()
+                        if all_params[param_name]['index_dim'] == 1:
+                            idx = idx[0]
+                        elif all_params[param_name]['index_dim'] > 1:
+                                idx = tuple(idx)
+                        # TODO: here
+                        print('c2', idx)
+                        if idx not in indices_to_get_duals[param_name]:
+                            indices_to_get_duals[param_name][idx] = {}
+
+                        if idx not in all_constraints[constraint]['index_set']:
+                            # There might be three possibilities here
+                            # 1. The dimensionality of the parameter is more than the constraint
+                            # 2. The dimensionality of the constraint is more than the parameter
+                            # 3. The dimensionality of the parameter is same as the constraint, but the indices are different
+                            # We need to check which one of these is true
+                            if all_params[param_name]['index_dim'] > all_constraints[constraint]['index_dim']:
+                                # This means the dimensionality of the parameter is more than the constraint
+                                # We need to check if the idx is a superset of the any of constraint's index
+                                # if it is, then we need to get the duals at every index of the constraint
+                                # else, we need to raise an exception
+                                if all_constraints[constraint]['index_dim'] != 0:
+                                    is_superset = False
+                                    for c_idx in all_constraints[constraint]['index_set']:
+                                        if c_idx in idx:
+                                            is_superset = True
+                                            if constraint not in indices_to_get_duals[param_name][idx]:
+                                                indices_to_get_duals[param_name][idx][constraint] = [c_idx]
+                                            else:
+                                                indices_to_get_duals[param_name][idx][constraint].append(c_idx)
+                                else:
+                                    if constraint not in indices_to_get_duals[param_name][idx]:
+                                        indices_to_get_duals[param_name][idx][constraint] = [None]
+
+                            elif all_params[param_name]['index_dim'] < all_constraints[constraint]['index_dim']:
+                                # This means the dimensionality of the constraint is more than the parameter
+                                # We need to check if the idx is a subset of the any of constraint's index
+                                # if it is, then we need to get the duals at every index of the constraint
+                                # else, we need to raise an exception                                
+                                for c_idx in all_constraints[constraint]['index_set']:
+                                    if idx in c_idx:
+                                        if constraint not in indices_to_get_duals[param_name][idx]:
+                                            indices_to_get_duals[param_name][idx][constraint] = [c_idx]
+                                        else:
+                                            indices_to_get_duals[param_name][idx][constraint].append(c_idx)
+                            else:
+                                # This means the dimensionality of the parameter is same as the constraint, but the indices are different
+                                # We need to check if the idx is a equal to the any of constraint's index
+                                # if it is, then we need to get the duals at every index of the constraint
+                                # else, we need to raise an exception
+                                for c_idx in all_constraints[constraint]['index_set']:
+                                    if idx in c_idx:
+                                        if constraint not in indices_to_get_duals[param_name][idx]:
+                                            indices_to_get_duals[param_name][idx][constraint] = [c_idx]
+                                        else:
+                                            indices_to_get_duals[param_name][idx][constraint].append(c_idx)
+                        else:
+                            if constraint not in indices_to_get_duals[param_name][idx]:
+                                indices_to_get_duals[param_name][idx][constraint] = [idx]
+                            else:
+                                indices_to_get_duals[param_name][idx][constraint].append(idx)
+                else:
+                    # if the parameter doesn't have an index, but the constraint can have an index, in that case
+                    # we need to get the duals at every index of the constraint
+                    indices_to_get_duals[param_name]['no_index'] = {}
+                    if None not in all_constraints[constraint]['index_set']:
+                        raise Exception("The constraint doesn't have the index that the parameter has")
+                    else:
+                        if constraint not in indices_to_get_duals[param_name]['no_index']:
+                            indices_to_get_duals[param_name]['no_index'][constraint] = all_constraints[constraint]['index_set']
+                        else:
+                            indices_to_get_duals[param_name]['no_index'][constraint] = all_constraints[constraint]['index_set']
+                     
+    print('c3', indices_to_get_duals)
+    if model.find_component('dual') is None:
+        model.dual = pe.Suffix(direction=pe.Suffix.IMPORT_EXPORT)
+    
     dual_values = {}
-    # import pdb
-    # pdb.set_trace()
-    # model.dual = pe.Suffix(direction=pe.Suffix.IMPORT)
     solver = SolverFactory("gurobi")
     solver.solve(model, tee=True)
     for var in model.component_objects(pe.Var):
@@ -877,31 +1352,50 @@ def solve_sensitivity_indexed(args, model):
                     var[index].fixed = True
             except:
                 print("!@#$%^&*()")
-            # var[index].domain = pe.NonNegativeReals
+
     results = solver.solve(model, tee=False)
-    # import pdb
-    # pdb.set_trace()
+
     termination_condition = results.solver.termination_condition
     if termination_condition == "maxTimeLimit" and 'Upper bound' in results.Problem[0]:
         termination_condition = 'optimal'
     
     if termination_condition == "optimal":
-        for arg in args['index']:
-            c_name = arg['constraint']
-            indices = arg['indices']
-            dual_values[c_name] = []
-            # import pdb
-            # pdb.set_trace()
-            if len(indices):
-                for idx in indices:
-                    idx = str(idx)
-                    c_name_index = c_name + idx
+        # Extract the duals of the constraints at the indices
+        for constraint in all_constraints.keys():
+            dual_values[constraint] = []
+            for idx in all_constraints[constraint]['index_set']:
+                if idx:
+                    if all_constraints[constraint]['index_dim'] > 1:
+                        c_name_index = f"{constraint}[{idx}]"
+                    elif all_constraints[constraint]['index_dim'] == 1:
+                        if isinstance(idx, str):
+                            c_name_index = f"{constraint}['{idx}']"
+                        else:
+                            c_name_index = f"{constraint}[{idx}]"
+                    
                     dual_value = eval(f"model.dual[model.{c_name_index}]")
-                    dual_values[c_name].append((idx, dual_value))
-            else:
-                dual_value = eval(f"model.dual[model.{c_name}]")
-                dual_values[c_name].append(dual_value)
-        out_text = generate_sensitivity_text(dual_values, model)
+                    dual_values[constraint].append((idx, dual_value))
+                else:
+                    dual_value = eval(f"model.dual[model.{constraint}]")
+                    dual_values[constraint].append((None, dual_value))
+        
+        # Now that we have the dual values for each constraint, we need to map the dual values to the 
+        # parameters present in the query
+        # and return the sensitivity coefficients for each parameter and its indices
+       
+        dual_values_params = {}
+
+        for param_name in indices_to_get_duals.keys():
+            dual_values_params[param_name] = []
+            for idx in indices_to_get_duals[param_name].keys():
+                for constraint in indices_to_get_duals[param_name][idx].keys():
+                    for c_idx in indices_to_get_duals[param_name][idx][constraint]:
+                        total_value = 0
+                        for values in dual_values[constraint]:
+                            total_value += values[1]
+                        dual_values_params[param_name].append((idx, total_value))
+        print('c4', dual_values_params)
+        out_text = generate_sensitivity_text(dual_values_params, model)
         flag = "feasible"
         return out_text, flag
     else:
@@ -990,7 +1484,7 @@ def classify_question(question, gpt_model):
     evaluation_prompt = []
     evaluation_prompt.append({
         "role": "system",
-        "content": f"""You are an AI-assistant who has an expert domain knowledge on linear programming optimization
+        "content": f"""You are a technical-assistant who has an expert domain knowledge on linear programming optimization
         problems and mixed integer linear programming optimization problems. 
         As you know, there are various things that can be done when we are posed with an LP problem.
         You have to assist the user in deciding which of the following things are to be done in order to answer
@@ -1018,14 +1512,17 @@ def classify_question(question, gpt_model):
             d) "If we allocate an additional $10,000 to our marketing budget, how much more revenue can we expect? Is it a better return on investment than, say, investing in product development?"
             e) "How would extending our customer service hours by two hours every day affect our monthly operating costs? And if we did extend the hours, would it significantly improve our customer satisfaction ratings?"
         
-        3. We already have the information on what constraints of the model are causing it to be infeasible. We also know what are the parameters of the model that are in these infeasible constriants. We also know the background story of the optimization model
-        and the real-world meaning of the model constraints, parameters and variables. With all this information, we will just answer the user queries without re-solving/troubleshooting the model for infeasibility.
+        3. We already have the information on what constraints of the model are causing it to be infeasible/feasible. We also know what are the parameters of the model that are in these constriants. We also know the background story of the optimization model
+        and the real-world meaning of the model constraints, parameters and variables. With all this information, we will just answer the user queries without re-solving/troubleshooting the model.
         Example queries of this kind are:
 
             a) "What are the constraints that are causing my model to be not feasible?"
-            b) "What physical quantities are making the model infeasible?"
-            c) "What are the parameters that I need to change to make the model feasible?"
-            d) "Which staffing requirements make my work schedule optimization model infeasible?"
+            b) "what are the constraints that are making my model feasbile?"
+            c) "What is my model about?"
+            d) "What physical quantities are making the model infeasible?"
+            e) "What are the parameters that I need to change to make the model feasible?"
+            f) "Which staffing requirements make my work schedule optimization model infeasible?"
+            g) "Explain the complete story of my model."
 
         4. We have access to the pyomo code of the model (which has detailed doc string and comments) and also has a concise summary of the
         model parameters, whether they are indexed, and if indexed then their dimension and all the indices etc as a json object. So we have information that can be obtained only
@@ -1037,10 +1534,21 @@ def classify_question(question, gpt_model):
             c) "What are the indices of the parameter `ship_class`?"
             d) "How many different kinds of ships are there? What are their capacities?"
             e) "What are the different kinds of ships we have?"
+            f) "How many men are present in Surat?"
+        
+        5. We have access to the optimization model which is written in pyomo. The user will ask you questions about the optimal value of the objective of the model,
+        or the optimal values of different variables present in the model. You can assume that the model has already been solved, so these queries are just about the optimal solution of the model.
+        Example queries of this kind are:
+            a) "What is the optimal cost in my problem?"
+            b) "What are the optimal values of the variables in my problem?"
+            c) "Which variable has the highest value in the optimal solution?"
+            d) "What is the optimal value of the objective function?"
+            e) "What is the optimal value of the variable `x`?"
+            f) "How many generators should I have in my power plant in order to have the maximum profit?"
         
 
         If you think it is related to infeasibility troubleshooting, generate "1". If you think it is related to sensitivity analysis, generate "2", and so on for other categoriers.
-        GENERATE ONLY WHAT IS ASKED. DO NOT GENERATE ANY EXTRA TEXT. CHOOSE THE BEST AND MOST APPROPRIATE CATEGORY FROM THE ABOVE. IF YOU ARE NOT ABLE TO CHOOSE ANY CATEGORY FROM THE ABOVE, RETURN 5.
+        GENERATE ONLY WHAT IS ASKED. DO NOT GENERATE ANY EXTRA TEXT. CHOOSE THE BEST AND MOST APPROPRIATE CATEGORY FROM THE ABOVE. IF YOU ARE NOT ABLE TO CHOOSE ANY CATEGORY FROM THE ABOVE, RETURN 6.
         """
     })
     evaluation_prompt.append(question)
@@ -1181,3 +1689,30 @@ def convert_to_standard_form(model):
     m_fixed.optimize()
 
     return model, m_fixed
+
+
+
+def find_parameter_side(e, p):
+    # Split the expression into LHS and RHS
+    parts = re.split(r'<=|>=|==|!=|>|<', e)
+    if len(parts) != 2:
+        raise ValueError("Invalid expression format")
+
+    # Normalize variable for case-insensitive matching
+    p = p.lower()
+
+    # Define a regular expression to find the variable
+    var_pattern = re.compile(r'\b' + re.escape(p) + r'\b', re.IGNORECASE)
+
+    # Check if the variable is in LHS, RHS, or both
+    found_in_lhs = var_pattern.search(parts[0]) is not None
+    found_in_rhs = var_pattern.search(parts[1]) is not None
+
+    if found_in_lhs and found_in_rhs:
+        return "BOTH"
+    elif found_in_lhs:
+        return "LHS"
+    elif found_in_rhs:
+        return "RHS"
+    else:
+        return "None"

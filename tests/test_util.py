@@ -5,6 +5,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 import pytest
 from src.Util import *
+from src.GUI import *
 
 def test_openai_api_key():
     assert "OPENAI_API_KEY" in os.environ, "You need to set the OPENAI_API_KEY environment variable"
