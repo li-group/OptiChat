@@ -457,6 +457,7 @@ def get_completion_from_messages_withfn_its(messages, gpt_model):
     messages=messages,
     tools=tools,
     tool_choice={"type": "function", "function": {"name": "solve_the_model"}}
+    # tool_choice="auto"
     )
     # import pdb
     # pdb.set_trace()
@@ -496,50 +497,6 @@ def get_completion_from_messaged_withfn_sen(messages, gpt_model):
 
 def get_completion_from_messages_withfn(messages, gpt_model):
     client = OpenAI(api_key=os.environ['OPENAI_API_KEY'])
-    tools = [
-        {
-            "type": "function",
-            "function": {
-                "name": "solve_the_model",
-                "description": "Given the parameters to be changed, re-solve the model and report the extent of the changes",
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "param_names": {
-                            "type": "array",
-                            "items": {
-                                "type": "string",
-                                "description": "A parameter name"
-                            },
-                            "description": "List of parameter names to be changed in order to re-solve the model"
-                        }
-                    },
-                    "required": ["param_names"]
-                }
-            },
-        },
-        {
-            "type": "function",
-            "function": {
-            "name": "sensitivity_analysis",
-            "description": """Given the constraints to be changed, find the sensitivity coefficients for each of the constraints and report the values""",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "constraint_names": {
-                        "type": "array",
-                        "items": {
-                            "type": "string",
-                            "description": "A constraint name"
-                        },
-                        "description": "List of constraint names to be changed in order to find sensitivity coefficients"
-                    }
-                },
-                "required": ["constraint_names"]
-            }
-        }
-        }
-    ]
     functions = [
         {
             "name": "solve_the_model",
@@ -559,45 +516,6 @@ def get_completion_from_messages_withfn(messages, gpt_model):
                 "required": ["param_names"]
             }
         },
-        # {
-        #     "name": "get_completion_detailed",
-        #     "description": f"""This is an API call to an LLM that answer's the user's query. The LLM has access to the
-        #     pyomo code file written in python, and using the comments given in the code, the LLM will come up with a simple
-        #     real-world optimizatin problem that the given pyomo model is trying to solve. User will ask questions about it and the
-        #     LLM will answer it. The LLM also has access to a json object `model_info`, which contains all the information about
-        #     the parameters of the model, their dimension and their indices. The LLM can access the values of the model parameters at 
-        #     the suitable indices as per the user's query and based on the story that theh LLM tells about what this optimization problem does. 
-        #     User query can involve multiple paramters and each of them can possibly have different indices. """,
-        #     "parameters": {
-        #         "type": "object",
-        #         "properties": {
-        #             "user_prompt": {
-        #                 "type": "string",
-        #                 "description": "The query asked by the user"
-        #             }
-        #         },
-        #         "required": ["user_prompt"]
-        #     }
-        # },
-        # {
-        #     "name": "get_completion_with_context",
-        #     "description": """This is an API call to an LLM that answer's the user's query. This LLM is acting like an infeasibility
-        #     troubleshooter and is an expert in pyomo, linear and mixed integer programming problems. It knows the real world
-        #     story about the optimization problem at hand, and knows all information about the model's solution, i.e.
-        #     things like the infeasibility set, all the constraints, all the parameters and their physical meanings etc.
-        #     But it doesn't know the exact dependencies of each of the model parameters. """,
-        #     "parameters": {
-        #         "type": "object",
-        #         "properties": {
-        #             "user_prompt": {
-        #                 "type": "string",
-        #                 "description": "The query asked by the user"
-        #             }
-        #         },
-        #         "required": ["user_prompt"]
-        #     }
-        # },
-        # additional gpt call
         {
             "name": "sensitivity_analysis",
             "description": """Given the constraints to be changed, find the sensitivity coefficients for each of the constraints and report the values""",
@@ -640,8 +558,6 @@ def get_parameters_n_indices(model):
         if constraint.is_indexed():
             for idx in constraint.keys():
                 for param in identify_mutable_parameters(constraint[idx].expr):
-                    # print(param.name)
-                    # print(str(param).split('[')[0])
                     side = find_parameter_side(constraint[idx].expr.to_string(), str(param).split('[')[0])
                     params[str(param).split('[')[0]]['lhs_or_rhs'] = side
                     print(side, str(param).split('[')[0])
@@ -852,8 +768,6 @@ def get_completion_for_index_variables(user_prompt, variables_info, PYOMO_CODE, 
     print("get_completion_for_index_variables", response)
     return response
 
-# TODO: change the parameter value directly
-
 def get_completion_for_quantity_sensitivity(user_prompt, parameter_name, indices, gpt_model):
     tools = [
         {
@@ -909,7 +823,6 @@ def get_completion_for_quantity_sensitivity(user_prompt, parameter_name, indices
         }
     ]
     messages = []
-    # TODO: Get back to it
     
     system_message = {
         "role": "system",
@@ -1090,8 +1003,8 @@ def gpt_function_call(ai_response, param_names_aval, model, nature='get_index', 
     elif nature == "optimal_value":
         fn_call = ai_response.choices[0].message.tool_calls[0].function
     else:
-        fn_call = ai_response.choices[0].message.function_call
-
+        fn_call = ai_response.choices[0].message.tool_calls[0].function
+        
     fn_name = fn_call.name
     arguments = fn_call.arguments
     if fn_name == "solve_the_model":
@@ -1175,6 +1088,8 @@ def describe_optimal_solution(args, model, fn_name):
                 indices = variable['indices']
                 if variable_name in variables_n_indices.keys():
                     if variables_n_indices[variable_name]['is_indexed']:
+                        import pdb
+                        pdb.set_trace()
                         if len(indices):
                             for idx in indices:
                                 if variables_n_indices[variable_name]['index_dim'] == 1:
@@ -1261,9 +1176,6 @@ def solve_sensitivity_indexed(args, model):
             for constraint in parameters_n_constraints[param_name]:
                 if len(indices):
                     for idx in indices:
-                        # idx = str(idx)
-                        # import pdb
-                        # pdb.set_trace()
                         if all_params[param_name]['index_dim'] == 1:
                             idx = idx[0]
                         elif all_params[param_name]['index_dim'] > 1:
@@ -1445,40 +1357,6 @@ def evaluate_gpt_response(question, answer, model_info, PYOMO_CODE, gpt_model):
     temperature=0)
     return response["choices"][0]["message"]["content"]
 
-# def classify_question(question, answer, model_info, gpt_model):
-#     evaluation_prompt = []
-#     evaluation_prompt.append({
-#         "role": "system",
-#         "content": f"""You are an expert in optimization models and pyomo. You will be given a user query, and an AI assistant's response.
-#         You have to determine to whom this query is to be forwarded. There are two experts whose description
-#         is given as follows:
-        
-#         1. Expert 1: He is an expert in pyomo and infeasibility troubleshooting. He knows the real world
-#         story about the optimization problem, and he knows all information about the model's solution, i.e.
-#         things like the infeasibility set, all the constraints, all the parameters and their physical meanings etc.
-#         But he doesn't know the exact dependencies of each of the model parameters. For example, he knows that
-#         a particular parameter depends on the number of tasks, but he doesn't know what those tasks are.
-
-#         2. Expert 2: He is a python programming expert. He has access to the pyomo code of the model (which has detailed doc string and comments),
-#         and he also has the fine-grained information of the optimization model as a json object. For example, he knows the values
-#         of each and every python variable, the indices of each and every model parameter etc. But he doesn't know the physical meanings
-#         of them.
-        
-
-#         You have access to a json object {model_info} which has all the pyomo model details. Verify the answer of the AI model with this info, and if it is incorret,
-#         forward the query to expert 2.
-#         As an expert, you have to decide to whom the user query is to be forwarded. Answer `1` if you want to forward it to Expert 1.
-#         Otherwise answer `2`. GENERATE ONLY WHAT IS ASKED, AND NOTHING ELSE!! Please take your time to properly think it out"""
-#     })
-#     evaluation_prompt.append(question)
-#     answer['role'] = "user"
-#     answer['content'] = f"""The AI assistant says: {answer['content']}"""
-#     evaluation_prompt.append(answer)
-#     response = openai.ChatCompletion.create(
-#     model=gpt_model,
-#     messages=evaluation_prompt,
-#     temperature=0)
-#     return response["choices"][0]["message"]["content"]
 
 def classify_question(question, gpt_model):
     evaluation_prompt = []
@@ -1523,6 +1401,8 @@ def classify_question(question, gpt_model):
             e) "What are the parameters that I need to change to make the model feasible?"
             f) "Which staffing requirements make my work schedule optimization model infeasible?"
             g) "Explain the complete story of my model."
+            h) "What are the inputs given to my model?"
+            i) "What is the most likely conflict among these constraints that you believe is causing the infeasibility?"
 
         4. We have access to the pyomo code of the model (which has detailed doc string and comments) and also has a concise summary of the
         model parameters, whether they are indexed, and if indexed then their dimension and all the indices etc as a json object. So we have information that can be obtained only
@@ -1562,7 +1442,6 @@ def convert_to_standard_form(model):
     var_replacements = []
     var_list = [v for v in model.component_objects(pe.Var)]
     for var in var_list:
-        # print(var.name)
         if var.is_indexed():
             flag = False
             for idx in var.index_set():
