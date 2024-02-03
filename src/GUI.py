@@ -6,10 +6,22 @@ from PySide6.QtCore import Qt, QTimer, QThread, Signal
 from PySide6.QtGui import QIcon, QKeySequence, QShortcut
 from PySide6.QtGui import QTextCursor, QColor, QBrush
 
-from Util import load_model, extract_component, add_eg, read_iis
-from Util import infer_infeasibility, param_in_const, extract_summary
-from Util import get_completion_from_messages_withfn, gpt_function_call
+from .Util import load_model, extract_component, add_eg, read_iis
+from .Util import infer_infeasibility, param_in_const, extract_summary, evaluate_gpt_response, classify_question, get_completion_detailed, convert_to_standard_form, get_constraints_n_parameters, get_completion_for_quantity_sensitivity, get_variables_n_indices
+from .Util import get_completion_from_messages_withfn, gpt_function_call, get_parameters_n_indices, get_completion_for_index, get_completion_for_index_sensitivity, get_constraints_n_indices, get_completion_general, get_completion_from_messages_withfn_its, get_completion_for_index_variables
 
+from enum import Enum
+
+class Question_Type(Enum):
+    ITS = "1"
+    SEN = "2"
+    GEN = "3"
+    DET = "4"
+    OPT = "5"
+    OTH = "6"
+
+class InvalidGPTResponse(Exception):
+    pass
 
 class Combobox(QComboBox):
     def __init__(self, parent=None):
@@ -141,7 +153,7 @@ class ProcessThread(QThread):
 
     def run(self):
         const_list, param_list, var_list, PYOMO_CODE = extract_component(self.model, self.py_path)
-        self.param_names_signal.emit(param_list)
+        self.param_names_signal.emit(param_list + param_list)
         summary = extract_summary(var_list, param_list, const_list, PYOMO_CODE, self.gpt_model)
         self.table_signal.emit(summary)
         summary_response = add_eg(summary, self.gpt_model)
@@ -150,8 +162,7 @@ class ProcessThread(QThread):
         const_names, param_names, iis_dict = read_iis(self.ilp_path, self.model)
         iis_relation = param_in_const(iis_dict)
         self.iis_relation_signal.emit(iis_relation)
-        # print(const_names, param_names, iis_dict)
-        infeasibility_report = infer_infeasibility(const_names, param_names, summary, self.gpt_model)
+        infeasibility_report = infer_infeasibility(const_names, param_names, summary, self.gpt_model, self.model)
         self.infeasibility_report_signal.emit(infeasibility_report)
 
 
@@ -160,20 +171,41 @@ class ChatThread(QThread):
     fn_message_signal = Signal(str)
     fn_name_signal = Signal(str)
 
-    def __init__(self, chatbot_messages, param_names_aval, model, gpt_model):
+    def __init__(self, chatbot_messages, param_names_aval, model, gpt_model, py_path):
         super().__init__()
         self.chatbot_messages = chatbot_messages
         self.param_names_aval = param_names_aval
         self.model = model
         self.gpt_model = gpt_model
+        self.py_path = py_path
+        _, _, _, self.PYOMO_CODE = extract_component(self.model, self.py_path)
+        self.model_info = get_parameters_n_indices(self.model)
+        self.model_constraint_info = get_constraints_n_indices(self.model)
+        self.model_constraint_parameters_info = get_constraints_n_parameters(self.model)
+        self.model_variables_info = get_variables_n_indices(self.model)
+
+        self.ai_message = None
 
     def run(self):
-        response = get_completion_from_messages_withfn(self.chatbot_messages, self.gpt_model)
-        if "function_call" not in response["choices"][0]["message"]:
-            ai_message = response["choices"][0]["message"]["content"]
-            self.ai_message_signal.emit(ai_message)
-        else:
-            (fn_message, flag), fn_name = gpt_function_call(response, self.param_names_aval, self.model)
+        # import pdb
+        # pdb.set_trace()
+        classification = classify_question(self.chatbot_messages[-1], self.gpt_model)
+        print("classification", classification)
+
+        if classification == Question_Type.ITS.value:
+            response = get_completion_from_messages_withfn_its(self.chatbot_messages, self.gpt_model)
+            
+            fn_call = response.choices[0].message.tool_calls[0]
+            fn_name = fn_call.function.name
+            arguments = fn_call.function.arguments
+            param_names = eval(arguments).get("param_names")
+            for param_name in param_names:
+                if eval(f"self.model.{param_name}.is_indexed()"):
+                    new_response = get_completion_for_index(self.chatbot_messages[-1], self.model_info, self.PYOMO_CODE, self.gpt_model)
+                    break
+                else:
+                    new_response = response
+            (fn_message, flag), fn_name = gpt_function_call(new_response, self.param_names_aval, self.model)
             orig_message = {'role': 'function', 'name': fn_name, 'content': fn_message}
             self.chatbot_messages.append(orig_message)
             if flag == 'feasible':
@@ -196,19 +228,93 @@ class ChatThread(QThread):
                                            'Explain why users instruction is invalid and '
                                            'suggest the parameters that the user can try.'}
             self.chatbot_messages.append(expl_message)
-            response = get_completion_from_messages_withfn(self.chatbot_messages, self.gpt_model)
-            ai_message = response["choices"][0]["message"]["content"]
-            self.ai_message_signal.emit(ai_message)
+            response = get_completion_general(self.chatbot_messages, self.gpt_model)
+            self.ai_message = response
+            self.ai_message_signal.emit(self.ai_message)
+        elif classification == Question_Type.SEN.value:
+            
+            new_response = get_completion_for_index_sensitivity(self.chatbot_messages[-1], self.model_info, self.model_constraint_parameters_info, self.PYOMO_CODE, self.gpt_model)
+            (fn_message, flag), fn_name = gpt_function_call(new_response, self.param_names_aval, self.model, nature='sensitivity_analysis', user_query=self.chatbot_messages[-1], gpt_model=self.gpt_model)
+            orig_message = {'role': 'function', 'name': fn_name, 'content': fn_message}
+            self.chatbot_messages.append(orig_message)
+            if flag == 'feasible':
+                #  TODO: Done
+                expl_message = {'role': 'system',
+                                'content': 'Tell the user that you did sensitivity analysis for the parameter they asked'
+                                           'Replace the parameter symbol in the text with its physical meaning '
+                                           '(for example, you could say "changing the number of men in each port" '
+                                           'instead of saying "increasing demand_rule") '
+                                           'and provide brief explanation.'}
+            elif flag == 'infeasible':
+                expl_message = {'role': 'system',
+                                'content': 'Tell the user that you cannot answer such question because the model is still infeasible.'
+                                           'Explain why it is not possible to perform sensitivity analysis for an infeasible model and '
+                                           'suggest other ways that the user can try.'}
+            elif flag == 'invalid':
+                expl_message = {'role': 'system',
+                                'content': 'Tell the user that you cannot change the things they requested. '
+                                           'Explain why users instruction is invalid and '
+                                           'suggest the parameters that the user can try.'}
+            self.chatbot_messages.append(expl_message)
+            response = get_completion_general(self.chatbot_messages, self.gpt_model)
+            self.ai_message = response
+            self.ai_message_signal.emit(self.ai_message)
+        elif classification == Question_Type.GEN.value:
+            new_response = get_completion_general(self.chatbot_messages, self.gpt_model)
+            self.ai_message = new_response
+            self.ai_message_signal.emit(self.ai_message)
+        elif classification == Question_Type.DET.value:
+            new_response = get_completion_detailed(self.chatbot_messages[-1], self.model_info, self.PYOMO_CODE, self.gpt_model)
+            self.ai_message = new_response.choices[0].message.content
+            self.ai_message_signal.emit(self.ai_message)
+        elif classification == Question_Type.OPT.value:
+            new_response = get_completion_for_index_variables(self.chatbot_messages[-1], self.model_variables_info, self.PYOMO_CODE, self.gpt_model)
+            (fn_message, flag), fn_name = gpt_function_call(new_response, self.param_names_aval, self.model, nature='optimal_value', user_query=self.chatbot_messages[-1], gpt_model=self.gpt_model)
+            orig_message = {'role': 'function', 'name': fn_name, 'content': fn_message}
+            self.chatbot_messages.append(orig_message)
+            if flag == 'feasible':
+                expl_message = {'role': 'system',
+                                'content': 'Tell the user that you ran the model and found the optimal value for the variables and the objective function they asked'
+                                           'Replace the objective name and variable names in the text with its physical meaning '
+                                           '(for example, you could say "the minimum budget" '
+                                           'instead of saying "obj") '
+                                           'and provide brief explanation.'}
+            elif flag == 'infeasible':
+                expl_message = {'role': 'system',
+                                'content': 'Tell the user that the model is infeasible and hence you cannot find the optimal value for the variables and the objective function they asked'
+                                            'Explain why it is not possible to find the optimal value for the variables and the objective function for an infeasible model and '
+                                            'suggest other ways that the user can try.'}
+            elif flag == 'invalid':
+                expl_message = {'role': 'system',
+                                'content': 'Tell the user that you cannot answer what they requested'
+                                           'Explain why users instruction is invalid and '
+                                           'suggest they can ask instead.'}
+            self.chatbot_messages.append(expl_message)
+            response = get_completion_general(self.chatbot_messages, self.gpt_model)
+            self.ai_message = response
+            self.ai_message_signal.emit(self.ai_message)
+        else:
+            # TODO: General query answering/respond "I dont know"
+            expl_message = {
+                'role': 'system',
+                'content': """Tell the user that you do not have the capability to answer this kind of queries yet.
+                Explain it to the user that you can help with any other queries regarding the model information general,
+                infeasibility troubleshooting and sensitivity analysis"""
 
+            }
+            self.chatbot_messages.append(expl_message)
+            response = get_completion_general(self.chatbot_messages, self.gpt_model)
+            self.ai_message = response
+            self.ai_message_signal.emit(self.ai_message)
 
 class InfeasibleModelTroubleshooter(QMainWindow):
     def __init__(self):
         super().__init__()
 
         self.chatbot_messages = [{'role': 'system',
-                                  'content': """You are an expert in optimization who helps unskilled user to 
+                                  'content': """You are an expert in optimization and Pyomo who helps unskilled user to 
                                   troubleshoot the infeasible optimization model and any optimization questions. \n
-                                  You are encouraged to remind users that they can change the value of parameters to 
+                                  You are encouraged to remind users that they can change the value of model parameters to 
                                   make the model become feasible, but try your best to avoid those parameters that have 
                                   product with variables. \nIf the users ask you to change a parameter that has product 
                                   with variable, DO NOT use "they are parameters that have product with variables" as 
@@ -240,6 +346,8 @@ class InfeasibleModelTroubleshooter(QMainWindow):
 
     def process_file(self):
         self.lbl_model.setText(f"Loading the model...")
+        # import pdb
+        # pdb.set_trace()
         self.model, self.ilp_path = load_model(self.py_path)
 
         py_path, ilp_path, model, gpt_model = self.py_path, self.ilp_path, self.model, self.combobox.currentText()
@@ -303,7 +411,7 @@ class InfeasibleModelTroubleshooter(QMainWindow):
         self.add_message('user', user_message)
         self.txt_in.clear()
         chatbot_messages, param_names_aval, model, gpt_model = self.chatbot_messages, self.param_names, self.model, self.combobox.currentText()
-        self.chat_thread = ChatThread(chatbot_messages, param_names_aval, model, gpt_model)
+        self.chat_thread = ChatThread(chatbot_messages, param_names_aval, model, gpt_model, self.py_path)
 
         self.chat_thread.ai_message_signal.connect(self.chat_ai_message)
         self.chat_thread.fn_message_signal.connect(self.chat_fn_message)
@@ -343,6 +451,7 @@ class InfeasibleModelTroubleshooter(QMainWindow):
         # Combobox, Browse Button, Model Label, Process Button
         self.combobox = Combobox()
         self.combobox.setFixedWidth(180)
+        self.combobox.addItem("gpt-4-1106-preview")
         self.combobox.addItem("gpt-4")
         self.combobox.addItem("gpt-3.5-turbo")
         self.combobox.addItem("gpt-3.5-turbo-16k")
@@ -401,6 +510,7 @@ class InfeasibleModelTroubleshooter(QMainWindow):
 
 
 if __name__ == "__main__":
+    QApplication.setStyle("fusion")
     app = QApplication(sys.argv)
     window = InfeasibleModelTroubleshooter()
     window.show()
