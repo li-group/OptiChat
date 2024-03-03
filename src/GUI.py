@@ -6,9 +6,9 @@ from PySide6.QtCore import Qt, QTimer, QThread, Signal
 from PySide6.QtGui import QIcon, QKeySequence, QShortcut
 from PySide6.QtGui import QTextCursor, QColor, QBrush
 
-from .Util import load_model, extract_component, add_eg, read_iis
-from .Util import infer_infeasibility, param_in_const, extract_summary, evaluate_gpt_response, classify_question, get_completion_detailed, convert_to_standard_form, get_constraints_n_parameters, get_completion_for_quantity_sensitivity, get_variables_n_indices
-from .Util import get_completion_from_messages_withfn, gpt_function_call, get_parameters_n_indices, get_completion_for_index, get_completion_for_index_sensitivity, get_constraints_n_indices, get_completion_general, get_completion_from_messages_withfn_its, get_completion_for_index_variables
+from Util import load_model, extract_component, add_eg, read_iis
+from Util import infer_infeasibility, param_in_const, extract_summary, evaluate_gpt_response, classify_question, get_completion_detailed, convert_to_standard_form, get_constraints_n_parameters, get_completion_for_quantity_sensitivity, get_variables_n_indices
+from Util import get_completion_from_messages_withfn, gpt_function_call, get_parameters_n_indices, get_completion_for_index, get_completion_for_index_sensitivity, get_constraints_n_indices, get_completion_general, get_completion_from_messages_withfn_its, get_completion_for_index_variables
 
 from enum import Enum
 
@@ -514,4 +514,6 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)
     window = InfeasibleModelTroubleshooter()
     window.show()
+    from pathlib import Path
+    sys.path.append(str(Path(__file__).parent.parent.parent))
     sys.exit(app.exec())
