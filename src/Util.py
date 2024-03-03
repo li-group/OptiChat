@@ -457,6 +457,7 @@ def get_completion_from_messages_withfn_its(messages, gpt_model):
     messages=messages,
     tools=tools,
     tool_choice={"type": "function", "function": {"name": "solve_the_model"}}
+    # tool_choice="auto"
     )
     # import pdb
     # pdb.set_trace()
@@ -1002,8 +1003,8 @@ def gpt_function_call(ai_response, param_names_aval, model, nature='get_index', 
     elif nature == "optimal_value":
         fn_call = ai_response.choices[0].message.tool_calls[0].function
     else:
-        fn_call = ai_response.choices[0].message.function_call
-
+        fn_call = ai_response.choices[0].message.tool_calls[0].function
+        
     fn_name = fn_call.name
     arguments = fn_call.arguments
     if fn_name == "solve_the_model":
@@ -1087,6 +1088,8 @@ def describe_optimal_solution(args, model, fn_name):
                 indices = variable['indices']
                 if variable_name in variables_n_indices.keys():
                     if variables_n_indices[variable_name]['is_indexed']:
+                        import pdb
+                        pdb.set_trace()
                         if len(indices):
                             for idx in indices:
                                 if variables_n_indices[variable_name]['index_dim'] == 1:
@@ -1398,6 +1401,8 @@ def classify_question(question, gpt_model):
             e) "What are the parameters that I need to change to make the model feasible?"
             f) "Which staffing requirements make my work schedule optimization model infeasible?"
             g) "Explain the complete story of my model."
+            h) "What are the inputs given to my model?"
+            i) "What is the most likely conflict among these constraints that you believe is causing the infeasibility?"
 
         4. We have access to the pyomo code of the model (which has detailed doc string and comments) and also has a concise summary of the
         model parameters, whether they are indexed, and if indexed then their dimension and all the indices etc as a json object. So we have information that can be obtained only

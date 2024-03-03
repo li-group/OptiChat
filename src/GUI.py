@@ -4,7 +4,7 @@ from PySide6.QtWidgets import (QApplication, QMainWindow, QVBoxLayout, QHBoxLayo
                                QWidget, QTextEdit, QPushButton, QLineEdit, QFileDialog, QLabel, QGroupBox)
 from PySide6.QtCore import Qt, QTimer, QThread, Signal
 from PySide6.QtGui import QIcon, QKeySequence, QShortcut
-from PySide6.QtGui import QTextCursor, QColor, QBrush
+from PySide6.QtGui import QTextCursor, QColor, QBrush, QPalette, QFont
 
 from Util import load_model, extract_component, add_eg, read_iis
 from Util import infer_infeasibility, param_in_const, extract_summary, evaluate_gpt_response, classify_question, get_completion_detailed, convert_to_standard_form, get_constraints_n_parameters, get_completion_for_quantity_sensitivity, get_variables_n_indices
@@ -86,8 +86,7 @@ class OutArea(QScrollArea):
                 padding: 5px;
             }
         ''')
-
-
+    
 class InTextEdit(QTextEdit):
     enterPressed = Signal()
 
@@ -194,43 +193,50 @@ class ChatThread(QThread):
 
         if classification == Question_Type.ITS.value:
             response = get_completion_from_messages_withfn_its(self.chatbot_messages, self.gpt_model)
-            
-            fn_call = response.choices[0].message.tool_calls[0]
-            fn_name = fn_call.function.name
-            arguments = fn_call.function.arguments
-            param_names = eval(arguments).get("param_names")
-            for param_name in param_names:
-                if eval(f"self.model.{param_name}.is_indexed()"):
-                    new_response = get_completion_for_index(self.chatbot_messages[-1], self.model_info, self.PYOMO_CODE, self.gpt_model)
-                    break
-                else:
-                    new_response = response
-            (fn_message, flag), fn_name = gpt_function_call(new_response, self.param_names_aval, self.model)
-            orig_message = {'role': 'function', 'name': fn_name, 'content': fn_message}
-            self.chatbot_messages.append(orig_message)
-            if flag == 'feasible':
-                expl_message = {'role': 'system',
-                                'content': 'Tell the user that you made some changed to the code and ran it, and '
-                                           'the model becomes feasible. '
-                                           'Replace the parameter symbol in the text with its physical meaning '
-                                           '(for example, you could say "increasing the amount of cost invested" '
-                                           'instead of saying "increasing c") '
-                                           'and provide brief explanation.'}
-            elif flag == 'infeasible':
-                expl_message = {'role': 'system',
-                                'content': 'Tell the user that you made some changed to the code and ran it, but '
-                                           'the model is still infeasible. '
-                                           'Explain why it does not become feasible and '
-                                           'suggest other parameters that the user can try.'}
-            elif flag == 'invalid':
-                expl_message = {'role': 'system',
-                                'content': 'Tell the user that you cannot change the things they requested. '
-                                           'Explain why users instruction is invalid and '
-                                           'suggest the parameters that the user can try.'}
-            self.chatbot_messages.append(expl_message)
-            response = get_completion_general(self.chatbot_messages, self.gpt_model)
-            self.ai_message = response
-            self.ai_message_signal.emit(self.ai_message)
+
+            try:
+                fn_call = response.choices[0].message.tool_calls[0]
+                fn_name = fn_call.function.name
+                arguments = fn_call.function.arguments
+                param_names = eval(arguments).get("param_names")
+                for param_name in param_names:
+                    if eval(f"self.model.{param_name}.is_indexed()"):
+                        new_response = get_completion_for_index(self.chatbot_messages[-1], self.model_info, self.PYOMO_CODE, self.gpt_model)
+                        break
+                    else:
+                        new_response = response
+                (fn_message, flag), fn_name = gpt_function_call(new_response, self.param_names_aval, self.model)
+                orig_message = {'role': 'function', 'name': fn_name, 'content': fn_message}
+                self.chatbot_messages.append(orig_message)
+                if flag == 'feasible':
+                    expl_message = {'role': 'system',
+                                    'content': 'Tell the user that you made some changed to the code and ran it, and '
+                                            'the model becomes feasible. '
+                                            'Replace the parameter symbol in the text with its physical meaning and mention the amount by which you changed it (if applicable)'
+                                            '(for example, you could say "increasing the amount of cost invested" '
+                                            'instead of saying "increasing c") '
+                                            'and provide brief explanation.'}
+                elif flag == 'infeasible':
+                    expl_message = {'role': 'system',
+                                    'content': 'Tell the user that you made some changed to the code and ran it, but '
+                                            'the model is still infeasible. '
+                                            'Explain why it does not become feasible and '
+                                            'suggest other parameters that the user can try.'}
+                elif flag == 'invalid':
+                    expl_message = {'role': 'system',
+                                    'content': 'Tell the user that you cannot change the things they requested. '
+                                            'Explain why users instruction is invalid and '
+                                            'suggest the parameters that the user can try.'}
+                self.chatbot_messages.append(expl_message)
+                response = get_completion_general(self.chatbot_messages, self.gpt_model)
+                self.ai_message = response
+                self.ai_message_signal.emit(self.ai_message)
+            except:
+                new_response = response.choices[0].message.content
+                self.ai_message = new_response
+                self.chatbot_messages.append({'role': 'assistant', 'content': new_response})
+                self.ai_message_signal.emit(self.ai_message)
+
         elif classification == Question_Type.SEN.value:
             
             new_response = get_completion_for_index_sensitivity(self.chatbot_messages[-1], self.model_info, self.model_constraint_parameters_info, self.PYOMO_CODE, self.gpt_model)
@@ -260,6 +266,9 @@ class ChatThread(QThread):
             self.ai_message = response
             self.ai_message_signal.emit(self.ai_message)
         elif classification == Question_Type.GEN.value:
+            print("General")
+            print(self.chatbot_messages)
+            print(type(self.chatbot_messages))
             new_response = get_completion_general(self.chatbot_messages, self.gpt_model)
             self.ai_message = new_response
             self.ai_message_signal.emit(self.ai_message)
@@ -310,6 +319,10 @@ class ChatThread(QThread):
 class InfeasibleModelTroubleshooter(QMainWindow):
     def __init__(self):
         super().__init__()
+        self.setGeometry(100, 100, 1024, 768)
+        self.timer = QTimer()
+        self.timer.timeout.connect(self.send_text)
+        # self.timer.start(100)
 
         self.chatbot_messages = [{'role': 'system',
                                   'content': """You are an expert in optimization and Pyomo who helps unskilled user to 
@@ -400,11 +413,24 @@ class InfeasibleModelTroubleshooter(QMainWindow):
         print(self.chatbot_messages)
         new_lbl = OutLabel(message)
         new_lbl.setStyleSheet(role_style[role])
+        new_lbl.setFont(QFont("Arial", 12))
         new_lbl.setWordWrap(True)
         new_lbl.setTextInteractionFlags(Qt.TextSelectableByMouse)
         self.mid_layout.addWidget(new_lbl)
+        self.current_index = 0
+        self.text_to_stream = message
+        self.new_lbl = new_lbl
+        # self.timer.start(0.01)
         QTimer.singleShot(0, lambda: self.scroll_area.ensureWidgetVisible(new_lbl))
 
+    def send_text(self):
+        if self.current_index < len(self.text_to_stream):
+            self.new_lbl.setText(self.new_lbl.text() + self.text_to_stream[self.current_index])
+            self.current_index += 1
+        else:
+            self.timer.stop()
+
+    
     def enter(self):
         self.lbl_model.setText(f"GPT is answering...")
         user_message = self.txt_in.toPlainText()
@@ -514,6 +540,7 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)
     window = InfeasibleModelTroubleshooter()
     window.show()
+
     from pathlib import Path
     sys.path.append(str(Path(__file__).parent.parent.parent))
     sys.exit(app.exec())
