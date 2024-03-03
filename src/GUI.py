@@ -193,6 +193,7 @@ class ChatThread(QThread):
 
         if classification == Question_Type.ITS.value:
             response = get_completion_from_messages_withfn_its(self.chatbot_messages, self.gpt_model)
+
             try:
                 fn_call = response.choices[0].message.tool_calls[0]
                 fn_name = fn_call.function.name
@@ -235,6 +236,7 @@ class ChatThread(QThread):
                 self.ai_message = new_response
                 self.chatbot_messages.append({'role': 'assistant', 'content': new_response})
                 self.ai_message_signal.emit(self.ai_message)
+
         elif classification == Question_Type.SEN.value:
             
             new_response = get_completion_for_index_sensitivity(self.chatbot_messages[-1], self.model_info, self.model_constraint_parameters_info, self.PYOMO_CODE, self.gpt_model)
@@ -538,4 +540,7 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)
     window = InfeasibleModelTroubleshooter()
     window.show()
+
+    from pathlib import Path
+    sys.path.append(str(Path(__file__).parent.parent.parent))
     sys.exit(app.exec())
