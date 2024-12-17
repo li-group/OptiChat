@@ -3,7 +3,7 @@ Welcome to the [OptiChat](https://arxiv.org/abs/2308.12923) page. OptiChat is an
 
 We aspire for this project to provide some valuable insights into **explaining optimization models using LLMs**, thereby briding the gap between practitioners and optimization models 🚀. 
 
-If you found this work useful, please cite this [preprint]() and our [previous paper]([https://arxiv.org/abs/2308.12923](https://www.tandfonline.com/doi/full/10.1080/03155986.2024.2385189))([arXiv](https://arxiv.org/abs/2308.12923))
+If you found this work useful, please cite this [preprint]() and our [previous paper](https://www.tandfonline.com/doi/full/10.1080/03155986.2024.2385189) ([arXiv](https://arxiv.org/abs/2308.12923))
 
 # Compatibility Notice
 Please note that the requirements.txt file has not yet been updated, and you may encounter compatibility issues, particularly related to infeasible models. These issues may arise due to version mismatches or outdated dependencies. We are working to address this and will update the file as soon as possible. Thank you for your understanding and patience.
@@ -14,7 +14,7 @@ Please note that the requirements.txt file has not yet been updated, and you may
 - [Tutorial](#tutorial)
 - [Chat Example](#chat-example)
 - [Model Library](#model-library)
-- [Build Your Own (Infeasibile) Model and Test it](#build-your-own-model-and-test-it)
+- [Build Your Own Model and Test it](#build-your-own-model-and-test-it)
 - [Citation](#citation)
 
 # Overview
@@ -53,7 +53,7 @@ Other buttons are intended for development and debugging purposes.
 ## Chat Example
 <a name="chat-example"></a>
 <p align="center">
-<img src="images/QuestionClass.pdf" alt="drawing" width="700"/>
+<img src="images/QuestionClass.png" alt="drawing" width="700"/>
 </p>
 
 Diagnosing queries focus on fixing infeasibility issues. 
@@ -71,7 +71,7 @@ Why-not queries investigate the counterfactual scenarios suggested by users.
 <a name="model-library"></a>
 The model libary is located in the **Feas** and **Infeas** folders.
 
-# Build Your Own (Infeasibile) Model and Test it:
+# Build Your Own Model and Test it:
 <a name="build-your-own-model-and-test-it"></a>
 At the current stage, OptiChat only supports optimization models written in Pyomo. A typical Pyomo model example is given as follows. 
 
