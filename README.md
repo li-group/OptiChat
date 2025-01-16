@@ -1,9 +1,9 @@
 # OptiChat
-Welcome to the [OptiChat](https://arxiv.org/abs/2308.12923) page. OptiChat is an interactive dialogue system powered by GPT4 LLM, augmented by Gurobi, Pyomo, predefined functions, and code generation, and aimed at helping practitioners interact with optimization models using natural language.
+Welcome to the [OptiChat](https://arxiv.org/abs/2501.08406) page. OptiChat is an interactive dialogue system powered by GPT4 LLM, augmented by Gurobi, Pyomo, predefined functions, and code generation, and aimed at helping practitioners interact with optimization models using natural language.
 
-We aspire for this project to provide some valuable insights into **explaining optimization models using LLMs**, thereby briding the gap between practitioners and optimization models 🚀. 
+We aspire for this project to provide some valuable insights into **explaining optimization models using LLMs**, thereby bridging the gap between practitioners and optimization models 🚀. 
 
-If you found this work useful, please cite this [preprint]() and our [previous paper](https://www.tandfonline.com/doi/full/10.1080/03155986.2024.2385189) ([arXiv](https://arxiv.org/abs/2308.12923))
+If you found this work useful, please cite this [preprint](https://arxiv.org/abs/2501.08406) and our [previous paper](https://www.tandfonline.com/doi/full/10.1080/03155986.2024.2385189) ([arXiv](https://arxiv.org/abs/2308.12923))
 
 # Compatibility Notice
 Please note that the requirements.txt file has not yet been updated, and you may encounter compatibility issues, particularly related to infeasible models. These issues may arise due to version mismatches or outdated dependencies. We are working to address this and will update the file as soon as possible. Thank you for your understanding and patience.
@@ -134,6 +134,18 @@ model.obj = Objective(expr=sum(10 * model.s[t] + (model.wage + model.sf[t]) * mo
 # Citation
 <a name="citation"></a>
 Cite us ❤️
+```bibtex
+@misc{OptiChat2025,
+      title={OptiChat: Bridging Optimization Models and Practitioners with Large Language Models}, 
+      author={Hao Chen and Gonzalo Esteban Constante-Flores and Krishna Sri Ipsit Mantri and Sai Madhukiran Kompalli and Akshdeep Singh Ahluwalia and Can Li},
+      year={2025},
+      eprint={2501.08406},
+      archivePrefix={arXiv},
+      primaryClass={cs.HC},
+      url={https://arxiv.org/abs/2501.08406}, 
+}
+```
+
 ```bibtex
 @article{OptiChat2023,
    author = {Chen, Hao and Constante-Flores, Gonzalo~E.  and Li, Can},
