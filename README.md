@@ -5,6 +5,11 @@ We aspire for this project to provide some valuable insights into **explaining o
 
 If you found this work useful, please cite this [preprint](https://arxiv.org/abs/2501.08406) and our [previous paper](https://www.tandfonline.com/doi/full/10.1080/03155986.2024.2385189) ([arXiv](https://arxiv.org/abs/2308.12923))
 
+# Video Demo
+
+[![Video Demo](https://youtu.be/7OEtEHfAdmo?si=h5jy45IdpMUotmq_/0.jpg)](https://youtu.be/7OEtEHfAdmo?si=h5jy45IdpMUotmq_)
+
+
 # Compatibility Notice
 Please note that the requirements.txt file has not yet been updated, and you may encounter compatibility issues, particularly related to infeasible models. These issues may arise due to version mismatches or outdated dependencies. We are working to address this and will update the file as soon as possible. Thank you for your understanding and patience.
 
