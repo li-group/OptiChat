@@ -7,7 +7,7 @@ If you found this work useful, please cite this [preprint](https://arxiv.org/abs
 
 # Video Demo
 
-[![Video Demo](https://youtu.be/7OEtEHfAdmo?si=h5jy45IdpMUotmq_/0.jpg)](https://youtu.be/7OEtEHfAdmo?si=h5jy45IdpMUotmq_)
+[![Video Demo](https://youtu.be/7OEtEHfAdmo/0.jpg)](https://youtu.be/7OEtEHfAdmo)
 
 
 # Compatibility Notice
