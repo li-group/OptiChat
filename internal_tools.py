@@ -8,7 +8,7 @@ from pyomo.core.expr.calculus.derivatives import differentiate
 from pyomo.opt import SolverFactory, TerminationCondition, SolverStatus
 
 from extractor import pyomo2json
-from get_code_from_markdown import *
+# from get_code_from_markdown import *
 from contextlib import redirect_stdout
 import sys
 import time
