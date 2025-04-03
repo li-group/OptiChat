@@ -2,6 +2,7 @@ import copy
 import time
 from typing import Dict, Optional, Union, List
 from openai import Client, OpenAI
+import google.generativeai as genai
 from prompts import get_prompts
 from internal_tools import feasibility_restoration, sensitivity_analysis, components_retrival, evaluate_modification
 from internal_tools import syntax_guidance, fnArgsDecoder
@@ -31,31 +32,39 @@ class Agent:
 
         self.team_conversation_filename = './logs/team_conversation.txt'
         self.chat_history_filename = './logs/detailed_chat_history.txt'
+        
+        
+#=====================llm_call function============================================================================
 
     def llm_call(self, prompt: Optional[str] = None, messages: Optional[List] = None,
                  seed: int = 10, stream: bool = False) -> str:
-        # make sure exactly one of prompt or messages is provided
-        assert (prompt is None) != (messages is None)
-        # make sure if messages is provided, it is a list of dicts with role and content
+        
+        assert (prompt is None) != (messages is None) # make sure exactly one of prompt or messages is provided
+        
+        # Ensure messages follow the correct structure, its a list of dict with role and content
         if messages is not None:
             assert isinstance(messages, list)
             for message in messages:
                 assert isinstance(message, dict)
                 assert "role" in message
                 assert "content" in message
-
+                
+        # messages field is required in OpenAi, and field has "role" and "content" key. 
         if not prompt is None:
             messages = [
                 {"role": "system", "content": self.system_prompt},
                 {"role": "user", "content": prompt},
             ]
+        
+        # Convert messages to a single prompt string for Gemini as Gemini takes only content as input
+        if messages:
+            gemini_prompt = "\n".join([msg["content"] for msg in messages if "content" in msg])
 
-        # print("=" * 10)
-        # print(f'llm_call is called, the following messages are sent to the llm: ')
-        # for message in messages:
-        #     print(f'{message["role"]}: {message["content"]}')
-        # print("=" * 10)
-
+        if not gemini_prompt or not gemini_prompt.strip():
+            print("Error: Prompt cannot be empty for Gemini API")
+            return None  # Prevents passing an empty prompt to Gemini
+        
+        # Handling response for OpenAI models using chat.completion API
         if type(self.client) in [OpenAI, Client]:
             completion = self.client.chat.completions.create(
                 model=self.llm,
@@ -65,10 +74,35 @@ class Agent:
             )
 
             if stream:
-                return completion
+                return completion # type= generator(streaming response)
             else:
-                content = completion.choices[0].message.content
-                return content
+                return completion.choices[0].message.content.strip() # type= string
+            
+        
+        #handling response for gemini models
+            
+        elif isinstance(self.client, genai.GenerativeModel):
+            try:
+                if stream:
+                    # Streaming response handling
+                    response = self.client.generate_content(gemini_prompt, stream=True)
+                    result = ""
+                    for chunk in response:
+                        if hasattr(chunk, "text"):
+                            #print(chunk.text, end="", flush=True) 
+                            result += chunk.text
+                    return result # type= string
+                else:
+                    response = self.client.generate_content(gemini_prompt)
+                    return response.text.strip() if hasattr(response, "text") else str(response).strip() #type=string
+            except Exception as e:
+                print(f"Error in llm_call (Gemini): {e}")
+                return None
+        else:
+            print("Error: Unknown client type")
+            return None
+        
+#============================================================================================================
 
     @staticmethod
     def generate_pseudo_messages(messages: List[Dict], team_conversation: List[Dict],
@@ -100,47 +134,81 @@ class Agent:
         print(prompt)
         print('-' * 5 + 'llm_response:' + '-' * 5)
         print(llm_response)
-
+        
+#=================llm_call_exp function======================================================
+    
+    # This function handles making API calls to diff LLMs
+    # It allows you to pass in prompts or messages, and stream response based on the model and stream flag. 
     def llm_call_exp(self, prompt: Optional[str] = None, messages: Optional[List] = None,
-                     seed: int = 10, temperature: float = 0.1,
-                     json_mode: bool = False,
-                     stream: bool = False,) -> str:
-        # make sure exactly one of prompt or messages is provided
-        assert (prompt is None) != (messages is None)
-        # make sure if messages is provided, it is a list of dicts with role and content
+                 seed: int = 10, temperature: float = 0.1,
+                 json_mode: bool = False, stream: bool = False) -> str:
+   
+        assert (prompt is None) != (messages is None)  # Make sure exactly one of prompt or messages is provided
+
+        # Ensure messages follow the correct structure, its a list of dict with role and content
         if messages is not None:
             assert isinstance(messages, list)
             for message in messages:
                 assert isinstance(message, dict)
                 assert "role" in message
                 assert "content" in message
-
+                
+        # messages field is required in OpenAi, and field has "role" and "content" key.        
         if not prompt is None:
             messages = [
                 {"role": "system", "content": self.system_prompt},
                 {"role": "user", "content": prompt},
             ]
 
-        if json_mode:
-            response_format = {"type": "json_object"}
-        else:
-            response_format = {"type": "text"}
+        # Convert messages to a single prompt string for Gemini as Gemini takes only content as input
+        if messages:
+            gemini_prompt = "\n".join([msg["content"] for msg in messages if "content" in msg])
 
+        if not gemini_prompt or not gemini_prompt.strip():
+            print("Error: Prompt cannot be empty for Gemini API")
+            return None  # Prevents passing an empty prompt to Gemini
+
+
+        # Handling OpenAI models using chat.completion API
         if type(self.client) in [OpenAI, Client]:
             completion = self.client.chat.completions.create(
                 model=self.llm,
                 messages=messages,
                 seed=seed,
                 temperature=temperature,
-                response_format=response_format,
                 stream=stream,
-                )
+            )
 
             if stream:
-                return completion
+                return completion  # type= generator(streaming response)
             else:
-                content = completion.choices[0].message.content
-                return content
+                return completion.choices[0].message.content.strip() # type= string
+
+
+        # Handling Gemini models
+        elif isinstance(self.client, genai.GenerativeModel):
+            try:
+                if stream:
+                    # Streaming response handling
+                    response = self.client.generate_content(gemini_prompt, stream=True)
+                    result = ""
+                    for chunk in response:
+                        if hasattr(chunk, "text"):
+                            #print(chunk.text, end="", flush=True) 
+                            result += chunk.text
+                    return result # type= string
+                else:
+                    response = self.client.generate_content(gemini_prompt)
+                    return response.text.strip() if hasattr(response, "text") else str(response).strip() #type=string
+            except Exception as e:
+                print(f"Error in llm_call_exp (Gemini): {e}")
+                return None
+
+        else:
+            print("Error: Unknown client type")
+            return None
+ 
+#============================================================================================================
 
 
 class Interpreter(Agent):
@@ -376,6 +444,7 @@ class Interpreter(Agent):
         stream_or_completion = self.llm_call_exp(prompt=prompt, temperature=args.temperature,
                                                  stream=args.illustration_stream)
         return stream_or_completion
+    
 
     def generate_inference_exp(self, args, model_representation: Dict):
         def split_representation(representation):

@@ -1,28 +1,51 @@
 #adapted from bid.gms : Bid Evaluation (GAMS Model Library)
 #https://www.gams.com/latest/gamslib_ml/libhtml/gamslib_bid.html
+import json
 from pyomo.environ import *
 
 model = ConcreteModel()
 
-# Sets
-vendors = ['a', 'b', 'c', 'd', 'e']
-segments = [1, 2, 3, 4, 5]
+# Load JSON data
+with open('bid_data.json') as f:
+    data = json.load(f)
+
+# Extract vendors and segments from the bid_data
+# Extract vendors and segments from the bid_data
+vendors = list(data['bid_data'].keys())  # Extract all vendor names (keys of 'bid_data')
+segments = sorted({int(segment) for vendor_data in data['bid_data'].values() for segment in vendor_data.keys()})  # Extract all unique segments
+
+# vendors = ['a', 'b', 'c', 'd', 'e']
+# segments = [1, 2, 3, 4, 5]
+
 model.v = Set(initialize=vendors)  # vendors
 model.s = Set(initialize=segments)  # segments
 
 # Scalar
-model.req = Param(mutable=True, initialize=239600.48)  # requirements
+# model.req = Param(mutable=True, initialize=239600.48)  # requirements
+model.req = Param(mutable=True, initialize=data['requirements']) # requirements
+
 
 # Parameters
-bid_init = {('a', 1, 'setup'): 3855.84, ('a', 1, 'price'): 61.150, ('a', 1, 'q-min'): 0, ('a', 1, 'q-max'): 33000,
-            ('b', 1, 'setup'): 125804.84, ('b', 1, 'price'): 68.099, ('b', 1, 'q-min'): 22000, ('b', 1, 'q-max'): 70000,
-            ('b', 2, 'setup'): 0, ('b', 2, 'price'): 66.049, ('b', 2, 'q-min'): 70000, ('b', 2, 'q-max'): 100000,
-            ('b', 3, 'setup'): 0, ('b', 3, 'price'): 64.099, ('b', 3, 'q-min'): 100000, ('b', 3, 'q-max'): 150000,
-            ('b', 4, 'setup'): 0, ('b', 4, 'price'): 62.119, ('b', 4, 'q-min'): 150000, ('b', 4, 'q-max'): 160000,
-            ('c', 1, 'setup'): 13456.00, ('c', 1, 'price'): 62.190, ('c', 1, 'q-min'): 0, ('c', 1, 'q-max'): 165600,
-            ('d', 1, 'setup'): 6583.98, ('d', 1, 'price'): 72.488, ('d', 1, 'q-min'): 0, ('d', 1, 'q-max'): 12000,
-            ('e', 1, 'setup'): 0, ('e', 1, 'price'): 70.150, ('e', 1, 'q-min'): 0, ('e', 1, 'q-max'): 42000,
-            ('e', 2, 'setup'): 0, ('e', 2, 'price'): 68.150, ('e', 2, 'q-min'): 42000, ('e', 2, 'q-max'): 77000}
+# bid_init = {('a', 1, 'setup'): 3855.84, ('a', 1, 'price'): 61.150, ('a', 1, 'q-min'): 0, ('a', 1, 'q-max'): 33000,
+#             ('b', 1, 'setup'): 125804.84, ('b', 1, 'price'): 68.099, ('b', 1, 'q-min'): 22000, ('b', 1, 'q-max'): 70000,
+#             ('b', 2, 'setup'): 0, ('b', 2, 'price'): 66.049, ('b', 2, 'q-min'): 70000, ('b', 2, 'q-max'): 100000,
+#             ('b', 3, 'setup'): 0, ('b', 3, 'price'): 64.099, ('b', 3, 'q-min'): 100000, ('b', 3, 'q-max'): 150000,
+#             ('b', 4, 'setup'): 0, ('b', 4, 'price'): 62.119, ('b', 4, 'q-min'): 150000, ('b', 4, 'q-max'): 160000,
+#             ('c', 1, 'setup'): 13456.00, ('c', 1, 'price'): 62.190, ('c', 1, 'q-min'): 0, ('c', 1, 'q-max'): 165600,
+#             ('d', 1, 'setup'): 6583.98, ('d', 1, 'price'): 72.488, ('d', 1, 'q-min'): 0, ('d', 1, 'q-max'): 12000,
+#             ('e', 1, 'setup'): 0, ('e', 1, 'price'): 70.150, ('e', 1, 'q-min'): 0, ('e', 1, 'q-max'): 42000,
+#             ('e', 2, 'setup'): 0, ('e', 2, 'price'): 68.150, ('e', 2, 'q-min'): 42000, ('e', 2, 'q-max'): 77000}
+
+
+bid_init = {}
+for vendor, segment_data in data['bid_data'].items():
+    for segment, values in segment_data.items():
+        bid_init[(vendor, segment, 'setup')] = values['setup']
+        bid_init[(vendor, segment, 'price')] = values['price']
+        bid_init[(vendor, segment, 'q-min')] = values['q-min']
+        bid_init[(vendor, segment, 'q-max')] = values['q-max']
+        
+# print(bid_init)
 
 model.vs = Set(within=model.v * model.s, initialize=[(v, s) for v in vendors for s in segments if (v,s,'q-max') in bid_init.keys()])  # vendor bit possibilities
 for (v,s) in model.vs:
