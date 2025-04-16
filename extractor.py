@@ -262,12 +262,16 @@ def iis2json(ilp_path, model_dict):
     return model_dict
 
 
-def initial_loading(file, is_uploaded=True):
+def initial_loading(file, is_uploaded=True, json_data=None):
     if is_uploaded:
         code = file.getvalue().decode("utf-8")
         spec = importlib.util.spec_from_loader("uploaded_model", loader=None)
         uploaded_model = importlib.util.module_from_spec(spec)
         sys.modules["uploaded_model"] = uploaded_model
+        
+        # Inject the JSON data before executing the model code
+        if json_data is not None:
+            uploaded_model.__dict__["data"] = json_data 
 
         # Execute the code in the context of the new module
         exec(code, uploaded_model.__dict__)

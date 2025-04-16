@@ -1,18 +1,31 @@
 import pyomo.environ as pyo
-
+import json
+import ast
 # Create the Pyomo model
 model = pyo.ConcreteModel()
 
+#import data from json
+data = globals().get("data", {})
+# with open('job_data.json') as f:
+#     data = json.load(f)
 
 # Define sets
-model.J = pyo.Set(initialize=[1,2,3,4,5,6,7], doc="Jobs")
-model.P = pyo.Set(within=model.J*model.J, initialize=[(1,4), (2,4), (2,3), (3,5), (3,6), (4,7)], doc="Pairs of jobs where the first job is a predecessor of the second job")
+model.J = pyo.Set(initialize=data['sets']['Jobs'], doc="Jobs")
+# print("Contents of model.J:")
+# for j in model.J:
+#     print(j)
+    
+p_tuples = [ast.literal_eval(item) for item in data['sets']['job_pair']]
+model.P = pyo.Set(within=model.J*model.J, initialize=p_tuples, doc="Pairs of jobs where the first job is a predecessor of the second job")
 # Define parameters and sets
-model.mincost = pyo.Param(model.J, initialize = {1:1600, 2:2400, 3:2900, 4:1900, 5:3800, 6: 2900, 7: 1300}, doc = "Cost For Minimum Number of Days For Each Job", mutable = True)
-model.maxcost = pyo.Param(model.J, initialize = {1:1000, 2:1800, 3:2000, 4:1300, 5:2000, 6: 2200, 7: 800}, doc = "Cost For Maximum Number of Days For Each Job", mutable = True)
-model.mintime = pyo.Param(model.J, initialize = {1:6, 2:8, 3:16, 4:14, 5:4, 6: 12, 7: 2}, doc = "Minimum Time For Jobs", mutable = True)
-model.maxtime = pyo.Param(model.J, initialize = {1:12, 2:16, 3:24, 4:20, 5:16, 6: 16, 7: 12}, doc = "Maximum Time For Jobs", mutable = True)
-model.totaldays = pyo.Param(initialize = 40, doc = "Total Number Of Days For Work", mutable = True)
+# mincost_data = {int(k): v for k, v in data["parameters"]["mincost"].items()}
+# print(mincost_data)
+
+model.mincost = pyo.Param(model.J, initialize = {int(k): v for k, v in data["parameters"]["mincost"].items()}, doc = "Cost For Minimum Number of Days For Each Job", mutable = True)
+model.maxcost = pyo.Param(model.J, initialize = {int(k): v for k, v in data["parameters"]["maxcost"].items()}, doc = "Cost For Maximum Number of Days For Each Job", mutable = True)
+model.mintime = pyo.Param(model.J, initialize = {int(k): v for k, v in data["parameters"]["mintime"].items()}, doc = "Minimum Time For Jobs", mutable = True)
+model.maxtime = pyo.Param(model.J, initialize = {int(k): v for k, v in data["parameters"]["maxtime"].items()}, doc = "Maximum Time For Jobs", mutable = True)
+model.totaldays = pyo.Param(initialize = data['parameters']['totaldays'], doc = "Total Number Of Days For Work", mutable = True)
 # Define variables
 model.s = pyo.Var(model.J, within = pyo.PositiveIntegers, doc = "Start Times For Each Job")
 model.t = pyo.Var(model.J, within = pyo.PositiveIntegers, doc = "Total Times For Each Job")

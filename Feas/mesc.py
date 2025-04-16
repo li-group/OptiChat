@@ -1,24 +1,29 @@
 import pyomo.environ as pyo
+import json
 
 #create model
 model = pyo.ConcreteModel(name="Multi-Echelon Supply Chain Optimization Model")
 
+# Load data from json
+data = globals().get("data", {})
+# with open("mesc_data.json", "r") as file:
+#     data = json.load(file)
+
 # Data
-num_periods = 30 # Number of periods
-num_stages = 4 # Number of stages
+num_periods = data["parameters"]["number_of_periods"] # Number of periods
+num_stages = data["parameters"]["number_of_stages"] # Number of stages
 
-unit_price = [2, 1.5, 1.0, 0.75] # unit sales price at stages [0, 1, 2, 3]
-holding_cost = [0.15, 0.10, 0.05, 0] # holding cost at stages [0, 1, 2, 3]
-supply_capacity = [100, 90, 80] # production capacity at stages [1, 2, 3]
-lead_time = [3, 5, 10] # lead times at stages [0, 1, 2]
-demand_cost = [0.10, 0.075, 0.05, 0.025] # unit backlog cost at stages [0, 1, 2, 3]
-unit_cost = [1.5, 1.0, 0.75, 0.5] # unit replenishment cost at stages [0, 1, 2, 3]
+unit_price = [v for k, v in sorted(data["parameters"]["unit_price_at_each_stage"].items(), key=lambda x: int(x[0]))]# unit sales price at stages [0, 1, 2, 3]
+holding_cost = [v for k, v in sorted(data["parameters"]["holding_cost_at_each_stage"].items(), key=lambda x: int(x[0]))] # holding cost at stages [0, 1, 2, 3]
+supply_capacity = [v for k, v in sorted(data["parameters"]["supply_capacity_at_each_stage"].items(), key=lambda x: int(x[0]))]# production capacity at stages [1, 2, 3]
+lead_time = [v for k, v in sorted(data["parameters"]["lead_time_at_each_stage"].items(), key=lambda x: int(x[0]))] # lead times at stages [0, 1, 2]
+demand_cost = [v for k, v in sorted(data["parameters"]["demand_cost_at_each_stage"].items(), key=lambda x: int(x[0]))] # unit backlog cost at stages [0, 1, 2, 3]
+unit_cost = [v for k, v in sorted(data["parameters"]["unit_cost_at_each_stage"].items(), key=lambda x: int(x[0]))] # unit replenishment cost at stages [0, 1, 2, 3]
 
-discount = 0.97 #  discount factor
+discount = data["parameters"]["discount"] #  discount factor
  
-D = [16, 10, 11, 16, 18, 18, 20, 25, 29, 14, 23, 16, 19, 27, 17, 21, 7, 21, 20, 20, 19, 25, 27, 21, 18, 29, 24, 17, 22, 16] # poisson distribution of demand for each period
-
-init_inv = [100, 100, 200] # initial inventory levels at stages [0, 1, 2]
+D = [v for k, v in sorted(data["parameters"]["demand"].items(), key=lambda x: int(x[0]))]
+init_inv = [v for k, v in sorted(data["parameters"]["initial_inventory_at_each_stage"].items(), key=lambda x: int(x[0]))] # initial inventory levels at stages [0, 1, 2]
 
 #define sets
 model.N = pyo.RangeSet(0,num_periods-1, doc= "Set of time periods excluding the last period") 

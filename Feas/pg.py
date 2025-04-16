@@ -1,11 +1,17 @@
 import pyomo.environ as pyo
 import time
+import json
 
 # Create the Pyomo model
 model = pyo.ConcreteModel()
 
+# Load data from json
+data = globals().get("data", {})
+# with open("pg_data.json", "r") as file:
+#     data = json.load(file)
+
 # Define sets
-model.T = pyo.Set(initialize=[t+1 for t in range(24)], doc="Hour of the day")
+model.T = pyo.Set(initialize=data["sets"]["Hour_of_the_day"], doc="Hour of the day")
 
 # Define parameters
 power_lim_wind = [
@@ -14,6 +20,7 @@ power_lim_wind = [
     150, 176, 185, 120, 130, 140,
     170, 190, 120, 170, 130, 150
 ]
+print(power_lim_wind)
 model.power_lim_wind = pyo.Param(
     model.T, initialize={t: power_lim_wind[t-1] for t in model.T}, mutable=True,
     doc="power limit of wind generation at each time"

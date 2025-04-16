@@ -6,7 +6,7 @@ import google.generativeai as genai
 from prompts import get_prompts
 from internal_tools import feasibility_restoration, sensitivity_analysis, components_retrival, evaluate_modification
 from internal_tools import syntax_guidance, fnArgsDecoder
-from extractor import extract_component_descriptions, insert_code, run_with_exec
+from extractor_org import extract_component_descriptions, insert_code, run_with_exec
 import json
 import re
 #import streamlit as st

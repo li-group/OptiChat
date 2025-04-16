@@ -1,0 +1,29 @@
+{
+    "sets": {
+      "cities": [
+        "boston", "chicago", "dallas", "kansas-cty",
+        "losangeles", "memphis", "portland", "salt-lake", "wash-dc"
+      ]
+    },
+    "parameters": {
+      "uarc": {
+        "boston,chicago": 58,
+        "boston,wash-dc": 25,
+        "chicago,kansas-cty": 29,
+        "chicago,memphis": 32,
+        "chicago,portland": 130,
+        "chicago,salt-lake": 85,
+        "dallas,kansas-cty": 29,
+        "dallas,losangeles": 85,
+        "dallas,memphis": 28,
+        "dallas,salt-lake": 75,
+        "kansas-cty,memphis": 27,
+        "kansas-cty,salt-lake": 66,
+        "kansas-cty,wash-dc": 62,
+        "losangeles,portland": 58,
+        "losangeles,salt-lake": 43,
+        "memphis,wash-dc": 53,
+        "portland,salt-lake": 48
+      }
+    }
+  }

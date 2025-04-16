@@ -1,0 +1,48 @@
+{
+    "sets": {
+      "quarters": ["summer", "fall", "winter", "spring"],
+      "shifts": ["first", "second"],
+      "production_levels": [1, 2, 3, 4],
+      "production_relationship_parameters": ["labor", "motor"],
+      "shift_cost_parameters": ["fixed", "labor"]
+    },
+    "parameters": {
+      "demand_of_motor_per_season": {
+        "spring": 24000
+      },
+      "leasing_cost_per_season": {
+        "summer": 15000
+      },
+      "initial_employment": {
+        "summer": 84
+      },
+      "material_cost_per_motor": 100,
+      "space_rental_per_motor": 2,
+      "hiring_cost_per_employee": 900,
+      "firing_cost_per_employee": 150,
+      "production_relationship": {
+        "labor": {
+          "1": 20,
+          "2": 40,
+          "3": 50,
+          "4": 60
+        },
+        "motor": {
+          "1": 1000,
+          "2": 3000,
+          "3": 4500,
+          "4": 5800
+        }
+      },
+      "shift_cost": {
+        "fixed": {
+          "first": 10000,
+          "second": 16000
+        },
+        "labor": {
+          "first": 3500,
+          "second": 4100
+        }
+      }
+    }
+  }

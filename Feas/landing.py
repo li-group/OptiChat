@@ -2,15 +2,22 @@
 
 import pyomo.environ as pyo
 import numpy as np
+import json
 # Create a ConcreteModel
 model = pyo.ConcreteModel()
 
+
+#import data from json
+data = globals().get("data", {})
+# with open('landing_data.json') as f:
+#     data = json.load(f)
 # Define parameters
 # Define sets
-model.N_aircraft = pyo.Param(initialize=5, doc="number of aircraft in approach")
-model.K_runway = pyo.Param(initialize=2, doc="Number of runway")
+model.N_aircraft = pyo.Param(initialize=data['parameters']['Number_of_aircraft'], doc="number of aircraft in approach")
+model.K_runway = pyo.Param(initialize=data['parameters']['Number_of_runway'], doc="Number of runway")
 model.N = pyo.RangeSet(model.N_aircraft)  # aircraft set
 model.K = pyo.RangeSet(model.K_runway)  # Runway Set
+
 model.c_plus = pyo.Param(model.N, initialize={i: 10 * i for i in range(1, model.N_aircraft + 1)},
                          doc="Cost of late landing for each aircraft", mutable=True)
 model.S = pyo.Param(model.N, model.N, initialize={(i, j): 5 for i in range(1, model.N_aircraft + 1) for j in
@@ -23,7 +30,7 @@ model.L = pyo.Param(model.N, initialize={i: 1000 for i in range(1, model.N_aircr
 model.T = pyo.Param(model.N, initialize={i: 5 for i in range(1, model.N_aircraft + 1)},
                     doc="Initial scheduled arrival time for aircraft", mutable=True)
 
-model.M = pyo.Param(initialize=20, doc="Big-M formulation, Mbig enough", mutable=True)
+model.M = pyo.Param(initialize=data['parameters']['M_formulation'], doc="Big-M formulation, Mbig enough", mutable=True)
 # Define binary decision variables
 model.w = pyo.Var(model.N, model.N, within=pyo.Binary, doc='1 if aircraft i lands before aircraft j 0 otherwise')
 model.x = pyo.Var(model.N, model.K, within=pyo.Binary, doc="1 if aircraft i is allocated to runway k")

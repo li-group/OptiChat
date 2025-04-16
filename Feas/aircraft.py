@@ -12,22 +12,21 @@ from pyomo.environ import *
 model = ConcreteModel()
 
 # Load demand distribution data from JSON file
-with open("aircraft_data.json", "r") as file:
-    data = json.load(file)
+data = globals().get("data", {})
+# with open("aircraft_data.json", "r") as file:
+#     data = json.load(file)
+
 
 # Sets   
 # Extract Aircraft Types
-I = list(data["c_init"].keys())  # Extracts 'a', 'b', 'c', 'd'
+I = list(data["cost_per_aircraft"].keys())  # Extracts 'a', 'b', 'c', 'd'
 
 # Extract Routes
-J = list(data["dd_init"].keys())  # Extracts 'route-1', 'route-2', etc.
+J = list(data["demand_distribution"].keys())  # Extracts 'route-1', 'route-2', etc.
 
 # Extract Demand States (assuming all routes share the same demand states)
-H = sorted([int(h) for h in data["dd_init"][J[0]].keys()])  # Extracts 1, 2, 3, 4, 5
+H = sorted([int(h) for h in data["demand_distribution"][J[0]].keys()])  # Extracts 1, 2, 3, 4, 5
 
-# print("Aircraft Types:", I)
-# print("Routes:", J)
-# print("Demand States:", H)
 
 model.i = Set(initialize=I, doc='Aircraft types and unassigned passengers')
 model.j = Set(initialize=J, doc='Assigned and unassigned routes')
@@ -36,22 +35,18 @@ model.hp = Set(initialize=H, doc='Demand states')
 
 
 # Demand distribution on route j
-dd_init = {(route, int(state)): demand for route, states in data["dd_init"].items() for state, demand in states.items()}
+dd_init = {(route, int(state)): demand for route, states in data["demand_distribution"].items() for state, demand in states.items()}
 
 # probability of demand state h on route j
 lambda_init = {(route, int(state)): prob for route, states in data["lambda_init"].items() for state, prob in states.items()}
 
 # costs per aircraft (1000s)
-c_init = {(aircraft, route): cost for aircraft, routes in data["c_init"].items() for route, cost in routes.items()}
+c_init = {(aircraft, route): cost for aircraft, routes in data["cost_per_aircraft"].items() for route, cost in routes.items()}
 
 # passenger capacity of aircraft i on route j
-p_init = {(aircraft, route): capacity for aircraft, routes in data["p_init"].items() for route, capacity in routes.items()}
-aa_init = data["aa_init"]  # Aircraft availability
+p_init = {(aircraft, route): capacity for aircraft, routes in data["passenger_capacity"].items() for route, capacity in routes.items()}
+aa_init = data["aircraft_availability"]  # Aircraft availability
 k_init = data["k_init"] 
-# print(dd_init)
-# print(lambda_init)
-# print(c_init)
-# print(p_init)
 
 
 # Parameters

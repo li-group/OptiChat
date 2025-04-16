@@ -1,22 +1,27 @@
 #adapted from sparta.gms : Military Manpower Planning from Wagner (GAMS Model Library)
 #https://www.gams.com/latest/gamslib_ml/libhtml/gamslib_sparta.html
 from pyomo.environ import *
+import json
 
 # Create a concrete model
 model = ConcreteModel()
 
+# Load JSON data
+data = globals().get("data", {})
+# with open("sparta_data.json", "r") as file:
+#     data = json.load(file)
+
 # Sets
-model.t = Set(initialize=list(range(1, 11)), doc='time periods (years)')
-model.l = Set(initialize=list(range(1, 5)), doc='length of enlistment (years)')
+model.t = Set(initialize=data["sets"]["time_periods_in_years"], doc='time periods (years)')
+model.l = Set(initialize=data["sets"]["lengths_of_enlistment_in_years"], doc='length of enlistment (years)')
 
 # Parameters
-model.infl = Param(model.t, mutable=True, initialize={1: 1.00, 2: 1.05, 3: 1.12, 4: 1.71, 5: 1.80,
-                                        6: 1.90, 7: 1.97, 8: 2.10, 9: 2.22, 10: 2.38},
+model.infl = Param(model.t, mutable=True, initialize={int(k): v for k, v in data["parameters"]["inflation_index_for_each_year"].items()},
                    doc='inflation index')
-model.req = Param(model.t, mutable=True, initialize={1: 5, 2: 6, 3: 7, 4: 6, 5: 4,
-                                       6: 9, 7: 8, 8: 8, 9: 6, 10: 4},
+model.req = Param(model.t, mutable=True, initialize={int(k): v for k, v in data["parameters"]["troop_requirement_for_each_year"].items()},
                   doc='troop requirement')
-model.clen = Param(model.l, mutable=True, initialize={1: 50, 2: 85, 3: 115, 4: 143},
+
+model.clen = Param(model.l, mutable=True, initialize={int(k): v for k, v in data["parameters"]["cost_of_service"].items()},
                    doc='cost of service')
 
 # Variables

@@ -7,55 +7,55 @@ Created on Mon Jul 31 17:11:42 2023
 """
 
 from pyomo.environ import *
+import json
 
 model = ConcreteModel()
+# Load data from json
+data = globals().get("data", {})
+# with open("prodsch_data.json", "r") as file:
+#     data = json.load(file)
 
 # Sets
-model.q = Set(initialize=['summer', 'fall', 'winter', 'spring'], doc='quarters')
-model.s = Set(initialize=['first', 'second'], doc='shifts')
-model.l = Set(initialize=[1, 2, 3, 4], doc='production levels')
-model.prp =  Set(initialize=['labor', 'motor'], doc='production relationship parameters')
-model.scp =  Set(initialize=['fixed', 'labor'], doc='shift cost parameters')
+model.q = Set(initialize=data["sets"]["quarters"], doc='quarters')
+model.s = Set(initialize=data["sets"]["shifts"], doc='shifts')
+model.l = Set(initialize=data["sets"]["production_levels"], doc='production levels')
+model.prp =  Set(initialize=data["sets"]["production_relationship_parameters"], doc='production relationship parameters')
+model.scp =  Set(initialize=data["sets"]["shift_cost_parameters"], doc='shift cost parameters')
+
 
 # Parameters
-model.d = Param(model.q, initialize={'spring': 24000}, default =0, mutable = True, doc='demand        (motors per season)')
-model.lc = Param(model.q, initialize={'summer': 15000}, default =0, mutable = True, doc='leasing cost (dollars per season)')
-model.ei = Param(model.q, initialize={'summer': 84}, default =0, mutable = True, doc= 'initial employment')
-model.mc = Param(initialize=100, mutable = True, doc='material cost  (dollars per motor)')
-model.sr = Param(initialize=2, mutable = True, doc='space rental   (dollars per motor)')
-model.hc = Param(initialize=900, mutable = True, doc='hiring cost (dollars per employee)')
-model.fc = Param(initialize=150, mutable = True, doc='firing cost (dollars per employee)')
+model.d = Param(model.q, initialize=data["parameters"]["demand_of_motor_per_season"], default =0, mutable = True, doc='demand (motors per season)')
+model.lc = Param(model.q, initialize=data["parameters"]["leasing_cost_per_season"], default =0, mutable = True, doc='leasing cost (dollars per season)')
+model.ei = Param(model.q, initialize=data["parameters"]["initial_employment"], default =0, mutable = True, doc= 'initial employment')
+model.mc = Param(initialize=data["parameters"]["material_cost_per_motor"], mutable = True, doc='material cost  (dollars per motor)')
+model.sr = Param(initialize=data["parameters"]["space_rental_per_motor"], mutable = True, doc='space rental   (dollars per motor)')
+model.hc = Param(initialize=data["parameters"]["hiring_cost_per_employee"], mutable = True, doc='hiring cost (dollars per employee)')
+model.fc = Param(initialize=data["parameters"]["firing_cost_per_employee"], mutable = True, doc='firing cost (dollars per employee)')
+
 
 model.delt = Param(model.q, initialize={q: 1/1.03**(qq - 1) for qq, q in enumerate(model.q, start=1)}, mutable = True, doc='discount factor')
 model.invmax = Param(initialize=sum(model.d[q] for q in model.q), mutable = True, doc='upper bound on inventory  (motors)')
 
-model.pr = Param(model.prp, model.l, initialize={
-    ('labor', 1): 20,   ('labor', 2): 40,   ('labor', 3): 50,   ('labor', 4): 60,
-    ('motor', 1): 1000, ('motor', 2): 3000, ('motor', 3): 4500, ('motor', 4): 5800
-}, default =0, doc='production relationship')
-
-model.sc = Param(model.scp, model.s, initialize={
-    ('fixed', 'first'): 10000, ('fixed', 'second'): 16000,
-    ('labor', 'first'): 3500,  ('labor', 'second'): 4100
-}, default =0, mutable = True, doc='shift cost (dollars per shift)')
+model.pr = Param(model.prp, model.l, initialize={(i, int(j)): v for i, d in data["parameters"]["production_relationship"].items() for j, v in d.items()}, default =0, doc='production relationship')
+model.sc = Param(model.scp, model.s, initialize={(i, j): v for i, d in data["parameters"]["shift_cost"].items() for j, v in d.items()}, default =0, mutable = True, doc='shift cost (dollars per shift)')
 
 # Variables
 model.cost = Var()
 model.dpc = Var(model.q, doc='direct production cost      (1000 $ per season)')
 model.isc = Var(model.q, doc='inventory storage cost      (1000 $ per season)')
 model.wfc = Var(model.q, doc='workforce fluctuation cost  (1000 $ per season)')
-model.src = Var(model.q, within=NonNegativeReals, doc='space rental cost           (1000 $ per season)')
-model.p = Var(model.q, within=NonNegativeReals, doc='production                  (motors per season)')
+model.src = Var(model.q, within=NonNegativeReals, doc='space rental cost (1000 $ per season)')
+model.p = Var(model.q, within=NonNegativeReals, doc='production   (motors per season)')
 
-model.ss = Var(model.l, model.q, model.s, within=NonNegativeReals, doc='production segments                 (sos2 type)')
+model.ss = Var(model.l, model.q, model.s, within=NonNegativeReals, doc='production segments (sos2 type)')
 model.ssb = Var(model.l, model.q, model.s, within=Binary, doc='0-1 needed for ss sos2 formulation')
-model.inv = Var(model.q, within=NonNegativeReals, doc='inventory                   (motors per season)')
+model.inv = Var(model.q, within=NonNegativeReals, doc='inventory (motors per season)')
 model.lease = Var(within=Binary, doc='lease-rent option')
-model.e = Var(model.q, doc='total employment                    (employees)')
-model.se = Var(model.q, model.s, doc='shift employment          (employees per shift)')
-model.shift = Var(model.q, model.s, within=Binary, doc='shift use indicator                    (binary)')
-model.h = Var(model.q, within=NonNegativeReals, doc='hirings in quarter                  (employees)')
-model.f = Var(model.q, within=NonNegativeReals, doc='firings in quarter                  (employees)')
+model.e = Var(model.q, doc='total employment (employees)')
+model.se = Var(model.q, model.s, doc='shift employment(employees per shift)')
+model.shift = Var(model.q, model.s, within=Binary, doc='shift use indicator (binary)')
+model.h = Var(model.q, within=NonNegativeReals, doc='hirings in quarter (employees)')
+model.f = Var(model.q, within=NonNegativeReals, doc='firings in quarter (employees)')
 
 # Constraints
 
@@ -65,11 +65,11 @@ model.ddpc = Constraint(model.q, rule=ddpc_rule, doc='direct production cost def
 
 def sbp_rule(model, q):
     return model.p[q] == sum(model.pr['motor', l]*model.ss[l, q, s] for l in model.l for s in model.s)
-model.sbp = Constraint(model.q, rule=sbp_rule, doc='sos product balance                   (motors)')
+model.sbp = Constraint(model.q, rule=sbp_rule, doc='sos product balance (motors)')
 
 def sbse_rule(model, q, s):
     return model.se[q, s] == sum(model.pr['labor', l]*model.ss[l, q, s] for l in model.l)
-model.sbse = Constraint(model.q, model.s, rule=sbse_rule, doc='sos shift employment balance       (employees)')
+model.sbse = Constraint(model.q, model.s, rule=sbse_rule, doc='sos shift employment balance (employees)')
 
 def scc_rule(model, q, s):
     return sum(model.ss[l, q, s] for l in model.l) == model.shift[q, s]
@@ -82,7 +82,7 @@ def invb_rule(model, q):
         return model.inv[q] == model.inv[model.q.prev(q)] + model.p[q] - model.d[q]
     else:
         return model.inv[q] == model.p[q] - model.d[q]
-model.invb = Constraint(model.q, rule=invb_rule, doc='inventory balance                     (motors)')
+model.invb = Constraint(model.q, rule=invb_rule, doc='inventory balance (motors)')
 
 def disc_rule(model, q):
     return model.isc[q] == (model.lc[q]*model.lease + model.src[q])/1000

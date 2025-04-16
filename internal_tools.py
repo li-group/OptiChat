@@ -7,7 +7,7 @@ from pyomo.core.expr.visitor import identify_mutable_parameters, replace_express
 from pyomo.core.expr.calculus.derivatives import differentiate
 from pyomo.opt import SolverFactory, TerminationCondition, SolverStatus
 
-from extractor import pyomo2json
+from extractor_org import pyomo2json
 # from get_code_from_markdown import *
 from contextlib import redirect_stdout
 import sys

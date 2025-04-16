@@ -12,8 +12,9 @@ from pyomo.environ import *
 model = ConcreteModel()
 
 #load data from json file
-with open("diet_data.json", "r") as file:
-    data = json.load(file)
+data = globals().get("data", {})
+# with open("diet_data.json", "r") as file:
+#     data = json.load(file)
 
 # Access nutrient requirements
 nutrient_requirements = data['nutrient_requirements']

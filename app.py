@@ -120,11 +120,16 @@ if not st.session_state.get("detailed_chat_history"):
 
 
 def process():
-    if uploaded_file is None:
-        st.error("Please upload your model first.")
+    #make sure user uploads both model and json file
+    if uploaded_file is None or uploaded_json is None:
+        st.error("Please upload both the Pyomo model and the corresponding JSON file.")
         return
+    
+    #load json
+    json_data = json.load(uploaded_json)
+    models_dict, code = initial_loading(uploaded_file, is_uploaded=True, json_data=json_data)
 
-    models_dict, code = initial_loading(uploaded_file)
+    #models_dict, code = initial_loading(uploaded_file)
 
     # user_prompt= st.chat_input("I have uploaded a Pyomo model.")
     # if user_prompt:
@@ -256,20 +261,19 @@ def process():
 
 
 def load_json():
-    if uploaded_file is None:
-        st.error("Please upload your model first.")
-        return
-    if uploaded_json is None:
-        st.error("Please upload your json file first.")
+    if uploaded_file is None or uploaded_json is None:
+        st.error("Please upload both the Pyomo model and the corresponding JSON file.")
         return
 
-    models_dict, code = initial_loading(uploaded_file)
+    # models_dict, code = initial_loading(uploaded_file)
+    json_data = json.load(uploaded_json)
+    models_dict, code = initial_loading(uploaded_file, is_uploaded=True, json_data=json_data)
 
     with st.chat_message("user"):
         st.markdown("I have uploaded a Pyomo model.")
     st.session_state.messages.append({"role": "user", "content": "I have uploaded a Pyomo model."})
 
-    skipJSON = json.load(uploaded_json)
+    skipJSON = json_data
     models_dict = feed_skipJSON(skipJSON, models_dict)
 
     st.session_state["models_dict"] = models_dict

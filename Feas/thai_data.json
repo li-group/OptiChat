@@ -1,0 +1,236 @@
+{
+    "sets": {
+        "ports": [
+            "chumphon",
+            "surat",
+            "nakon",
+            "songkhla"
+        ],
+        "voyages": [
+            "v-01",
+            "v-02",
+            "v-03",
+            "v-04",
+            "v-05",
+            "v-06",
+            "v-07",
+            "v-08",
+            "v-09",
+            "v-10",
+            "v-11",
+            "v-12",
+            "v-13",
+            "v-14",
+            "v-15"
+        ],
+        "ship_classes": [
+            "small",
+            "medium",
+            "large"
+        ],
+        "assignment": [
+            [
+                "v-01",
+                "chumphon"
+            ],
+            [
+                "v-02",
+                "surat"
+            ],
+            [
+                "v-03",
+                "nakon"
+            ],
+            [
+                "v-04",
+                "songkhla"
+            ],
+            [
+                "v-05",
+                "chumphon"
+            ],
+            [
+                "v-05",
+                "surat"
+            ],
+            [
+                "v-06",
+                "chumphon"
+            ],
+            [
+                "v-06",
+                "nakon"
+            ],
+            [
+                "v-07",
+                "chumphon"
+            ],
+            [
+                "v-07",
+                "songkhla"
+            ],
+            [
+                "v-08",
+                "surat"
+            ],
+            [
+                "v-08",
+                "nakon"
+            ],
+            [
+                "v-09",
+                "surat"
+            ],
+            [
+                "v-09",
+                "songkhla"
+            ],
+            [
+                "v-10",
+                "nakon"
+            ],
+            [
+                "v-10",
+                "songkhla"
+            ],
+            [
+                "v-11",
+                "chumphon"
+            ],
+            [
+                "v-11",
+                "surat"
+            ],
+            [
+                "v-11",
+                "nakon"
+            ],
+            [
+                "v-12",
+                "chumphon"
+            ],
+            [
+                "v-12",
+                "surat"
+            ],
+            [
+                "v-12",
+                "songkhla"
+            ],
+            [
+                "v-13",
+                "chumphon"
+            ],
+            [
+                "v-13",
+                "nakon"
+            ],
+            [
+                "v-13",
+                "songkhla"
+            ],
+            [
+                "v-14",
+                "surat"
+            ],
+            [
+                "v-14",
+                "nakon"
+            ],
+            [
+                "v-14",
+                "songkhla"
+            ],
+            [
+                "v-15",
+                "chumphon"
+            ],
+            [
+                "v-15",
+                "surat"
+            ],
+            [
+                "v-15",
+                "nakon"
+            ],
+            [
+                "v-15",
+                "songkhla"
+            ]
+        ],
+        "ship_capability": [
+            [
+                "chumphon",
+                "small"
+            ],
+            [
+                "chumphon",
+                "medium"
+            ],
+            [
+                "chumphon",
+                "large"
+            ],
+            [
+                "surat",
+                "medium"
+            ],
+            [
+                "surat",
+                "large"
+            ],
+            [
+                "nakon",
+                "medium"
+            ],
+            [
+                "nakon",
+                "large"
+            ],
+            [
+                "songkhla",
+                "large"
+            ]
+        ]
+    },
+    "parameters": {
+        "number_of_men": {
+            "chumphon": 475,
+            "surat": 659,
+            "nakon": 672,
+            "songkhla": 1123
+        },
+        "ship_capacity": {
+            "small": 100,
+            "medium": 200,
+            "large": 600
+        },
+        "number_of_ships": {
+            "small": 2,
+            "medium": 3,
+            "large": 4
+        },
+        "dist": {
+            "v-01": 370,
+            "v-02": 460,
+            "v-03": 600,
+            "v-04": 750,
+            "v-05": 515,
+            "v-06": 640,
+            "v-07": 810,
+            "v-08": 665,
+            "v-09": 665,
+            "v-10": 800,
+            "v-11": 720,
+            "v-12": 860,
+            "v-13": 840,
+            "v-14": 865,
+            "v-15": 920
+        },
+        "weights": {
+            "w1": 1.0,
+            "w2": 0.01,
+            "w3": 0.0001
+        }
+    }
+}
