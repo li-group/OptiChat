@@ -25,18 +25,24 @@ from prompts import get_prompts, get_tools, get_syntax_guidance_tool
 from agents import Interpreter, Coordinator, Explainer, Engineer
 
 
+#=========================get_agents=====================================
+#initialize and returns the four main agents: Interpreter, Explainer, Engineer, and Coordinator.
 def get_agents(fn_names, client, llm_model_name):
+    # Interpreter: Handles parsing and understanding of prompts or messages.
     interpreter = Interpreter(client=client, llm=llm_model_name)
+    # Explainer: Provides explanations based on model reasoning.
     explainer = Explainer(client=client, llm=llm_model_name)
 
     multiple_tools, single_tools, none_tools, all_tools, tool_choice = get_tools(fn_names, llm_model_name)
     syntax_guidance_tool = get_syntax_guidance_tool(llm_model_name)
+    # Engineer: Executes tool-based reasoning with syntax/tool guidance.
     engineer = Engineer(client=client, llm=llm_model_name,
                         multiple_tools=multiple_tools, single_tools=single_tools,
                         none_tools=none_tools, all_tools=all_tools,
                         tool_choice=tool_choice,
                         syntax_guidance_tool=syntax_guidance_tool,
                         function_names=str(fn_names))
+    # Coordinator: Oversees collaboration between Explainer and Engineer.
     coordinator = Coordinator(client=client, agents=[explainer, engineer], llm=llm_model_name)
     return interpreter, explainer, engineer, coordinator
 

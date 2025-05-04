@@ -356,8 +356,8 @@ Human Expert Answer:
     elif prompt == 'test_prompt':
         return test_prompt
 
-
-def get_fn_json(fn_name, mode):
+#=========================get_fn_json_openai=====================================
+def get_fn_json_openai(fn_name, mode):
     if mode == 'multiple':
         fn_json_template = \
             {
@@ -687,14 +687,20 @@ def get_fn_json(fn_name, mode):
         return fn_delta_json_template
     return fn_json_template
 
+
+#=========================get_fn_json_gemini=====================================
+# Constructs function tool JSON schemas for Gemini models based on the given mode.
 def get_fn_json_gemini(fn_name, mode):
+    
+    # Helper to wrap a parameters dictionary into the Gemini-compatible tool schema
     def make_template(parameters):
         return {
             "name": fn_name,
             "description": "",  # Will be set below
             "parameters": parameters
         }
-
+        
+    # Builds the "parameters" schema for a standard function call
     def base_parameters(queried_component_indexes_schema):
         return {
             "type": "object",
@@ -718,7 +724,8 @@ def get_fn_json_gemini(fn_name, mode):
             },
             "required": ["queried_components", "queried_model"]
         }
-
+        
+    # Builds the "parameters" schema for a delta/modification function call
     def delta_parameters(queried_component_indexes_schema):
         return {
             "type": "object",
@@ -750,7 +757,8 @@ def get_fn_json_gemini(fn_name, mode):
             },
             "required": ["queried_components", "queried_model"]
         }
-
+    
+     # Determine the component_indexes schema based on the specified mode
     if mode == 'multiple':
         ci_schema = {
             "type": "array",
@@ -798,7 +806,9 @@ def get_fn_json_gemini(fn_name, mode):
     return fn_json_template
 
 
-def get_syntax_guidance_fn_json():
+#=========================get_syntax_guidance_fn_openai=====================================
+# Function to generate the syntax guidance function's JSON template for OpenAI
+def get_syntax_guidance_fn_openai():
     fn_json_template = \
         {
             "type": "function",
@@ -823,7 +833,10 @@ def get_syntax_guidance_fn_json():
 
     return fn_json_template
 
-def get_syntax_guidance_tool_gemini():
+
+#=========================get_syntax_guidance_fn_gemini=====================================
+# Function to generate the syntax guidance function's JSON template for gemini
+def get_syntax_guidance_fn_gemini():
     return {
         "name": "syntax_guidance",
         "description": (
@@ -850,34 +863,25 @@ def get_syntax_guidance_tool_gemini():
             "required": ["queried_function", "queried_components", "queried_model"]
         }
     }
-
-
-# def get_tools(fn_names):
-#     multiple_tools = []
-#     single_tools = []
-#     none_tools = []
-#     all_tools = []
-#     for fn_name in fn_names:
-#         if fn_name != 'external_tools':
-#             multiple_tools.append(get_fn_json(fn_name, 'multiple'))
-#             single_tools.append(get_fn_json(fn_name, 'single'))
-#             none_tools.append(get_fn_json(fn_name, 'none'))
-#             all_tools.append(get_fn_json(fn_name, 'all'))
-#     return multiple_tools, single_tools, none_tools, all_tools, 'auto'
-
+ 
+ 
+#=========================get_tools=====================================   
+#  Prepares tool schemas for different syntax modes based on the LLM provider.
 def get_tools(fn_names, llm_model_name):
+    # Choose the appropriate function-to-tool conversion utility based on LLM type
     if llm_model_name.startswith("gpt"):
-        get_fn = get_fn_json
+        get_fn = get_fn_json_openai
     elif llm_model_name.startswith("gemini"):
         get_fn = get_fn_json_gemini
     else:
         raise ValueError("Invalid provider. Choose 'openai' or 'gemini'.")
-
+    # Initialize tool lists for different usage scenarios
     multiple_tools = []
     single_tools = []
     none_tools = []
     all_tools = []
-
+    
+    # Generate tool definitions for each function name
     for fn_name in fn_names:
         if fn_name != 'external_tools':
             multiple_tools.append(get_fn(fn_name, 'multiple'))
@@ -888,17 +892,13 @@ def get_tools(fn_names, llm_model_name):
     return multiple_tools, single_tools, none_tools, all_tools, 'auto'
 
 
-# def get_syntax_guidance_tool():
-#     syntax_guidance_fn_json = get_syntax_guidance_fn_json()
-#     syntax_guidance_tool = [syntax_guidance_fn_json]
-#     return syntax_guidance_tool
-
-
+#=========================get_syntax_guidance_tool=====================================
+#Returns the appropriate syntax guidance tool definition based on the LLM provider.
 def get_syntax_guidance_tool(llm_model_name):
     if llm_model_name.startswith("gpt"):
-        syntax_guidance_fn_json = get_syntax_guidance_fn_json()  # Use OpenAI version
+        syntax_guidance_fn_json = get_syntax_guidance_fn_openai()  # Use OpenAI version
     elif llm_model_name.startswith("gemini"):
-        syntax_guidance_fn_json = get_syntax_guidance_tool_gemini()  # Use Gemini version
+        syntax_guidance_fn_json = get_syntax_guidance_fn_gemini()  # Use Gemini version
     else:
         raise ValueError("Invalid provider. Choose 'openai' or 'gemini'.")
     return [syntax_guidance_fn_json]

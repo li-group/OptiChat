@@ -715,13 +715,17 @@ class Engineer(Agent):
         self.fake_team_conversation.append({"agent_name": 'Execution result', "agent_response": execution_rst})
         return src_code, execution_rst
     
-    def tool_call_exp(self, prompt: Optional[str] = None, messages: Optional[List] = None,
+    #============function_call_exp function====================================================== 
+    # This function handles making API calls to diff LLMs
+    #old function name= tool_call_exp
+    def function_call_exp(self, prompt: Optional[str] = None, messages: Optional[List] = None,
                       seed: int = 10, temperature: float = 0.1,
                       is_syntax_guidance: bool = False,
                       syntax_mode: str = 'none'):
 
         # make sure exactly one of prompt or messages is provided
         assert (prompt is None) != (messages is None)
+        
         # make sure if messages is provided, it is a list of dicts with role and content
         if messages is not None:
             assert isinstance(messages, list)
@@ -729,13 +733,14 @@ class Engineer(Agent):
                 assert isinstance(message, dict)
                 assert "role" in message
                 assert "content" in message
-
+        
+        # If only prompt is provided, wrap it in a standard system/user message format
         if not prompt is None:
             messages = [
                 {"role": "system", "content": self.system_prompt},
                 {"role": "user", "content": prompt},
             ]
-
+        # Determine tool configuration based on syntax guidance or specified mode
         if is_syntax_guidance:
             tools = self.syntax_guidance_tool
             tool_choice = {"type": "function", "function": {"name": "syntax_guidance"}}
@@ -773,6 +778,7 @@ class Engineer(Agent):
         elif isinstance(self.client, genai.GenerativeModel):
             # Handling Gemini models
             response = self.client.generate_content(messages[1]["content"], tools=tools)
+            print(response)
             
             if response.candidates and response.candidates[0].content.parts and hasattr(response.candidates[0].content.parts[0], 'functionCall') and response.candidates[0].content.parts[0].functionCall:
                 fn_call = response.candidates[0].content.parts[0].functionCall
@@ -780,6 +786,7 @@ class Engineer(Agent):
                 fn_args = fn_call.arguments
         else:
             raise Exception("Client type not supported!")
+        
         print(f'function name = {fn_name}')
         print(f'function arguments = {fn_args}')
         return fn_name, fn_args
@@ -801,7 +808,7 @@ class Engineer(Agent):
             self.syntax_cnt -= 1
             try:
                 syntax_start = time.time()
-                fn_name, fn_args = self.tool_call_exp(messages=pseudo_messages,
+                fn_name, fn_args = self.function_call_exp(messages=pseudo_messages,
                                                       seed=self.syntax_cnt, temperature=args.temperature,
                                                       is_syntax_guidance=True)
                 syntax_end = time.time()
@@ -834,7 +841,7 @@ class Engineer(Agent):
             self.operator_cnt -= 1
             try:
                 syntax_start = time.time()
-                fn_name, fn_args = self.tool_call_exp(messages=pseudo_messages,
+                fn_name, fn_args = self.function_call_exp(messages=pseudo_messages,
                                                       seed=self.operator_cnt, temperature=args.temperature,
                                                       is_syntax_guidance=False,
                                                       syntax_mode=syntax_mode)
