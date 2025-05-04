@@ -1,12 +1,18 @@
 import networkx as nx
 import matplotlib.pyplot as plt
+import json
+
+data = globals().get("data", {})
+# with open("RTN_data.json", "r") as file:
+#     data = json.load(file)
+
 
 net = nx.Graph()  # create network
-nodes = ["A", "B", "C", "D", "E", "F", "V", "Rx1", "Rx2", "Rx3"]  # node labels
-R = ["A", "B", "C", "D", "E", "F", "V"]  # resource nodes
-Rreact = ["A", "B", "C"]  # reactants
-Rprod = ["D", "E", "F"]  # products
-I = ["Rx1", "Rx2", "Rx3"]  # task nodes
+nodes = data['sets']['nodes'] # node labels
+R = data['sets']['resources']  # resource nodes
+Rreact = data['sets']['reactants']  # reactants
+Rprod = data['sets']['products']  # products
+I = data['sets']['tasks']   # task nodes
 
 # create nodes
 for n in nodes:
@@ -24,23 +30,8 @@ for n in nodes:
                      Xmax=1)  # X0 = number of reactors available initially, Xmin = minimum number of available reactors (busy reactor = 0 available), Xmax = number of reactors
 
 # connect network
-net.add_edges_from([
-    ("A", "Rx1"),
-    ("B", "Rx1"),
-    ("D", "Rx1"),
-
-    ("A", "Rx2"),
-    ("C", "Rx2"),
-    ("E", "Rx2"),
-
-    ("B", "Rx3"),
-    ("C", "Rx3"),
-    ("F", "Rx3"),
-
-    ("V", "Rx1"),
-    ("V", "Rx2"),
-    ("V", "Rx3"),
-])
+net.add_edges_from(data['sets']['edges'])
+print(net)
 
 # add metadata to the edges
 # mu is the fixed consumption/production ratio

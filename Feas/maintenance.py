@@ -1,73 +1,37 @@
 import pyomo.environ as pyo
+import json
+
+data = globals().get("data", {})
+# with open('maintenance_data.json') as f:
+#     data = json.load(f)
 
 # Create the Pyomo model
 model = pyo.ConcreteModel()
 
 # Define sets
-model.L = pyo.RangeSet(2, doc="Sections")
-model.I = pyo.Set(initialize=["Repair", "Replace"], doc="Event Types")
-model.J = pyo.RangeSet(10, doc="Part Numbers")
-model.T = pyo.RangeSet(25, doc="Month Number (Time Index)")
-model.K = pyo.Set(initialize=[(1, 1), (1, 2), (1, 3), (1, 4), (1, 5), (1, 6), 
-                              (2, 1), (2, 7), (2, 8), (2, 9), (2, 10)], domain=model.L*model.J, 
+model.L = pyo.Set(initialize=data['sets']['Sections'])
+model.I = pyo.Set(initialize=data['sets']['Event_Types'])
+model.J = pyo.Set(initialize=data['sets']['Part_Numbers'])
+model.T = pyo.Set(initialize=data['sets']['Months'])
+model.K = pyo.Set(initialize=[tuple(k) for k in data['sets']['Section_Parts']], domain=model.L*model.J, 
                               doc="The Parts in Each Section")
+
 
 # Define parameters
 model.f = pyo.Param(model.K, model.I, initialize={
-    (1, 1, "Repair"): 3,
-    (1, 1, "Replace"): 5,
-    (1, 2, "Repair"): 3,
-    (1, 2, "Replace"): 7,
-    (1, 3, "Repair"): 3,
-    (1, 3, "Replace"): 4,
-    (1, 4, "Repair"): 4,
-    (1, 4, "Replace"): 6,
-    (1, 5, "Repair"): 4,
-    (1, 5, "Replace"): 9,
-    (1, 6, "Repair"): 5,
-    (1, 6, "Replace"): 9,
-    (2, 1, "Repair"): 4,
-    (2, 1, "Replace"): 6,
-    (2, 7, "Repair"): 5,
-    (2, 7, "Replace"): 9,
-    (2, 8, "Repair"): 4,
-    (2, 8, "Replace"): 8,
-    (2, 9, "Repair"): 3,
-    (2, 9, "Replace"): 7,
-    (2, 10, "Repair"): 4,
-    (2, 10, "Replace"): 10,
+    eval(k): v for k, v in data['parameters']['Minimum_Maintenance_Periods'].items()
 }, doc="Minimum Maintenance Periods for Each Event and Part", mutable=True)
 
 model.c = pyo.Param(model.K, model.I, initialize={
-    (1, 1, "Repair"): 200,
-    (1, 1, "Replace"): 300,
-    (1, 2, "Repair"): 350,
-    (1, 2, "Replace"): 250,
-    (1, 3, "Repair"): 100,
-    (1, 3, "Replace"): 300,
-    (1, 4, "Repair"): 300,
-    (1, 4, "Replace"): 500,
-    (1, 5, "Repair"): 300,
-    (1, 5, "Replace"): 100,
-    (1, 6, "Repair"): 100,
-    (1, 6, "Replace"): 100,
-    (2, 1, "Repair"): 200,
-    (2, 1, "Replace"): 300,
-    (2, 7, "Repair"): 250,
-    (2, 7, "Replace"): 150,
-    (2, 8, "Repair"): 200,
-    (2, 8, "Replace"): 300,
-    (2, 9, "Repair"): 200,
-    (2, 9, "Replace"): 180,
-    (2, 10, "Repair"): 200,
-    (2, 10, "Replace"): 190,
+    eval(k): v for k, v in data['parameters']['Event_Cost'].items()
 }, doc="Event Cost (INR)", mutable=True)
 
-model.w = pyo.Param(initialize=1, doc="Pullback Window (for event consolidation)", mutable=True)
 
-model.oc = pyo.Param(initialize=2000, doc="Shutdown Cost (INR)", mutable=True)
+model.w = pyo.Param(initialize=data['parameters']['Pullback_Window'], doc="Pullback Window (for event consolidation)", mutable=True)
 
-model.m = pyo.Param(initialize=22, doc="Big-M Value (maximum simultaneous events, lower case due to formatting rules)", mutable=True)
+model.oc = pyo.Param(initialize=data['parameters']['Shutdown_Cost'], doc="Shutdown Cost (INR)", mutable=True)
+
+model.m = pyo.Param(initialize=data['parameters']['BigM'], doc="Big-M Value (maximum simultaneous events, lower case due to formatting rules)", mutable=True)
 
 # Define variables
 model.x = pyo.Var(model.K, model.I, model.T, domain=pyo.Binary, doc="Perform Event i for Part j in Section l at Time t")

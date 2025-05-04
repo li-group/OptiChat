@@ -714,7 +714,7 @@ class Engineer(Agent):
             f.write(execution_rst)
         self.fake_team_conversation.append({"agent_name": 'Execution result', "agent_response": execution_rst})
         return src_code, execution_rst
-
+    
     def tool_call_exp(self, prompt: Optional[str] = None, messages: Optional[List] = None,
                       seed: int = 10, temperature: float = 0.1,
                       is_syntax_guidance: bool = False,
@@ -752,7 +752,9 @@ class Engineer(Agent):
                 raise Exception("Invalid mode!")
             tool_choice = "required"
 
+
         if type(self.client) in [OpenAI, Client]:
+            # Handling OpenAI models using chat.completion API
             completion = self.client.chat.completions.create(
                 model=self.llm,
                 messages=messages,
@@ -766,13 +768,23 @@ class Engineer(Agent):
                 fn_call = completion.choices[0].message.tool_calls[0].function
                 fn_name = fn_call.name
                 fn_args = fn_call.arguments
-                print(f'function name = {fn_name}')
-                print(f'function arguments = {fn_args}')
-            else:
-                raise Exception("No tool call executed by Operator, perhaps because of the 'auto' tool choice!")
+                
+                
+        elif isinstance(self.client, genai.GenerativeModel):
+            # Handling Gemini models
+            response = self.client.generate_content(messages[1]["content"], tools=tools)
+            
+            if response.candidates and response.candidates[0].content.parts and hasattr(response.candidates[0].content.parts[0], 'functionCall') and response.candidates[0].content.parts[0].functionCall:
+                fn_call = response.candidates[0].content.parts[0].functionCall
+                fn_name = fn_call.name
+                fn_args = fn_call.arguments
         else:
             raise Exception("Client type not supported!")
+        print(f'function name = {fn_name}')
+        print(f'function arguments = {fn_args}')
         return fn_name, fn_args
+
+
 
     def generate_syntax_exp(self, args, messages, team_conversation, models_dict):
         while not self.syntax_success and self.syntax_cnt > 0:

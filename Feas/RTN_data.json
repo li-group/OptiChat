@@ -1,0 +1,15 @@
+{
+    "sets": {
+      "nodes": ["A", "B", "C", "D", "E", "F", "V", "Rx1", "Rx2", "Rx3"],
+      "resources": ["A", "B", "C", "D", "E", "F", "V"],
+      "reactants": ["A", "B", "C"],
+      "products": ["D", "E", "F"],
+      "tasks": ["Rx1", "Rx2", "Rx3"],
+      "edges": [
+        ["A", "Rx1"], ["B", "Rx1"], ["D", "Rx1"],
+        ["A", "Rx2"], ["C", "Rx2"], ["E", "Rx2"],
+        ["B", "Rx3"], ["C", "Rx3"], ["F", "Rx3"],
+        ["V", "Rx1"], ["V", "Rx2"], ["V", "Rx3"]
+      ]
+    }
+  }

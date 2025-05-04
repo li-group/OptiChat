@@ -25,19 +25,19 @@ from prompts import get_prompts, get_tools, get_syntax_guidance_tool
 from agents import Interpreter, Coordinator, Explainer, Engineer
 
 
-def get_agents(fn_names, client, llm='gpt-4-turbo-preview'):
-    interpreter = Interpreter(client=client, llm=llm)
-    explainer = Explainer(client=client, llm=llm)
+def get_agents(fn_names, client, llm_model_name):
+    interpreter = Interpreter(client=client, llm=llm_model_name)
+    explainer = Explainer(client=client, llm=llm_model_name)
 
-    multiple_tools, single_tools, none_tools, all_tools, tool_choice = get_tools(fn_names)
-    syntax_guidance_tool = get_syntax_guidance_tool()
-    engineer = Engineer(client=client, llm=llm,
+    multiple_tools, single_tools, none_tools, all_tools, tool_choice = get_tools(fn_names, llm_model_name)
+    syntax_guidance_tool = get_syntax_guidance_tool(llm_model_name)
+    engineer = Engineer(client=client, llm=llm_model_name,
                         multiple_tools=multiple_tools, single_tools=single_tools,
                         none_tools=none_tools, all_tools=all_tools,
                         tool_choice=tool_choice,
                         syntax_guidance_tool=syntax_guidance_tool,
                         function_names=str(fn_names))
-    coordinator = Coordinator(client=client, agents=[explainer, engineer], llm=llm)
+    coordinator = Coordinator(client=client, agents=[explainer, engineer], llm=llm_model_name)
     return interpreter, explainer, engineer, coordinator
 
 

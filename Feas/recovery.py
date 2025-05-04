@@ -1,14 +1,19 @@
 import numpy as np
 import pyomo.environ as pyo
+import json
+
+data = globals().get("data", {})
+# with open("recovery_data.json", "r") as file:
+#     data = json.load(file)
 
 np.random.seed(15)
 
-len_K = 10
-len_I = 5
-len_J = 3
-len_M = 5
-len_L = 10
-len_N = 2
+len_K = data['sets']['K']
+len_I = data['sets']['I']
+len_J = data['sets']['J']
+len_M = data['sets']['M']
+len_L = data['sets']['L']
+len_N = data['sets']['N']
 
 # Initialize Parameters Randomly as per the Paper
 d = np.random.uniform(350,550,len_L)

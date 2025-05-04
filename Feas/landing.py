@@ -11,6 +11,7 @@ model = pyo.ConcreteModel()
 data = globals().get("data", {})
 # with open('landing_data.json') as f:
 #     data = json.load(f)
+
 # Define parameters
 # Define sets
 model.N_aircraft = pyo.Param(initialize=data['parameters']['Number_of_aircraft'], doc="number of aircraft in approach")

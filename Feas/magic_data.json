@@ -1,0 +1,54 @@
+{
+    "sets": {
+      "Demand_Block": ["12pm-6am", "6am-9am", "9am-3pm", "3pm-6pm", "6pm-12pm"],
+      "Generators": ["type-1", "type-2", "type-3"],
+      "predecessors": {
+        "6am-9am": "12pm-6am",
+        "9am-3pm": "6am-9am",
+        "3pm-6pm": "9am-3pm",
+        "6pm-12pm": "3pm-6pm"
+    }
+    },
+    "parameters": {
+      "demand": {
+        "12pm-6am": 15,
+        "6am-9am": 30,
+        "9am-3pm": 25,
+        "3pm-6pm": 40,
+        "6pm-12pm": 27
+      },
+      "duration": {
+        "12pm-6am": 6,
+        "6am-9am": 3,
+        "9am-3pm": 6,
+        "3pm-6pm": 3,
+        "6pm-12pm": 6
+      },
+      "generation_data": {
+        "type-1": {
+          "min_pow": 0.85,
+          "max_pow": 2.0,
+          "cost_min": 1000,
+          "cost_inc": 2.0,
+          "start": 2000,
+          "number": 12
+        },
+        "type-2": {
+          "min_pow": 1.25,
+          "max_pow": 1.75,
+          "cost_min": 2600,
+          "cost_inc": 1.3,
+          "start": 1000,
+          "number": 10
+        },
+        "type-3": {
+          "min_pow": 1.5,
+          "max_pow": 4.0,
+          "cost_min": 3000,
+          "cost_inc": 3.0,
+          "start": 500,
+          "number": 5
+        }
+      }
+    }
+  }

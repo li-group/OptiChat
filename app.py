@@ -54,6 +54,7 @@ llm_model = st.sidebar.selectbox(
     options=["gpt-4-turbo-preview", "gpt-4-turbo", "gpt-4-1106-preview", 
              "gpt-4", "gpt-3.5-turbo", "gpt-3.5-turbo-16k", 
              "gemini-1.5-flash"], )
+st.session_state['llm_model_name']=llm_model
 
 #======setting up access token to use API===============
 
@@ -62,6 +63,8 @@ if llm_model.startswith("gpt"):
     st.session_state["llm_model"] = llm_model
     client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
     st.session_state['client'] = client
+    
+
     
 # setting up API key for Gemini
 elif llm_model.startswith("gemini"):
@@ -72,6 +75,8 @@ elif llm_model.startswith("gemini"):
     
 else:
     print("select a model")
+
+# Print the client object and its type for debugging
 print(f"Client object: {client}")
 print(f"Client type: {type(client)}")
 
@@ -97,9 +102,10 @@ st.session_state['fn_names'] = ["feasibility_restoration",
                                 "evaluate_modification",
                                 "external_tools"]
 
+
 interpreter, explainer, engineer, coordinator = get_agents(st.session_state.fn_names,
                                                            st.session_state.client,
-                                                           st.session_state.llm_model)
+                                                           st.session_state.llm_model_name)
 st.session_state['Interpreter'] = interpreter
 st.session_state['Explainer'] = explainer
 st.session_state['Engineer'] = engineer
@@ -382,7 +388,7 @@ if prompt:
         st.session_state.models_dict
     )
 
-    print('OptiChat_out:', updated_messages)
+    #print('OptiChat_out:', updated_messages)
 
     if updated_messages:
         st.session_state.messages = updated_messages

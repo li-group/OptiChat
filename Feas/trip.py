@@ -1,16 +1,22 @@
 import pyomo.environ as pyo
 import numpy as np
+import json
+
+data = globals().get("data", {})
+# with open("trip_data.json", "r") as file:
+#     data = json.load(file)
 
 ## Given problem parameters
-n = 4
-h = 5
-edges = [(1,2),(1,3),(2,1),(2,4),(3,1),(3,4),(4,2),(4,3)]
+n = data['parameters']['n']
+h = data['parameters']['h']
+edges = [tuple(edge) for edge in data['parameters']['edges']]
+
 
 ## Fix the random seed
 np.random.seed(0)
 
 ## Big M constant
-M = 5000
+M = data['parameters']['M']
 
 ## Create the Pyomo model
 model = pyo.ConcreteModel()
@@ -34,44 +40,18 @@ model.f_d = pyo.Var(model.cal_A*model.N, within=pyo.NonNegativeReals, initialize
                     doc="traffic volume of each link with destination d")
 
 ## Define parametes
-model.beta = pyo.Param(model.N, model.N, initialize={
-    (1,1): 0.000, (1,2): 2.000, (1,3): 1.768, (1,4): 3.576,
-    (2,1): 2.000, (2,2): 0.000, (2,3): 3.768, (2,4): 2.348,
-    (3,1): 1.768, (3,2): 3.768, (3,3): 0.000, (3,4): 1.808,
-    (4,1): 3.576, (4,2): 2.348, (4,3): 1.808, (4,4): 0.000
+model.beta = pyo.Param(model.N, model.N, initialize={eval(k): v for k, v in data['parameters']['trip_completion_penalty'].items()
 }, doc="trip completion penalties", mutable = True)
 
 model.nu = pyo.Param(model.N, model.N, pyo.RangeSet(0,h-1,1), initialize={
-    (1,1,0): 0,  (1,2,0): 39, (1,3,0): 17, (1,4,0): 10,
-    (2,1,0): 40, (2,2,0): 0,  (2,3,0): 7,  (2,4,0): 38,
-    (3,1,0): 14, (3,2,0): 5,  (3,3,0): 0,  (3,4,0): 14,
-    (4,1,0): 10, (4,2,0): 36, (4,3,0): 14, (4,4,0): 0,
-    (1,1,1): 0,  (1,2,1): 45, (1,3,1): 17, (1,4,1): 11,
-    (2,1,1): 44, (2,2,1): 0,  (2,3,1): 5,  (2,4,1): 31,
-    (3,1,1): 21, (3,2,1): 5,  (3,3,1): 0,  (3,4,1): 15,
-    (4,1,1): 12, (4,2,1): 44, (4,3,1): 15, (4,4,1): 0,
-    (1,1,2): 0,  (1,2,2): 41, (1,3,2): 16, (1,4,2): 11,
-    (2,1,2): 38, (2,2,2): 0,  (2,3,2): 7,  (2,4,2): 29,
-    (3,1,2): 17, (3,2,2): 6,  (3,3,2): 0,  (3,4,2): 13,
-    (4,1,2): 13, (4,2,2): 36, (4,3,2): 13, (4,4,2): 0,
-    (1,1,3): 0,  (1,2,3): 37, (1,3,3): 14, (1,4,3): 12,
-    (2,1,3): 38, (2,2,3): 0,  (2,3,3): 7,  (2,4,3): 42,
-    (3,1,3): 15, (3,2,3): 6,  (3,3,3): 0,  (3,4,3): 13,
-    (4,1,3): 9,  (4,2,3): 35, (4,3,3): 12, (4,4,3): 0,
-    (1,1,4): 0,  (1,2,4): 44, (1,3,4): 17, (1,4,4): 12,
-    (2,1,4): 42, (2,2,4): 0,  (2,3,4): 5,  (2,4,4): 41,
-    (3,1,4): 17, (3,2,4): 6,  (3,3,4): 0,  (3,4,4): 16,
-    (4,1,4): 12, (4,2,4): 30, (4,3,4): 13, (4,4,4): 0,
+    eval(k): v for k, v in data['parameters']['travel_demand'].items()
 }, doc="travel demands", mutable=True)
 
 model.Txy = pyo.Param(model.N,model.N, initialize={
-    (1,2): 2.000, (1,3): 1.768, (2,4): 2.348, (3,4):1.808,
-    (2,1): 2.000, (3,1): 1.768, (4,2): 2.348, (4,3):1.808
+    eval(k): v for k, v in data['parameters']['freeflow_travel_time'].items()
 }, doc="freeflow travel time", mutable = True)
 
-model.Cxy = pyo.Param(model.N,model.N, initialize={
-    (1,2): 25.00, (1,3): 12.50, (2,4): 33.75, (3,4):12.50,
-    (2,1): 25.00, (3,1): 12.50, (4,2): 33.75, (4,3):12.50
+model.Cxy = pyo.Param(model.N,model.N, initialize={eval(k): v for k, v in data['parameters']['practical_capacity'].items()
 }, doc="Practical capacity", mutable = True)
 
 def c_init_rule(model, x, tau_x, y, tau_y):
