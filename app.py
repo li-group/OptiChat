@@ -19,7 +19,7 @@ def string_generator(long_string, chunk_size=50):
         time.sleep(0.1)  # Optionally add a small delay between each yield
 
 
-client = OpenAI(base_url="http://localhost:8012/v1/", api_key='None')
+client = OpenAI(base_url=os.environ['VLLM_URL'], api_key='None')
 st.session_state['client'] = client
 st.session_state['temperature'] = 0.1  # by default
 st.session_state['json_mode'] = True  # by default
@@ -38,7 +38,7 @@ gpt_model = st.sidebar.selectbox(label="GPT-Model", options=["ibnzterrell/Meta-L
 st.session_state["gpt_model"] = gpt_model
 # Set a default model
 if "gpt_model" not in st.session_state:
-    st.session_state["gpt_model"] = "ibnzterrell/Meta-Llama-3.3-70B-Instruct-AWQ-INT4"
+    st.session_state["gpt_model"] = os.environ['VLLM_MODEL']
 if "models_dict" not in st.session_state:
     st.session_state["models_dict"] = {"model_representation": {}}
 if "code" not in st.session_state:
