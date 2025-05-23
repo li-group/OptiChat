@@ -1,10 +1,10 @@
 import streamlit as st
 from openai import OpenAI
 import os
-from io import StringIO
+# from io import StringIO
 import time
-import tempfile
-import io
+# import tempfile
+# import io
 from extractor import initial_loading
 from extractor import update_model_representation, get_skipJSON, feed_skipJSON
 from utils import get_agents
@@ -19,7 +19,7 @@ def string_generator(long_string, chunk_size=50):
         time.sleep(0.1)  # Optionally add a small delay between each yield
 
 
-client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
+client = OpenAI(base_url="http://localhost:8012/v1/", api_key='None')
 st.session_state['client'] = client
 st.session_state['temperature'] = 0.1  # by default
 st.session_state['json_mode'] = True  # by default
@@ -34,11 +34,11 @@ st.set_page_config(layout='wide')
 st.title("OptiChat: Talk to your Optimization Model")
 
 
-gpt_model = st.sidebar.selectbox(label="GPT-Model", options=["gpt-4-turbo-preview", "gpt-4-turbo", "gpt-4-1106-preview", "gpt-4", "gpt-3.5-turbo", "gpt-3.5-turbo-16k"], )
+gpt_model = st.sidebar.selectbox(label="GPT-Model", options=["ibnzterrell/Meta-Llama-3.3-70B-Instruct-AWQ-INT4"])
 st.session_state["gpt_model"] = gpt_model
 # Set a default model
 if "gpt_model" not in st.session_state:
-    st.session_state["gpt_model"] = "gpt-4-turbo-preview"
+    st.session_state["gpt_model"] = "ibnzterrell/Meta-Llama-3.3-70B-Instruct-AWQ-INT4"
 if "models_dict" not in st.session_state:
     st.session_state["models_dict"] = {"model_representation": {}}
 if "code" not in st.session_state:
