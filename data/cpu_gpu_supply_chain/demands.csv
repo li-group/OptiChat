@@ -1,0 +1,13 @@
+node_id,product_type,demand,revenue_per_unit
+store1,cpu,500,500
+store1,gpu,400,2500
+store2,cpu,600,545
+store2,gpu,500,2450
+store3,cpu,700,560
+store3,gpu,600,2550
+store4,cpu,450,540
+store4,gpu,350,2475
+store5,cpu,580,555
+store5,gpu,480,2525
+store6,cpu,650,550
+store6,gpu,550,2500

@@ -18,8 +18,8 @@ def string_generator(long_string, chunk_size=50):
         yield long_string[i:i+chunk_size]
         time.sleep(0.1)  # Optionally add a small delay between each yield
 
-
-client = OpenAI(base_url=os.environ['VLLM_URL'], api_key='None')
+API_KEY = os.environ.get("API_KEY")
+client = OpenAI(base_url=os.environ['VLLM_URL'], api_key=API_KEY)
 st.session_state['client'] = client
 st.session_state['temperature'] = 0.1  # by default
 st.session_state['json_mode'] = True  # by default
