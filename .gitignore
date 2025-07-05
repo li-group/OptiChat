@@ -1,4 +1,5 @@
 # .gitignore
+!test_set/
 logs/
 # Python
 __pycache__/
