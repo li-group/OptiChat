@@ -133,6 +133,16 @@ Example: If the dimension of an indexed component is 2,
 the first dimension represents time, the second dimension represents location,
 the user specifies the location to be "NY", the time is not specified by users,
 then return the tuple ("__all__", "NY")
+
+- Must be careful with the data type of each index in the tuple by inspecting code
+Example: If the dimension of an indexed component is 2,
+the first dimension represents time, the second dimension represents location,
+the user specifies the time to be 9, the location to be "NY"
+then return the tuple (9, "NY") instead of ('9', "NY")
+
+**Note:** indexes are not specified unless the **exact** values are provided and the total number of values is less than the size of the dimension.
+Descriptions like "for all the indexes", "from one to ten (but the size of dimension is 10)" are considered as "Not specified",
+which MUST use "__all__" instead of enumerating all indexes.
 """
             return tuple_guidance, mode
 
@@ -143,6 +153,10 @@ When specific index provided, fill in the type of {type(pattern)}
 If no specific index provided, return "__all__" in string
 
 - "__all__" is placeholder that represents all indexes that user didn't specify
+
+**Note:** indexes are not specified unless the **exact** values are provided and the total number of values is less than the size of the dimension.
+Descriptions like "for all the indexes", "from one to ten (but the size of dimension is 10)" are considered as "Not specified",
+which MUST use "__all__" instead of enumerating all indexes.
 """
             return primitive_guidance, mode
 
@@ -291,12 +305,16 @@ Users need to provide a valid parameter for feasibility restoration."""
     model.slack_iis_constraints = pe.ConstraintList()
     for consts in original_consts:
         for const_idx in consts.index_set():
-            const = consts[const_idx]
-            new_expr = clone_expression(const.expr)
-            for replacements in replacements_list:
-                new_expr = replace_expressions(new_expr, replacements)
-            model.slack_iis_constraints.add(new_expr)
-            const.deactivate()
+            try:
+                const = consts[const_idx]
+                new_expr = clone_expression(const.expr)
+                for replacements in replacements_list:
+                    new_expr = replace_expressions(new_expr, replacements)
+                model.slack_iis_constraints.add(new_expr)
+                const.deactivate()
+            except Exception as e:
+                print(f"Skip the skipped constraint")
+
     # replace objective
     objectives = model.component_objects(pe.Objective, active=True)
     for obj in objectives:

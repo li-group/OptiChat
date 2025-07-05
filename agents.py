@@ -127,11 +127,20 @@ class Agent:
             response_format = {"type": "text"}
 
         if type(self.client) in [OpenAI, Client]:
-            completion = self.client.chat.completions.create(
+            if self.llm not in ["o3"]:
+                completion = self.client.chat.completions.create(
                 model=self.llm,
                 messages=messages,
                 seed=seed,
                 temperature=temperature,
+                response_format=response_format,
+                stream=stream,
+                )
+            else:
+                completion = self.client.chat.completions.create(
+                model=self.llm,
+                messages=messages,
+                seed=seed,
                 response_format=response_format,
                 stream=stream,
                 )
@@ -633,8 +642,9 @@ class Engineer(Agent):
         self.queried_function = None
 
     def execute_code(self, revision_code, print_code):
-        src_code = insert_code(self.source_code, revision_code, 'REVISION')
-        src_code = insert_code(src_code, print_code, 'PRINT')
+        #src_code = insert_code(self.source_code, revision_code, 'REVISION')
+        # src_code = insert_code(src_code, print_code, 'PRINT')
+        src_code = self.source_code + "\n" + revision_code
         execution_rst = run_with_exec(src_code)
 
         # save the complete code as .py
@@ -684,14 +694,24 @@ class Engineer(Agent):
             tool_choice = "required"
 
         if type(self.client) in [OpenAI, Client]:
-            completion = self.client.chat.completions.create(
+            if self.llm not in ["o3"]:
+                completion = self.client.chat.completions.create(
                 model=self.llm,
                 messages=messages,
                 seed=seed,
                 temperature=temperature,
                 tools=tools,
                 tool_choice=tool_choice
-            )
+                )
+            else:
+                completion = self.client.chat.completions.create(
+                model=self.llm,
+                messages=messages,
+                seed=seed,
+                tools=tools,
+                tool_choice=tool_choice
+                )
+
             if completion.choices[0].message.tool_calls:
                 # internal tool is called
                 fn_call = completion.choices[0].message.tool_calls[0].function
@@ -802,11 +822,13 @@ class Engineer(Agent):
             self.programmer_cnt -= 1
             try:
                 snippets = re.findall(self.pattern, code_output, flags=re.DOTALL)
-                assert len(snippets) <= 2
-                assert snippets[0][0] == 'python'
-                assert snippets[1][0] == 'python'
+                # assert len(snippets) <= 2
+                # assert snippets[0][0] == 'python'
+                # assert snippets[1][0] == 'python'
+                # revision_code = snippets[0][1]
+                # print_code = snippets[1][1]
                 revision_code = snippets[0][1]
-                print_code = snippets[1][1]
+                print_code = ""
                 self.programmer_success = True
                 self.fake_team_conversation.append({"agent_name": 'Programmer', "agent_response": code_output})
                 return code_output, revision_code, print_code
@@ -823,22 +845,35 @@ class Engineer(Agent):
     def evaluator_loop_exp(self, args, pseudo_messages):
         while self.evaluator_cnt > 0:
             evaluation_start = time.time()
+            # evaluation_output = self.llm_call_exp(messages=pseudo_messages,
+            #                                       seed=self.evaluator_cnt, temperature=args.temperature,
+            #                                       json_mode=args.json_mode, stream=False)
             evaluation_output = self.llm_call_exp(messages=pseudo_messages,
                                                   seed=self.evaluator_cnt, temperature=args.temperature,
-                                                  json_mode=args.json_mode, stream=False)
+                                                  json_mode=True, stream=False)
             evaluation_end = time.time()
             self.evaluation_time += (evaluation_end - evaluation_start)
 
             self.evaluator_cnt -= 1
             try:
-                evaluation = evaluation_output.strip()
-                if "```json" in evaluation:
-                    evaluation = evaluation.split("```json")[1].split("```")[0]
-                evaluation = evaluation.replace("\\", "")
-                # print('Code review:', evaluation)
-                evaluation = json.loads(evaluation)
+                # evaluation = evaluation_output.strip()
+                # if "```json" in evaluation:
+                #     evaluation = evaluation.split("```json")[1].split("```")[0]
+                # evaluation = evaluation.replace("\\", "")
+                # # print('Code review:', evaluation)
+                # evaluation = json.loads(evaluation)
+
+                # delete until the first '```json'
+                if "```json" in evaluation_output:
+                    evaluation_output = evaluation_output[evaluation_output.find("```json") + 7:]
+                    evaluation_output = evaluation_output[: evaluation_output.rfind("```")]
+                start = evaluation_output.find("{")
+                end = evaluation_output.rfind("}")
+                evaluation_output = evaluation_output[start:end + 1]
+                evaluation = json.loads(evaluation_output)
                 decision = evaluation["decision"]
                 comment = evaluation["comment"]
+
                 self.evaluator_success = True
                 self.fake_team_conversation.append({"agent_name": 'Evaluator', "agent_response": evaluation_output})
                 return evaluation_output, decision, comment
@@ -861,8 +896,8 @@ class Engineer(Agent):
         while self.debug_times_left > 0:
             # Only init the cnt for programmer and evaluator for every debugging loop
             # because _init_cnt() will reset all the success, cnt, debug_times_left
-            self.programmer_cnt = 3
-            self.evaluator_cnt = 3
+            self.programmer_cnt = 2
+            self.evaluator_cnt = 2
             # until the programmer generates the code in correct format
             programmer_prompt = self.programmer_prompt_template
             pseudo_messages = self.generate_pseudo_messages(messages, self.fake_team_conversation, programmer_prompt)

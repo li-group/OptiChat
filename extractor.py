@@ -409,14 +409,15 @@ def insert_code(src_code: str, new_lines: str, code_type: str) -> str:
 
     insert a code patch into the source code.
     """
-    # # for now, we have # OPTICHAT REVISION CODE GOES HERE and # OPTICHAT PRINT CODE GOES HERE
-    # return replace(src_code, '# CODE GOES HERE', new_lines)
-    if code_type == 'REVISION':
-        return replace(src_code, f"# OPTICHAT {code_type} CODE GOES HERE", new_lines)
-    elif code_type == 'PRINT':
-        return replace(src_code, f"# OPTICHAT {code_type} CODE GOES HERE", new_lines)
-    else:
-        raise ValueError(f"Invalid code type: {code_type}")
+    # # # for now, we have # OPTICHAT REVISION CODE GOES HERE and # OPTICHAT PRINT CODE GOES HERE
+    # # return replace(src_code, '# CODE GOES HERE', new_lines)
+    # if code_type == 'REVISION':
+    #     return replace(src_code, f"# OPTICHAT {code_type} CODE GOES HERE", new_lines)
+    # elif code_type == 'PRINT':
+    #     return replace(src_code, f"# OPTICHAT {code_type} CODE GOES HERE", new_lines)
+    # else:
+    #     raise ValueError(f"Invalid code type: {code_type}")
+    return replace(src_code, f"# YOUR CODE GOES HERE", new_lines)
 
 
 def run_with_exec(src_code: str):

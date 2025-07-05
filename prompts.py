@@ -10,15 +10,15 @@ Example: "How many [component name] are currently available"
 """
 sensitivity_analysis_fn_description = """
 Use when: The model is feasible and you want to understand the impact of changing [component name] on the optimal objective value, **without specifying the extent of changes**.
-Example: “How will the optimal profit change with the change in the [component name]”
-Example: "How stable is the objective value in response to variations in the [component name]"
-Example: "Will the optimal value be greatly affected if we have more [component name]"
+Example: “How will the optimal profit change with the change in the [component name]” (didn't specify how much the change is)
+Example: "How stable is the objective value in response to variations in the [component name]" (didn't specify how much the change is)
+Example: "Will the optimal value be greatly affected if we have more [component name]" (didn't specify how much the change is)
 """
 evaluate_modification_fn_description = """
 Use when: The model is feasible and you want to understand the impact of changing [component name] on the optimal objective value, **by specifying the extent of changes**.
-Example: “How will the optimal profit change with **a 10% increase** in the [component name]”
-Example: "How stable is the objective value in response to the modification that [component name] is **decreased by 20 units**"
-Example: "Will the optimal value be greatly affected if we have *two* more [component name]"
+Example: “How will the optimal profit change with **a 10% increase** in the [component name]” (specified the change is **a 10% increase**)
+Example: "How stable is the objective value in response to the modification that [component name] is **decreased by 20 units**" (specified the change is **decreased by 20 units**)
+Example: "Will the optimal value be greatly affected if we have **two more** [component name]" (specified the change is **two more**)
 """
 
 
@@ -185,16 +185,16 @@ Example: "How many [component name] are currently available"
 
 3. sensitivity_analysis:
 Use when: The model is feasible and you want to understand the impact of changing [component name] on the optimal objective value, **without specifying the extent of changes**.
-Example: “How will the optimal profit change with the change in the [component name]”
-Example: "How stable is the objective value in response to variations in the [component name]"
-Example: "Will the optimal value be greatly affected if we have more [component name]"
+Example: “How will the optimal profit change with the change in the [component name]” (didn't specify how much the change is)
+Example: "How stable is the objective value in response to variations in the [component name]" (didn't specify how much the change is)
+Example: "Will the optimal value be greatly affected if we have more [component name]" (didn't specify how much the change is)
 [component name] category: parameters.
 
 4. evaluate_modification:
 Use when: The model is feasible and you want to understand the impact of changing [component name] on the optimal objective value, **by specifying the extent of changes**.
-Example: “How will the optimal profit change with **a 10% increase** in the [component name]”
-Example: "How stable is the objective value in response to the modification that [component name] is **decreased by 20 units**"
-Example: "Will the optimal value be greatly affected if we have *two* more [component name]"
+Example: “How will the optimal profit change with **a 10% increase** in the [component name]” (specified the change is **a 10% increase**)
+Example: "How stable is the objective value in response to the modification that [component name] is **decreased by 20 units**" (specified the change is **decreased by 20 units**)
+Example: "Will the optimal value be greatly affected if we have **two more** [component name]" (specified the change is **two more**)
 [component name] category: parameters or variables.
 
 5. external_tools:
@@ -218,87 +218,172 @@ You're an optimization expert who helps your team to access and interact with op
 Your task is to invoke the most appropriate tool correctly based on the user's query and system reminders.
 """
 
-    code_reminder_prompt = """
-{source_code}
+#     code_reminder_prompt = """
+# {source_code}
+#
+# # OPTICHAT REVISION CODE GOES HERE
+#
+# from pyomo.environ import SolverFactory, TerminationCondition
+# solver = SolverFactory('gurobi')
+# solver.options['TimeLimit'] = 300  # 5min time limit
+# results = solver.solve(model, tee=False)
+# print("Solver Status: ", results.solver.status)
+# print("Termination Condition: ", results.solver.termination_condition)
+# if results.solver.termination_condition == TerminationCondition.optimal:
+#     from pyomo.environ import Objective
+#     for obj_name, obj in model.component_map(Objective).items():
+#         print('Optimal Objective Value: ', pyo.value(obj))
+# else:
+#     print("Model is infeasible or unbounded, no optimal objective value is available.")
+#
+# # OPTICHAT PRINT CODE GOES HERE
+#
+# """
 
-# OPTICHAT REVISION CODE GOES HERE
+#     programmer_prompt = """
+# You're an optimization expert who helps your team to write pyomo code to answer users questions.
+# (1) write code snippet to revise the model, only when the user doubts the model's optimal solution and provides a counterexample
+# (2) write code snippet to print out the information useful for answering the user's question
+#
+# Output Format:
+# ==========
+# ```python
+# CODE SNIPPET FOR REVISING THE MODEL
+# ```
+#
+# ```python
+# CODE SNIPPET FOR PRINTING OUT USEFUL INFORMATION
+# ```
+# ==========
+#
+# Here are some example questions and their answer codes:
+# ----- EXAMPLE 1 -----
+# Question: Why is it not recommended to use just one supplier for roastery 2?
+#
+# Answer Code:
+# ```python
+# # user is actually interested in the case that only one supplier can supply roastery 2 and does not believe the optimal solution.
+# model.force_one_supplier = ConstraintList()
+# model.force_one_supplier.add(sum(model.z[s,'roastery2'] for s in model.suppliers) <= 1)
+# for s in model.suppliers:
+#     model.force_one_supplier.add(model.x[s,'roastery2'] <= model.capacity_in_supplier[s] * model.z[s, 'roastery2'])
+# ```
+#
+# ```python
+# # I print out the new optimal objective value so that you can tell the user how the objective value changes if only one supplier supplies roastery 2.
+# print('If forcing only one supplier to supply roastery 2, the optimal objective value will become: ', model.obj())
+# ```
+#
+# ----- EXAMPLE 2 -----
+# Question: Why is it not recommended to have production cost larger than transportation cost in the optimal setting?
+#
+# Answer Code:
+# ```python
+# # user does not believe the optimal solution obtained when production cost smaller than transportation cost.
+# # so we force production cost to be less than transportation cost to see what will happen.
+# model.counter_example = ConstraintList()
+# model.counter_example.add(model.production <= model.transportation)
+# ```
+#
+# ```python
+# # I print out the new optimal objective value so that you can tell the user how the objective value changes.
+# print('If forcing production cost be smaller than transportation cost, the optimal objective value will become: ', model.obj())
+# ```
+#
+# - Code reminder has provided you with the source code of the pyomo model
+# - Your written code will be added to the lines with substring: "# OPTICHAT *** CODE GOES HERE"
+# So, you don't need to repeat the source code that has already been provided by Code reminder.
+# - The code for re-solving the model has already been given,
+# So you don't need to add it. Solving the model repeatedly can lead to errors.
+# - Your written code should be accompanied by comments to explain the purpose of the code.
+# - Evaluator will execute the new code for you and read the execution result.
+# So, you MUST print out the model information that you believe is necessary for the user's question.
+# """
 
-from pyomo.environ import SolverFactory, TerminationCondition
-solver = SolverFactory('gurobi')
-solver.options['TimeLimit'] = 300  # 5min time limit
-results = solver.solve(model, tee=False)
-print("Solver Status: ", results.solver.status)
-print("Termination Condition: ", results.solver.termination_condition)
-if results.solver.termination_condition == TerminationCondition.optimal:
-    from pyomo.environ import Objective
-    for obj_name, obj in model.component_map(Objective).items():
-        print('Optimal Objective Value: ', pyo.value(obj))
-else:
-    print("Model is infeasible or unbounded, no optimal objective value is available.")
-
-# OPTICHAT PRINT CODE GOES HERE
-
-"""
+    code_reminder_prompt = """{source_code}\n# YOUR CODE GOES HERE\n"""
 
     programmer_prompt = """
-You're an optimization expert who helps your team to write pyomo code to answer users questions.
-(1) write code snippet to revise the model, only when the user doubts the model's optimal solution and provides a counterexample
-(2) write code snippet to print out the information useful for answering the user's question
+    You're an optimization expert who helps your team to write pyomo code to answer users questions, such as
+    - write code snippet to revise the model, only when the user doubts the model's optimal solution and provides a counterexample
+    - write code snippet to print out the information useful for answering the user's question
 
-Output Format:
-==========
-```python
-CODE SNIPPET FOR REVISING THE MODEL
-```
+    Output Format:
+    ==========
+    ```python
+    YOUR CODE SNIPPET
+    ```
+    ==========
 
-```python
-CODE SNIPPET FOR PRINTING OUT USEFUL INFORMATION
-```
-==========
+    Here are some example questions and their answer codes:
+    ----- EXAMPLE 1 -----
+    Question: Why is it not recommended to use just one supplier for roastery 2?
 
-Here are some example questions and their answer codes:
------ EXAMPLE 1 -----
-Question: Why is it not recommended to use just one supplier for roastery 2?
-
-Answer Code:
+    Answer Code:
 ```python
 # user is actually interested in the case that only one supplier can supply roastery 2 and does not believe the optimal solution.
 model.force_one_supplier = ConstraintList()
 model.force_one_supplier.add(sum(model.z[s,'roastery2'] for s in model.suppliers) <= 1)
 for s in model.suppliers:
     model.force_one_supplier.add(model.x[s,'roastery2'] <= model.capacity_in_supplier[s] * model.z[s, 'roastery2'])
-```
-
-```python
+    from pyomo.environ import SolverFactory, TerminationCondition
+    
+# standard code to solve the model. Don't change this code if you need to solve a mode.
+solver = SolverFactory('gurobi')  # only gurobi is available in env
+solver.options['TimeLimit'] = 300  # 5min time limit
+results = solver.solve(model, tee=False)  # tee must be False to suppress solver output, otherwise the output is overwhelming
+print("Solver Status: ", results.solver.status)
+print("Termination Condition: ", results.solver.termination_condition)
+# always check the termination condition and optimal objective value first
+if results.solver.termination_condition == TerminationCondition.optimal:
+    from pyomo.environ import Objective
+    from pyomo.environ import value
+    for obj_name, obj in model.component_map(Objective).items():
+        print('Optimal Objective Value: ', value(obj))
+else:
+    print("Model is infeasible or unbounded, no optimal objective value is available.")
+    
 # I print out the new optimal objective value so that you can tell the user how the objective value changes if only one supplier supplies roastery 2.
 print('If forcing only one supplier to supply roastery 2, the optimal objective value will become: ', model.obj())
 ```
 
------ EXAMPLE 2 -----
-Question: Why is it not recommended to have production cost larger than transportation cost in the optimal setting?
+    ----- EXAMPLE 2 -----
+    Question: Why is it not recommended to have production cost larger than transportation cost in the optimal setting?
 
-Answer Code:
+    Answer Code:
 ```python
 # user does not believe the optimal solution obtained when production cost smaller than transportation cost.
 # so we force production cost to be less than transportation cost to see what will happen.
 model.counter_example = ConstraintList()
 model.counter_example.add(model.production <= model.transportation)
-```
-
-```python
+    
+# standard code to solve the model. Don't change this code if you need to solve a mode.
+solver = SolverFactory('gurobi')  # only gurobi is available in env
+solver.options['TimeLimit'] = 300  # 5min time limit
+results = solver.solve(model, tee=False)  # tee must be False to suppress solver output, otherwise the output is overwhelming
+print("Solver Status: ", results.solver.status)
+print("Termination Condition: ", results.solver.termination_condition)
+# always check the termination condition and optimal objective value first
+if results.solver.termination_condition == TerminationCondition.optimal:
+    from pyomo.environ import Objective
+    from pyomo.environ import value
+    for obj_name, obj in model.component_map(Objective).items():
+        print('Optimal Objective Value: ', value(obj))
+else:
+    print("Model is infeasible or unbounded, no optimal objective value is available.")
+    
 # I print out the new optimal objective value so that you can tell the user how the objective value changes.
 print('If forcing production cost be smaller than transportation cost, the optimal objective value will become: ', model.obj())
 ```
-
-- Code reminder has provided you with the source code of the pyomo model
-- Your written code will be added to the lines with substring: "# OPTICHAT *** CODE GOES HERE"
-So, you don't need to repeat the source code that has already been provided by Code reminder.
-- The code for re-solving the model has already been given, 
-So you don't need to add it. Solving the model repeatedly can lead to errors.
-- Your written code should be accompanied by comments to explain the purpose of the code.
-- Evaluator will execute the new code for you and read the execution result.
-So, you MUST print out the model information that you believe is necessary for the user's question.
-"""
+    
+    - Code reminder has provided you with the source code of the pyomo model
+    - Your written code will be added to the lines with substring: "# YOUR CODE GOES HERE"
+    So, you don't need to repeat the source code that has already been provided by Code reminder.
+    - The standard code for re-solving the model has been given in the examples, 
+    So, you MUST use the standard code to re-solve the model to avoid undesired execution errors and long execution result.
+    - Your written code should be accompanied by comments to explain the purpose of the code.
+    - Evaluator will execute the new code for you and read the execution result.
+    So, you MUST print out the model information that you believe is necessary for the user's question.
+    """
 
     evaluator_prompt = """
 You're an optimization expert who helps your team to review pyomo code,
@@ -319,8 +404,11 @@ This is because programmers are trying to create a counterfactual example that t
 
     test_prompt = """
 You are a judge who determines if the LLM’s answer passes the test.
-Criteria: The data in the execution result should be consistent with the human expert's answer.
-Details: LLM may omit some data that human experts collected from other sources, but if it covers the correct objective value correctly, it should pass.
+**Criteria**:
+1. Is the code bug-free?
+2. Is the execution result consistent with the human expert's answer, especially the specific values?
+LLM may omit some values that human experts collected from other sources, 
+but if the execution result covers the correct objective value, it should pass.
 
 Human Expert Answer: 
 {human_expert_answer}
