@@ -11,7 +11,7 @@ dist/
 build/
 *.egg
 *.so
-*.pkl
+#*.pkl
 
 # Jupyter Notebooks
 .ipynb_checkpoints/
