@@ -53,3 +53,10 @@ __gams*
 
 index*.bin
 *.ilp
+
+# Ignore local testing
+create_code_testset.py
+create_tool_testset.py
+grading.py
+run_exp.py
+show_results.ipynb
