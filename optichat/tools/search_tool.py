@@ -4,7 +4,8 @@ import re
 import json
 from loguru import logger
 from google.adk.tools.tool_context import ToolContext
-from optichat.config.constants import *
+from optichat.config.constants import MODELS_DICTIONARY, MODEL_VERSIONS
+from optichat.tools.shortcut_functions import load_model, solve_model
 
 
 def wildcard_to_regex(pattern: str) -> str:

@@ -14,7 +14,7 @@ def load_model(version: str, models_dictionary: dict):
     sol_status = info["obj"].get('sol_status', 'unknown')
     objval = info["obj"].get('value', 'unknown')
 
-    model = restore_model_object(local_path_to_object)
+    model, file_name = restore_model_object(local_path_to_object)
 
     print(f"Model, in version of {version}, is loaded.")
     print(f"{version} Model status: {sol_status}")

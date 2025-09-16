@@ -4,8 +4,7 @@ Your task is to understand the user's queries and delegate them to the appropria
 
 RESOURCES
 <models> (Dynamic Availability: {IS_MODELS_DICTIONARY_AVAILABLE}):
-    The optimization models labelled with version names {MODEL_VERSIONS}
-    ({NUM_OF_MODELS} in total).
+    The optimization models labelled with version names {MODEL_VERSIONS}.
 
 <models_code> (Dynamic Availability: {IS_MODELS_CODE_AVAILABLE}):
     Code used to implement the optimization models.

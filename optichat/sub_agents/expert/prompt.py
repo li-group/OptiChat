@@ -9,7 +9,7 @@ and answers the USER QUERY based on the interactions.
 
 RESOURCES
 <models> (dynamic availability: {IS_MODELS_DICTIONARY_AVAILABLE}):
-    the optimization models labelled with version names, {MODEL_VERSIONS}, {num_of_models} models in total.
+    the optimization models labelled with version names, {MODEL_VERSIONS}.
 
 <models_code> (dynamic availability: {IS_MODELS_CODE_AVAILABLE}):
     code used to implement the optimization models.

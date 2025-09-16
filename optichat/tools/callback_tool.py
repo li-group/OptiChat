@@ -2,6 +2,7 @@ import time
 import json
 import os
 import glob
+from xml.parsers.expat import model
 import tiktoken
 from loguru import logger
 from typing import Dict, Any, List
@@ -13,12 +14,15 @@ from google.adk.tools.tool_context import ToolContext
 from google.adk.tools.base_tool import BaseTool
 from google.adk.models import LlmResponse, LlmRequest
 from optichat.config.constants import (IS_SESSION_INITIALIZED, PERSISTENT_STATES, TEMPORARY_STATES,
-                                       CFG, IS_EXPERT_AGENT_USED, EXPERT_AGENT_START_TIME)
+                                       CFG, IS_EXPERT_AGENT_USED, EXPERT_AGENT_START_TIME,
+                                       MODELS_DICTIONARY, MODEL_VERSIONS, IS_MODELS_DICTIONARY_AVAILABLE,
+                                       IS_MODELS_CODE_AVAILABLE, IS_MODELS_PAPER_AVAILABLE)
+from optichat.tools.extract_tool import restore_model_object, extract_model_info
 
 
 def initialize_session(callback_context: CallbackContext):
     if IS_SESSION_INITIALIZED not in callback_context.state:
-        callback_context.state.update(PERSISTENT_STATES)
+        callback_context.state.update(PERSISTENT_STATES)  # add IS_SESSION_INITIALIZED as False
         callback_context.state.update(TEMPORARY_STATES)
 
     user_content = callback_context.user_content
@@ -33,6 +37,19 @@ def initialize_session(callback_context: CallbackContext):
                     cfg = json.loads(raw.decode("utf-8"))
                     cfg = _init_cfg(cfg)
                     callback_context.state[CFG] = cfg
+                    models_dictionary, model_versions = _init_models(cfg)
+                    is_model_dictionary_available = len(models_dictionary) > 0
+                    callback_context.state[MODELS_DICTIONARY] = models_dictionary
+                    callback_context.state[MODEL_VERSIONS] = model_versions
+                    callback_context.state[IS_MODELS_DICTIONARY_AVAILABLE] = is_model_dictionary_available
+                    # TODO: complete these two functions after rag function is ready
+                    some_output_for_code_rag_fn_use = _init_models_code(cfg)
+                    callback_context.state["some_output_for_code_rag_fn_use"] = some_output_for_code_rag_fn_use
+                    callback_context.state[IS_MODELS_CODE_AVAILABLE] = False # TODO 
+                    some_output_for_paper_rag_fn_use = _init_models_paper(cfg)
+                    callback_context.state["some_output_for_paper_rag_fn_use"] = some_output_for_paper_rag_fn_use
+                    callback_context.state[IS_MODELS_PAPER_AVAILABLE] = False # TODO    
+                    callback_context.state[IS_SESSION_INITIALIZED] = True
             else:
                 parts_wo_json.append(part)
         else:
@@ -46,6 +63,42 @@ def initialize_query(callback_context: CallbackContext, llm_request: LlmRequest)
     # reset temporary states for every query
     callback_context.state.update(TEMPORARY_STATES)
     return None
+
+
+def _init_models(cfg: dict):
+    models_dictionary = {}
+    model_versions = []
+    if "models" in cfg:
+        for resource_path in cfg["models"].get("local_resources", []):
+            model, version = restore_model_object(resource_path)
+            # TODO: need some way to introduce termination_condition smartly
+            # pyomo model's termination_condition is stored in results = solver.solve(model, tee=False)
+            from pyomo.opt import SolverFactory
+            solver = SolverFactory('gurobi')
+            results = solver.solve(model, tee=False)
+            termination_condition = results.solver.termination_condition
+            # but we only stored the model object.
+            # here assume we solve the model again no matter whether .pkl object is solved before.
+            info = extract_model_info(model, termination_condition=termination_condition)
+            models_dictionary.update({version: info})
+            model_versions.append(version)
+    return models_dictionary, model_versions
+
+
+def _init_models_code(cfg: dict):
+    some_output_for_rag_fn_use = None
+    if "models_code" in cfg:
+        for resource_path in cfg["models_code"].get("local_resources", []):
+            pass
+    return some_output_for_rag_fn_use
+
+
+def _init_models_paper(cfg: dict):
+    some_output_for_rag_fn_use = None
+    if "models_paper" in cfg:
+        for resource_path in cfg["models_paper"].get("local_resources", []):
+            pass
+    return some_output_for_rag_fn_use
 
 
 def _init_cfg(cfg: dict):

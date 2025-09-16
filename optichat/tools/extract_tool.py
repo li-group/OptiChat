@@ -177,15 +177,18 @@ def extract_model_info(model, termination_condition='unknown'):
 def restore_model_object(file_path):
     """
     use cloudpickle to restore a Pyomo model object from a file.
+    Note that file_name without suffix. .pkl is returned as well.
     """
     with open(file_path, mode='rb') as file:
         model = cloudpickle.load(file)
-    return model
+    file_name = os.path.splitext(os.path.basename(file_path))[0]
+    return model, file_name
 
 
 def save_model_object(model, file_name):
     """
     use cloudpickle to save a Pyomo model object to a file.
+    Note that file_name is without suffix .pkl
     """
     folder_name = os.path.join(os.getcwd(), TMP_MODEL_OBJECT_FOLDER)
     os.makedirs(folder_name, exist_ok=True)
