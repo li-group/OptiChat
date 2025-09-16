@@ -1,0 +1,195 @@
+import time
+import json
+import os
+import glob
+import tiktoken
+from loguru import logger
+from typing import Dict, Any, List
+from typing import Optional
+from copy import deepcopy
+from google.genai import types
+from google.adk.agents.callback_context import CallbackContext
+from google.adk.tools.tool_context import ToolContext
+from google.adk.tools.base_tool import BaseTool
+from google.adk.models import LlmResponse, LlmRequest
+from optichat.config.constants import (IS_SESSION_INITIALIZED, PERSISTENT_STATES, TEMPORARY_STATES,
+                                       CFG, IS_EXPERT_AGENT_USED, EXPERT_AGENT_START_TIME)
+
+
+def initialize_session(callback_context: CallbackContext):
+    if IS_SESSION_INITIALIZED not in callback_context.state:
+        callback_context.state.update(PERSISTENT_STATES)
+        callback_context.state.update(TEMPORARY_STATES)
+
+    user_content = callback_context.user_content
+    parts_wo_json = []
+    for part in user_content.parts:
+        if getattr(part, "inline_data", None) is not None:
+            if part.inline_data.mime_type == "application/json":
+                if callback_context.state[IS_SESSION_INITIALIZED]:
+                    raise NotImplementedError("Session is already initialized, cannot re-initialize with a new cfg. Open a new session instead.")
+                else:
+                    raw = part.inline_data.data
+                    cfg = json.loads(raw.decode("utf-8"))
+                    cfg = _init_cfg(cfg)
+                    callback_context.state[CFG] = cfg
+            else:
+                parts_wo_json.append(part)
+        else:
+            parts_wo_json.append(part)
+    # replace user_content with parts without json part (if a part has json, it cannot be processed)
+    callback_context.user_content.parts = parts_wo_json
+    return None
+
+
+def initialize_query(callback_context: CallbackContext, llm_request: LlmRequest):
+    # reset temporary states for every query
+    callback_context.state.update(TEMPORARY_STATES)
+    return None
+
+
+def _init_cfg(cfg: dict):
+    cfg_out = deepcopy(cfg)
+    
+    required_sections = ["models", "models_code", "models_paper"]
+    extension_filters = {
+        "models": [".pkl"],
+        "models_code": [".py"],
+        "models_paper": [".txt", ".pdf"]
+    }
+
+    for section_key, section_cfg in cfg.items():
+        if section_key in required_sections:
+            local_resources = section_cfg.get("local_resources", [])
+            allowed_extensions = extension_filters.get(section_key, None)
+            expanded_resources = _expand_resources(local_resources, allowed_extensions)
+            cfg_out[section_key]["local_resources"] = expanded_resources
+
+    return cfg_out
+
+
+def _expand_resources(local_resources: List[str], allowed_extensions: Optional[List[str]]):
+    """
+    Expand wildcard * patterns with allowed extensions filtering
+    """
+    expanded_resources = []
+    for resource_path in local_resources:
+        if "*" in resource_path:
+            matches = glob.glob(resource_path)
+        else:
+            matches = [resource_path]
+        if not matches:
+            raise FileNotFoundError(f"No files matched: {resource_path}")
+        if allowed_extensions:
+            filtered_matches = [
+                match for match in matches 
+                    if any(match.lower().endswith(ext) for ext in allowed_extensions)
+                    ]
+        else:
+            filtered_matches = matches
+        expanded_resources.extend(sorted(filtered_matches))
+    return expanded_resources
+
+
+def check_is_expert_agent_used(callback_context: CallbackContext):
+    is_expert_agent_used = callback_context.state.get(IS_EXPERT_AGENT_USED, None)
+    start_time = callback_context.state.get(EXPERT_AGENT_START_TIME, None)
+    if is_expert_agent_used is None:
+        raise ValueError("check_is_expert_agent_used: IS_EXPERT_AGENT_USED is not set in the state.")
+    if start_time is None:
+        raise ValueError("check_is_expert_agent_used: EXPERT_AGENT_START_TIME is not set in the state.")
+
+    if is_expert_agent_used:
+        return types.Content(
+            parts=[types.Part(text=f"[system message]: Expert agent has already been used. "
+                                   f"Expert agent can ONLY be used once per user query. "
+                                   f"Explain the last response from expert agent to the user first. ")],
+            role="model"
+        )
+    else:
+        callback_context.state[IS_EXPERT_AGENT_USED] = True
+        callback_context.state[EXPERT_AGENT_START_TIME] = time.time()
+        return None
+
+
+def check_expert_agent_runtime(callback_context: CallbackContext):
+    is_expert_agent_used = callback_context.state.get(IS_EXPERT_AGENT_USED)
+    if is_expert_agent_used:
+        start_time = callback_context.state.get(EXPERT_AGENT_START_TIME)
+        if start_time:
+            elapsed_time = time.time() - start_time
+            logger.debug(f"*** Expert Agent Runtime: {elapsed_time:.2f} s "
+                         f"({elapsed_time/60:.2f} min) ***")
+    return None
+
+
+def check_llm_response(callback_context: CallbackContext, llm_response: LlmResponse):
+    agent_name = callback_context.agent_name
+    if llm_response.content and llm_response.content.parts:
+        if llm_response.content.parts[0].text:
+            original_text = llm_response.content.parts[0].text
+            logger.info((f"[Callback] Inspecting LLM response from '{agent_name}': "
+                         f"{original_text}"))
+        elif llm_response.content.parts[0].function_call:
+            logger.info((f"[Callback] Inspecting LLM function call from '{agent_name}': "
+                         f"{llm_response.content.parts[0].function_call.name}"))
+        else:
+            logger.info("[Callback] Inspected LLM response: No text content found.")
+    elif llm_response.error_message:
+        logger.error((f"[Callback] Inspected LLM response: "
+                      f"Contains error '{llm_response.error_message}'. "))
+    else:
+        logger.warning("[Callback] Inspected LLM response: Empty LlmResponse.")
+    return None
+
+
+def check_tool_usage(tool: BaseTool, tool_context: ToolContext):
+    agent_name = tool_context.agent_name
+    tool_name = tool.name
+
+    usage_key = f"{agent_name.upper()}_{tool_name.upper()}_USES"
+    if usage_key in tool_context.state:
+        uses_left = tool_context.state[usage_key]
+        if uses_left <= 0:
+            logger.debug(f"Usage key '{usage_key}' has no remaining uses.")
+            return {"result": f"\n[system message]: **WARNING** '{tool_name}' tool cannot be used anymore! "}
+        else:
+            tool_context.state[usage_key] -= 1
+            logger.debug(f"Usage key '{usage_key}' decremented. Remaining uses: {tool_context.state[usage_key]}")
+    else:
+        logger.debug(f"Usage key '{usage_key}' not found in the state. Skipping tool usage check.")
+    return None
+
+
+def check_tool_response(tool: BaseTool,
+                        args: Dict[str, Any],
+                        tool_context: ToolContext,
+                        tool_response: Dict):
+    agent_name = tool_context.agent_name
+    tool_name = tool.name
+    result = tool_response.get("result", "")
+    max_tokens_key = f"{agent_name.upper()}_{tool_name.upper()}_MAX_TOKENS"
+    if max_tokens_key in tool_context.state:
+        max_tokens = tool_context.state[max_tokens_key]
+        try:
+            encoding = tiktoken.get_encoding("cl100k_base")
+            tokens = encoding.encode(result)
+            token_count = len(tokens)
+            if token_count > max_tokens:
+                # truncate the result to max_tokens
+                truncated_tokens = tokens[:max_tokens]
+                truncated_result = encoding.decode(truncated_tokens)
+                truncated_result += ("... \n[system message]: **WARNING** "
+                                     "Execution result was truncated due to token limit.")
+                logger.warning(f"'{tool_name.upper()}' execution (truncated) result: {truncated_result}")
+                # return a truncated tool_response dictionary
+                truncated_tool_response = deepcopy(tool_response)
+                truncated_tool_response["result"] = truncated_result
+                return truncated_tool_response
+        except Exception as e:
+            raise RuntimeError(f"Token counting failed: {e}.")
+    else:
+        logger.debug(f"max tokens key '{max_tokens_key}' not found in the state. Skipping tool response check.")
+    logger.info(f"'{tool_name.upper()}' execution result: {result}")
+    return None  # Return None to indicate no modification to tool_response
+
