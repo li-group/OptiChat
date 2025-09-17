@@ -18,11 +18,12 @@ from optichat.config.constants import (IS_SESSION_INITIALIZED, PERSISTENT_STATES
                                        MODELS_DICTIONARY, MODEL_VERSIONS, IS_MODELS_DICTIONARY_AVAILABLE,
                                        IS_MODELS_CODE_AVAILABLE, IS_MODELS_PAPER_AVAILABLE)
 from optichat.tools.extract_tool import restore_model_object, extract_model_info
+from optichat.tools.rag_tool import init_paper_rag, init_code_rag
 
 
 def initialize_session(callback_context: CallbackContext):
     if IS_SESSION_INITIALIZED not in callback_context.state:
-        callback_context.state.update(PERSISTENT_STATES)  # add IS_SESSION_INITIALIZED as False
+        callback_context.state.update(PERSISTENT_STATES)  # which also set IS_SESSION_INITIALIZED as False
         callback_context.state.update(TEMPORARY_STATES)
 
     user_content = callback_context.user_content
@@ -42,13 +43,10 @@ def initialize_session(callback_context: CallbackContext):
                     callback_context.state[MODELS_DICTIONARY] = models_dictionary
                     callback_context.state[MODEL_VERSIONS] = model_versions
                     callback_context.state[IS_MODELS_DICTIONARY_AVAILABLE] = is_model_dictionary_available
-                    # TODO: complete these two functions after rag function is ready
-                    some_output_for_code_rag_fn_use = _init_models_code(cfg)
-                    callback_context.state["some_output_for_code_rag_fn_use"] = some_output_for_code_rag_fn_use
-                    callback_context.state[IS_MODELS_CODE_AVAILABLE] = False # TODO 
-                    some_output_for_paper_rag_fn_use = _init_models_paper(cfg)
-                    callback_context.state["some_output_for_paper_rag_fn_use"] = some_output_for_paper_rag_fn_use
-                    callback_context.state[IS_MODELS_PAPER_AVAILABLE] = False # TODO    
+                    is_models_code_available = _init_models_code(cfg)
+                    callback_context.state[IS_MODELS_CODE_AVAILABLE] = is_models_code_available
+                    is_models_paper_available = _init_models_paper(cfg)
+                    callback_context.state[IS_MODELS_PAPER_AVAILABLE] = is_models_paper_available
                     callback_context.state[IS_SESSION_INITIALIZED] = True
             else:
                 parts_wo_json.append(part)
@@ -86,19 +84,27 @@ def _init_models(cfg: dict):
 
 
 def _init_models_code(cfg: dict):
-    some_output_for_rag_fn_use = None
     if "models_code" in cfg:
-        for resource_path in cfg["models_code"].get("local_resources", []):
-            pass
-    return some_output_for_rag_fn_use
+        paths = cfg["models_code"].get("local_resources", [])
+        model_name = cfg.get("model_name", "default_model")
+        init_code_rag(paths, model_name)
+        is_models_code_available = True
+    else:
+        logger.debug("No 'models_code' in cfg")
+        is_models_code_available = False
+    return is_models_code_available
 
 
 def _init_models_paper(cfg: dict):
-    some_output_for_rag_fn_use = None
     if "models_paper" in cfg:
-        for resource_path in cfg["models_paper"].get("local_resources", []):
-            pass
-    return some_output_for_rag_fn_use
+        paths = cfg["models_paper"].get("local_resources", [])
+        model_name = cfg.get("model_name", "default_model")
+        init_paper_rag(paths, model_name)
+        is_models_paper_available = True 
+    else:
+        logger.debug("No 'models_paper' in cfg")
+        is_models_paper_available = False
+    return is_models_paper_available
 
 
 def _init_cfg(cfg: dict):
@@ -115,9 +121,16 @@ def _init_cfg(cfg: dict):
         if section_key in required_sections:
             local_resources = section_cfg.get("local_resources", [])
             allowed_extensions = extension_filters.get(section_key, None)
-            expanded_resources = _expand_resources(local_resources, allowed_extensions)
-            cfg_out[section_key]["local_resources"] = expanded_resources
-
+            # TODO: temporary solution to use init_code_rag() in rag_tool.py
+            if section_key == "models_code":
+                logger.warning(("For 'models_code', ONLY one path is supported for now, "
+                    "which must be a .py file or a wildcard path to indicate a folder. "
+                    "No expand_resources() is performed for 'models_code' in cfg."))
+                assert len(local_resources) == 1, "ONLY one path for models_code is supported for now."
+                assert local_resources[0].endswith(".py") or local_resources[0].endswith("*"), "models_code path must be a .py file or a wildcard path."
+            else:
+                expanded_resources = _expand_resources(local_resources, allowed_extensions)
+                cfg_out[section_key]["local_resources"] = expanded_resources
     return cfg_out
 
 

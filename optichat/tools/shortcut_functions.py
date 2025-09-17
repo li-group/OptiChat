@@ -76,7 +76,7 @@ def solve_model(model: pe.ConcreteModel, version: str, models_dictionary: dict):
 #     """
 #     ```add_constraint(constraint_name: str, expression: str, model)```
 #     adds a constraint to the model in place, returns nothing.
-# TODO: 
+# TODO: the most difficult part
 # reconstruct pyomo expression from string
 # - model.find_component(component_name) can get the actual pyomo component
 # - need a way to rearrange the components into a valid pyomo expression from expression string

@@ -1,6 +1,7 @@
 import json
 
 cfg_template = {
+    "model_name": "your_model_name_here",
     "models": {
         "local_resources": [
             "models/*",

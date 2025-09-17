@@ -9,8 +9,10 @@ def extract_expressions_from_lp(lp_local_file_path: str):
     """
     Process the .lp file given by lp_local_file_path,
     get all expressions (constraints and objective) from the LP file.
-    TODO: This function works for modelling languages that load and write .lp files, 
+    
+    **This function works for modelling languages that load and write .lp files, 
     not very applicable to Pyomo (as far as I know)
+    Therefore this is NOT USED for now.**
 
     Args:
     lp_local_file_path(str): path to the local LP file
@@ -118,7 +120,7 @@ def extract_model_var(model, termination_condition):
 def extract_model_constraint(model, termination_condition):
     """
     Extract constraints from a Pyomo model.
-    Information includes name, component_type, expression, TODO: is_binding needs verification
+    Information includes name, component_type, expression, TODO: is_binding implementation here needs verification
     """
     eps = 1e-5
     constraint_info = {}
