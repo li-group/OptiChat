@@ -16,7 +16,7 @@ from google.adk.models import LlmResponse, LlmRequest
 from optichat.config.constants import (IS_SESSION_INITIALIZED, PERSISTENT_STATES, TEMPORARY_STATES,
                                        CFG, IS_EXPERT_AGENT_USED, EXPERT_AGENT_START_TIME,
                                        MODELS_DICTIONARY, MODEL_VERSIONS, IS_MODELS_DICTIONARY_AVAILABLE,
-                                       IS_MODELS_CODE_AVAILABLE, IS_MODELS_PAPER_AVAILABLE)
+                                       IS_MODELS_CODE_AVAILABLE, IS_MODELS_PAPER_AVAILABLE, USER_QUERY)
 from optichat.tools.extract_tool import restore_model_object, extract_model_info
 from optichat.tools.rag_tool import init_paper_rag, init_code_rag
 
@@ -60,6 +60,10 @@ def initialize_session(callback_context: CallbackContext):
 def initialize_query(callback_context: CallbackContext, llm_request: LlmRequest):
     # reset temporary states for every query
     callback_context.state.update(TEMPORARY_STATES)
+    if llm_request.contents and llm_request.contents[-1].role == 'user':
+         if llm_request.contents[-1].parts:
+            user_query = llm_request.contents[-1].parts[0].text
+            callback_context.state[USER_QUERY] = user_query
     return None
 
 
@@ -159,11 +163,8 @@ def _expand_resources(local_resources: List[str], allowed_extensions: Optional[L
 
 def check_is_expert_agent_used(callback_context: CallbackContext):
     is_expert_agent_used = callback_context.state.get(IS_EXPERT_AGENT_USED, None)
-    start_time = callback_context.state.get(EXPERT_AGENT_START_TIME, None)
     if is_expert_agent_used is None:
         raise ValueError("check_is_expert_agent_used: IS_EXPERT_AGENT_USED is not set in the state.")
-    if start_time is None:
-        raise ValueError("check_is_expert_agent_used: EXPERT_AGENT_START_TIME is not set in the state.")
 
     if is_expert_agent_used:
         return types.Content(
@@ -209,7 +210,7 @@ def check_llm_response(callback_context: CallbackContext, llm_response: LlmRespo
     return None
 
 
-def check_tool_usage(tool: BaseTool, tool_context: ToolContext):
+def check_tool_usage(tool: BaseTool, args: Dict[str, Any], tool_context: ToolContext):
     agent_name = tool_context.agent_name
     tool_name = tool.name
 
@@ -233,6 +234,7 @@ def check_tool_response(tool: BaseTool,
                         tool_response: Dict):
     agent_name = tool_context.agent_name
     tool_name = tool.name
+    # AgentTool may return str instead of Dict as tool_response
     result = tool_response.get("result", "")
     max_tokens_key = f"{agent_name.upper()}_{tool_name.upper()}_MAX_TOKENS"
     if max_tokens_key in tool_context.state:
