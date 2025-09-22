@@ -93,14 +93,19 @@ def extract_expressions_from_lp(lp_local_file_path: str):
 
 def extract_model_param(model, termination_condition):
     """
-    Extract parameters from a Pyomo model.
+    Extract (mutable) parameters from a Pyomo model.
     Information includes name, component_type, value, TODO:is_RHS?
     """
     param_info = {}
     for param in model.component_objects(pe.Param, active=True):
-        for idx in param:
-            param_info[pe.name(param[idx])] = {"component_type": "parameter",
-                                               "value": param[idx].value}
+        if param.mutable:
+            for idx in param:
+                try:
+                    v = param[idx].value
+                except Exception as e:
+                    raise ValueError(f"Error accessing value of parameter {pe.name(param)} with index {idx}: {e}")
+                param_info[pe.name(param[idx])] = {"component_type": "parameter",
+                                                   "value": param[idx].value}
     return param_info
 
 
@@ -112,6 +117,10 @@ def extract_model_var(model, termination_condition):
     var_info = {}
     for var in model.component_objects(pe.Var, active=True):
         for idx in var:
+            try:
+                v = var[idx].value
+            except Exception as e:
+                raise ValueError(f"Error accessing value of variable {pe.name(var)} with index {idx}: {e}")
             var_info[pe.name(var[idx])] = {"component_type": "variable",
                                            "solution": var[idx].value}
     return var_info
@@ -126,8 +135,17 @@ def extract_model_constraint(model, termination_condition):
     constraint_info = {}
     for constraint in model.component_objects(pe.Constraint, active=True):
         for idx in constraint:
+            try:
+                v = constraint[idx].expr
+            except Exception as e:
+                raise ValueError(f"Error accessing expression of constraint {pe.name(constraint)} with index {idx}: {e}")
+            try:
+                lslack = constraint[idx].lslack()
+                uslack = constraint[idx].uslack()
+            except Exception as e:
+                raise ValueError(f"Error accessing slack of constraint {pe.name(constraint)} with index {idx}: {e}")
             if str(termination_condition) == 'optimal':
-                if abs(constraint.lslack()) < eps or abs(constraint.uslack()) < eps:
+                if abs(constraint[idx].lslack()) < eps or abs(constraint[idx].uslack()) < eps:
                     is_binding = True
                 else:
                     is_binding = False
@@ -145,10 +163,11 @@ def extract_model_objective(model, termination_condition):
     Information includes name, component_type, expression (with sense: min/max), value. 
     """
     objective_info = {}
-    if len(model.component_objects(pe.Objective, active=True)) > 1:
+    objectives = list(model.component_objects(pe.Objective, active=True))
+    if len(objectives) > 1:
         raise ValueError("The model has multiple objectives, which is not supported.")
     else:
-        obj = model.component_objects(pe.Objective, active=True)[0]
+        obj = objectives[0]
         if obj.sense == pe.minimize:
             obj_sense = "MINIMIZE: "
         elif obj.sense == pe.maximize:
