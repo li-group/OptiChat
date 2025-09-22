@@ -91,7 +91,8 @@ def _init_models_code(cfg: dict):
     if "models_code" in cfg:
         paths = cfg["models_code"].get("local_resources", [])
         model_name = cfg.get("model_name", "default_model")
-        init_code_rag(paths, model_name)
+        # TODO: temporary solution to use GenericLoader in rag_tool.py, which only supports one path
+        init_code_rag(paths[0], model_name)
         is_models_code_available = True
     else:
         logger.debug("No 'models_code' in cfg")

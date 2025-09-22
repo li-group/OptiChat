@@ -77,7 +77,7 @@ def init_chroma_collection(collection_name, docs, empty_existing):
         vector_store._client.delete_collection(name=collection_name)
         logger.debug(f"After deletion, existing collections are {[col.name for col in vector_store._client.list_collections()]}")
     vector_store = get_chroma_vs(collection_name, embeddings, persist_directory)
-    logger.debug(f"Building collection {vector_store.collection_name} by adding documents...")
+    logger.debug(f"Building collection {collection_name} by adding documents...")
     vector_store.add_documents(documents=docs)
     logger.debug(f"After adding documents, existing collections are {[col.name for col in vector_store._client.list_collections()]}")
 
