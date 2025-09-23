@@ -9,10 +9,6 @@ If you found this work useful, please cite this [preprint](https://arxiv.org/abs
 
 [![Video Demo](https://img.youtube.com/vi/7OEtEHfAdmo/0.jpg)](https://youtu.be/7OEtEHfAdmo)
 
-
-# Compatibility Notice
-Please note that the requirements.txt file has not yet been updated, and you may encounter compatibility issues, particularly related to infeasible models. These issues may arise due to version mismatches or outdated dependencies. We are working to address this and will update the file as soon as possible. Thank you for your understanding and patience.
-
 ## Table of Contents
 - [Overview](#overview)
 - [Installation](#installation)
