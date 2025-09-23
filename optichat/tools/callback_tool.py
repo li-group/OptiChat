@@ -233,6 +233,7 @@ def check_tool_response(tool: BaseTool,
                         args: Dict[str, Any],
                         tool_context: ToolContext,
                         tool_response: Dict):
+    show_first_n_chars = 500
     agent_name = tool_context.agent_name
     tool_name = tool.name
     # AgentTool may return str instead of Dict as tool_response
@@ -250,7 +251,8 @@ def check_tool_response(tool: BaseTool,
                 truncated_result = encoding.decode(truncated_tokens)
                 truncated_result += ("... \n[system message]: **WARNING** "
                                      "Execution result was truncated due to token limit.")
-                logger.warning(f"'{tool_name.upper()}' execution (truncated) result: {truncated_result}")
+                logger.warning((f"'{tool_name.upper()}' execution (truncated) result: {truncated_result[:show_first_n_chars]}"
+                                "\n... (showing only the first {show_first_n_chars} characters)"))
                 # return a truncated tool_response dictionary
                 truncated_tool_response = deepcopy(tool_response)
                 truncated_tool_response["result"] = truncated_result
@@ -259,6 +261,7 @@ def check_tool_response(tool: BaseTool,
             raise RuntimeError(f"Token counting failed: {e}.")
     else:
         logger.debug(f"max tokens key '{max_tokens_key}' not found in the state. Skipping tool response check.")
-    logger.info(f"'{tool_name.upper()}' execution result: {result}")
+    logger.info(f"'{tool_name.upper()}' execution result: {result[:show_first_n_chars]}"
+                f"\n... (showing only the first {show_first_n_chars} characters)")
     return None  # Return None to indicate no modification to tool_response
 

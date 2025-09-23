@@ -90,6 +90,13 @@ def get_chroma_vs(collection_name, embeddings, persist_directory):
     return vector_store
 
 
+def convert_docs_to_str(result_docs):
+    result_str = f"Retrieved {len(result_docs)} documents: "
+    for i, doc in enumerate(result_docs):
+        result_str += f"\nSource {i+1}: {doc.metadata.get('source', 'unknown source')} \nContent {i+1}: {doc.page_content}\n"
+    return result_str
+
+
 def code_rag(request: str, tool_context: ToolContext) -> str:
     """
     code_rag retrieves code blocks from <models_code> by
@@ -110,7 +117,7 @@ def code_rag(request: str, tool_context: ToolContext) -> str:
                                      persist_directory=PERSIST_DIRECTORY)
         retriever = vector_store.as_retriever(search_type=CODE_RAG_SEARCH_TYPE,
                                               search_kwargs=CODE_RAG_SEARCH_KWARGS)
-        result = retriever.invoke(request)
+        result = convert_docs_to_str(retriever.invoke(request))
         return {"result": result}
     else:
         return {"result": "No 'models_code' in cfg, cannot use code_rag."}
@@ -136,7 +143,7 @@ def paper_rag(request: str, tool_context: ToolContext) -> str:
                                      persist_directory=PERSIST_DIRECTORY)
         retriever = vector_store.as_retriever(search_type=PAPER_RAG_SEARCH_TYPE,
                                               search_kwargs=PAPER_RAG_SEARCH_KWARGS)
-        result = retriever.invoke(request)
+        result = convert_docs_to_str(retriever.invoke(request))
         return {"result": result}
     else:
         return {"result": "No 'models_paper' in cfg, cannot use paper_rag."}
