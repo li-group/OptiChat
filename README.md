@@ -9,10 +9,6 @@ If you found this work useful, please cite this [preprint](https://arxiv.org/abs
 
 [![Video Demo](https://img.youtube.com/vi/7OEtEHfAdmo/0.jpg)](https://youtu.be/7OEtEHfAdmo)
 
-
-# Compatibility Notice
-Please note that the requirements.txt file has not yet been updated, and you may encounter compatibility issues, particularly related to infeasible models. These issues may arise due to version mismatches or outdated dependencies. We are working to address this and will update the file as soon as possible. Thank you for your understanding and patience.
-
 ## Table of Contents
 - [Overview](#overview)
 - [Installation](#installation)
@@ -37,7 +33,7 @@ Query: OptiChat supports diagnosing, retrieval, sensitivity, what-if and why-not
 # Installation
 <a name="installation"></a>
 1. Install python3 and pip
-2. Install python packages ```pip install -r requirements.txt``` (Please note we are still updating the requirements.txt)
+2. Install python packages ```pip install -r requirements.txt```
 3. Install Gurobi following the instructions in the youtube videos  [here](https://support.gurobi.com/hc/en-us/articles/4534161999889). For windows without admin access, follow the instructions
 [here](https://support.gurobi.com/hc/en-us/articles/360060996432-How-do-I-install-Gurobi-on-Windows-without-administrator-credentials-)
 4. Apply for an OpenAI API key [here](https://platform.openai.com/).  Add the key to your environment variables as ```OPENAI_API_KEY```
