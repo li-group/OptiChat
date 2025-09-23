@@ -58,12 +58,15 @@ def initialize_session(callback_context: CallbackContext):
 
 
 def initialize_query(callback_context: CallbackContext, llm_request: LlmRequest):
+    is_debug = True
     # reset temporary states for every query
     callback_context.state.update(TEMPORARY_STATES)
     if llm_request.contents and llm_request.contents[-1].role == 'user':
          if llm_request.contents[-1].parts:
             user_query = llm_request.contents[-1].parts[0].text
             callback_context.state[USER_QUERY] = user_query
+    if is_debug:
+        check_llm_request(callback_context, llm_request)
     return None
 
 
@@ -188,6 +191,22 @@ def check_expert_agent_runtime(callback_context: CallbackContext):
             elapsed_time = time.time() - start_time
             logger.debug(f"*** Expert Agent Runtime: {elapsed_time:.2f} s "
                          f"({elapsed_time/60:.2f} min) ***")
+    return None
+
+
+def check_llm_request(callback_context: CallbackContext, llm_request: LlmRequest):
+    agent_name = callback_context.agent_name
+    original_instruction = llm_request.config.system_instruction or types.Content(role="system", parts=[])
+    # Ensure system_instruction is Content and parts list exists
+    if not isinstance(original_instruction, types.Content):
+         # Handle case where it might be a string (though config expects Content)
+         original_instruction = types.Content(role="system", parts=[types.Part(text=str(original_instruction))])
+    if not original_instruction.parts:
+        original_instruction.parts.append(types.Part(text="")) # Add an empty part if none exist
+
+    original_text = original_instruction.parts[0].text or ""
+    logger.info((f"[Callback] Inspecting LLM request from '{agent_name}': "
+                 f"{original_text}"))
     return None
 
 

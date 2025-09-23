@@ -1,3 +1,6 @@
+from optichat.tools.extract_tool import auto_extract_function_docs
+
+
 EXPERT_AGENT_PROMPT_NO_SC = """
 USER QUERY
 {USER_QUERY}
@@ -162,5 +165,17 @@ RESPONSE STYLE
 """
 
 
-EXPERT_AGENT_PROMPTS = {1: EXPERT_AGENT_PROMPT_NO_SC,
-                        2: EXPERT_AGENT_PROMPT}
+def get_expert_agent_prompt(prompt_version=1):
+    EXPERT_AGENT_PROMPTS = {1: EXPERT_AGENT_PROMPT_NO_SC,
+                            2: EXPERT_AGENT_PROMPT}
+    if prompt_version in EXPERT_AGENT_PROMPTS:
+        prompt = EXPERT_AGENT_PROMPTS[prompt_version]
+    else:
+        raise NotImplementedError(f"Prompt version '{prompt_version}' is not implemented.")
+    
+    shortcut_functions_docs = auto_extract_function_docs("optichat.tools.shortcut_functions")
+
+    if prompt_version in [1, 2]:
+        prompt = prompt.replace("__SHORTCUT_FUNCTIONS_PLACEHOLDER__", shortcut_functions_docs)
+
+    return prompt
