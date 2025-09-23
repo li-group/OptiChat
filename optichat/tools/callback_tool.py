@@ -17,7 +17,7 @@ from optichat.config.constants import (IS_SESSION_INITIALIZED, PERSISTENT_STATES
                                        CFG, IS_EXPERT_AGENT_USED, EXPERT_AGENT_START_TIME,
                                        MODELS_DICTIONARY, MODEL_VERSIONS, IS_MODELS_DICTIONARY_AVAILABLE,
                                        IS_MODELS_CODE_AVAILABLE, IS_MODELS_PAPER_AVAILABLE, USER_QUERY)
-from optichat.tools.extract_tool import restore_model_object, extract_model_info
+from optichat.tools.extract_tool import restore_model_object, save_model_object, extract_model_info
 from optichat.tools.rag_tool import init_paper_rag, init_code_rag
 
 
@@ -25,8 +25,8 @@ def initialize_session(callback_context: CallbackContext):
     if IS_SESSION_INITIALIZED not in callback_context.state:
         callback_context.state.update(PERSISTENT_STATES)  # which also set IS_SESSION_INITIALIZED as False
         callback_context.state.update(TEMPORARY_STATES)
-
     user_content = callback_context.user_content
+    user_query = callback_context.user_content.parts[0].text
     parts_wo_json = []
     for part in user_content.parts:
         if getattr(part, "inline_data", None) is not None:
@@ -54,19 +54,9 @@ def initialize_session(callback_context: CallbackContext):
             parts_wo_json.append(part)
     # replace user_content with parts without json part (if a part has json, it cannot be processed)
     callback_context.user_content.parts = parts_wo_json
-    return None
-
-
-def initialize_query(callback_context: CallbackContext, llm_request: LlmRequest):
-    is_debug = True
     # reset temporary states for every query
     callback_context.state.update(TEMPORARY_STATES)
-    if llm_request.contents and llm_request.contents[-1].role == 'user':
-         if llm_request.contents[-1].parts:
-            user_query = llm_request.contents[-1].parts[0].text
-            callback_context.state[USER_QUERY] = user_query
-    if is_debug:
-        check_llm_request(callback_context, llm_request)
+    callback_context.state[USER_QUERY] = user_query
     return None
 
 
@@ -85,6 +75,8 @@ def _init_models(cfg: dict):
             # but we only stored the model object.
             # here assume we solve the model again no matter whether .pkl object is solved before.
             info = extract_model_info(model, termination_condition=termination_condition)
+            local_path_to_object = save_model_object(model, version)
+            info.update({"local_path_to_object": local_path_to_object,})
             models_dictionary.update({version: info})
             model_versions.append(version)
     return models_dictionary, model_versions
