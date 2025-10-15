@@ -15,11 +15,35 @@ def load_model(version: str, models_dictionary: dict):
     objval = info["obj"].get('value', 'unknown')
 
     model, file_name = restore_model_object(local_path_to_object)
+    
+    # remove dual suffix if exists so that it won't interfere with newly added constraints
+    if hasattr(model, 'dual'):
+        model.del_component(model.dual)
 
     print(f"Model, in version of {version}, is loaded.")
     print(f"{version} Model status: {sol_status}")
     print(f"{version} Model optimal objective value: {objval}")
     return model
+
+
+def add_dual_suffix(model: pe.ConcreteModel):
+    """
+    ```model_with_dual_suffix = add_dual_suffix(model: pe.ConcreteModel)```
+    adds dual suffix to the model so that the resulting model will include dual solution after being solved
+    """
+    if hasattr(model, "dual"):
+        print("Model already has dual suffix. Original model is returned.")
+    else:
+        # simple safeguard to ensure model is LP
+        for var in model.component_objects(pe.Var, active=True):
+            for idx in var:
+                if var[idx].is_binary():
+                    print(("Model has binary variables. "
+                    "Dual suffix can only be added to LP models. "
+                    "Original model is returned."))
+                    return model
+        model.dual = pe.Suffix(direction=pe.Suffix.IMPORT_EXPORT)
+    return model 
 
 
 def solve_model(model: pe.ConcreteModel, version: str, models_dictionary: dict):

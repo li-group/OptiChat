@@ -152,7 +152,7 @@ def extract_model_constraint(model, termination_condition):
             else:
                 is_binding = "unknown"
             
-            if model.find_component('dual') is not None:
+            if hasattr(model, "dual"):
                 dual = model.dual[constraint[idx]]
             else:
                 dual = "unknown"
