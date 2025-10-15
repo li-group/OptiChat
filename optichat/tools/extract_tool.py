@@ -90,7 +90,6 @@ def extract_expressions_from_lp(lp_local_file_path: str):
     return info
 
 
-
 def extract_model_param(model, termination_condition):
     """
     Extract (mutable) parameters from a Pyomo model.
@@ -129,7 +128,9 @@ def extract_model_var(model, termination_condition):
 def extract_model_constraint(model, termination_condition):
     """
     Extract constraints from a Pyomo model.
-    Information includes name, component_type, expression, TODO: is_binding implementation here needs verification
+    Information includes name, component_type, expression, 
+    TODO: dual solution,
+    TODO: is_binding implementation here needs verification
     """
     eps = 1e-5
     constraint_info = {}
@@ -144,6 +145,7 @@ def extract_model_constraint(model, termination_condition):
                 uslack = constraint[idx].uslack()
             except Exception as e:
                 raise ValueError(f"Error accessing slack of constraint {pe.name(constraint)} with index {idx}: {e}")
+            
             if str(termination_condition) == 'optimal':
                 if abs(constraint[idx].lslack()) < eps or abs(constraint[idx].uslack()) < eps:
                     is_binding = True
@@ -151,9 +153,15 @@ def extract_model_constraint(model, termination_condition):
                     is_binding = False
             else:
                 is_binding = "unknown"
+            
+            if model.find_component('dual') is not None:
+                dual = model.dual[constraint[idx]]
+            else:
+                dual = "unknown"
             constraint_info[pe.name(constraint[idx])] = {"component_type": "constraint",
                                                          "expression": str(constraint[idx].expr), 
-                                                         "is_binding": is_binding}
+                                                         "is_binding": is_binding,
+                                                         "dual": dual}
     return constraint_info
 
 
