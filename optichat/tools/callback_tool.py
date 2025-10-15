@@ -64,9 +64,6 @@ def _init_models(cfg: dict):
     models_dictionary = {}
     model_versions = []
     if "models" in cfg:
-        # TODO: assume cfg gives the following information
-        # is_solved: bool
-        # is_lp: bool
         is_solved = cfg["models"].get("is_solved", False)
         is_lp = cfg["models"].get("is_lp", False)
         for resource_path in cfg["models"].get("local_resources", []):

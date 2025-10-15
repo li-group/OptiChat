@@ -209,7 +209,7 @@ def _solve_model(model, is_lp=False, is_solved=False):
     """
     if is_solved:
         return model, TerminationCondition.optimal
-    if is_lp and model.find_component('dual') is None:
+    if is_lp and not hasattr(model, "dual"):
         model.dual = pe.Suffix(direction=pe.Suffix.IMPORT_EXPORT)
     solver = SolverFactory('gurobi')
     results = solver.solve(model, tee=False)
