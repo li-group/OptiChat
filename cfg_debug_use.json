@@ -1,0 +1,12 @@
+{   "model_name": "debug",
+    "models": {
+        "local_resources": [
+            "my_model.pkl"
+        ]
+    },
+    "models_code": {
+        "local_resources": [
+            "Feas/aircraft.py"
+        ]
+    }
+}

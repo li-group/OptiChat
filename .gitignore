@@ -60,3 +60,8 @@ create_tool_testset.py
 grading.py
 run_exp.py
 show_results.ipynb
+quick_test.ipynb
+tmp/
+
+# Ignore kb
+chroma_langchain_db/
