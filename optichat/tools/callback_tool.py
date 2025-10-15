@@ -17,7 +17,7 @@ from optichat.config.constants import (IS_SESSION_INITIALIZED, PERSISTENT_STATES
                                        CFG, IS_EXPERT_AGENT_USED, EXPERT_AGENT_START_TIME,
                                        MODELS_DICTIONARY, MODEL_VERSIONS, IS_MODELS_DICTIONARY_AVAILABLE,
                                        IS_MODELS_CODE_AVAILABLE, IS_MODELS_PAPER_AVAILABLE, USER_QUERY)
-from optichat.tools.extract_tool import restore_model_object, save_model_object, extract_model_info
+from optichat.tools.extract_tool import restore_model_object, save_model_object, extract_model_info, _solve_model
 from optichat.tools.rag_tool import init_paper_rag, init_code_rag
 
 
@@ -64,16 +64,14 @@ def _init_models(cfg: dict):
     models_dictionary = {}
     model_versions = []
     if "models" in cfg:
+        # TODO: assume cfg gives the following information
+        # is_solved: bool
+        # is_lp: bool
+        is_solved = cfg["models"].get("is_solved", False)
+        is_lp = cfg["models"].get("is_lp", False)
         for resource_path in cfg["models"].get("local_resources", []):
             model, version = restore_model_object(resource_path)
-            # TODO: need some way to introduce termination_condition smartly
-            # pyomo model's termination_condition is stored in results = solver.solve(model, tee=False)
-            from pyomo.opt import SolverFactory
-            solver = SolverFactory('gurobi')
-            results = solver.solve(model, tee=False)
-            termination_condition = results.solver.termination_condition
-            # but we only stored the model object.
-            # here assume we solve the model again no matter whether .pkl object is solved before.
+            model, termination_condition = _solve_model(model, is_lp=is_lp, is_solved=is_solved)
             info = extract_model_info(model, termination_condition=termination_condition)
             local_path_to_object = save_model_object(model, version)
             info.update({"local_path_to_object": local_path_to_object,})

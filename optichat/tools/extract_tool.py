@@ -128,9 +128,7 @@ def extract_model_var(model, termination_condition):
 def extract_model_constraint(model, termination_condition):
     """
     Extract constraints from a Pyomo model.
-    Information includes name, component_type, expression, 
-    TODO: dual solution,
-    TODO: is_binding implementation here needs verification
+    Information includes name, component_type, expression, dual, is_binding
     """
     eps = 1e-5
     constraint_info = {}
@@ -201,6 +199,22 @@ def extract_model_info(model, termination_condition='unknown'):
     # combine all info
     info = {**param_info, **var_info, **constraint_info, **objective_info}
     return info
+
+
+def _solve_model(model, is_lp=False, is_solved=False):
+    """
+    solve the model, 
+    if is_lp, add dual suffix for LP models to enable dual extraction in the future.
+    if is_solved, skip solving and return the model directly.
+    """
+    if is_solved:
+        return model, TerminationCondition.optimal
+    if is_lp and model.find_component('dual') is None:
+        model.dual = pe.Suffix(direction=pe.Suffix.IMPORT_EXPORT)
+    solver = SolverFactory('gurobi')
+    results = solver.solve(model, tee=False)
+    termination_condition = results.solver.termination_condition
+    return model, termination_condition
 
 
 def restore_model_object(file_path):
