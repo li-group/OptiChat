@@ -333,9 +333,7 @@ def feasibility_restoration(
     return "Feedback from internal tools: \n" + f"Applied restoration: added penalized slack to '{tname}'. Created: {', '.join(created)}."
 
 
-# =============================================
-# Iterative Infeasibility Restoration (ADK signature, same logic)
-# =============================================
+# Iterative Infeasibility Restoration 
 
 def iterative_feasibility_restoration(
     version: str,
@@ -473,3 +471,4 @@ def iterative_feasibility_restoration(
 
     header = "Iterative restoration summary:"
     return "Feedback from internal tools: \n" + "\n".join([header] + iteration_summaries)
+
