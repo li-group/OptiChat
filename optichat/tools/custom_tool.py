@@ -7,6 +7,7 @@ from pyomo.contrib.iis import write_iis
 from pyomo.core.expr.visitor import identify_mutable_parameters
 from pyomo.core.expr.calculus.derivatives import differentiate
 
+# New-architecture helpers (must exist in your project)
 from .shortcut_functions import load_model, solve_model, add_dual_suffix
 
 
@@ -29,6 +30,7 @@ def sensitivity_analysis(
       1) Load model; ensure dual suffix; solve (registry updated).
       2) For each queried parameter/index, compute coef = -d(body)/dp + d(lower)/dp + d(upper)/dp.
       3) Multiply coef by constraint dual; aggregate per queried parameter.
+
     Returns:
       "Feedback from internal tools:\\n..." (plain text).
     """
@@ -74,7 +76,22 @@ def sensitivity_analysis(
         """Find constraints influenced by p, with coef = -d(body)/dp + d(lower)/dp + d(upper)/dp."""
         implicated: List[Dict[str, Any]] = []
         param_comp = getattr(model, param_name)
-        param_inst = param_comp[idx] if idx is not None else param_comp
+
+        # EXACT legacy semantics for scalar vs indexed and None:
+        if param_comp.is_indexed():
+            if idx is None:
+                raise IndexError(
+                    "Error: Indexes are not valid. This usually happens when the order of indexes in the tuple is incorrect."
+                )
+            param_inst = param_comp[idx]
+        else:
+            # scalar Param: accept None or () only
+            if idx not in (None, ()):
+                raise IndexError(
+                    "Error: Indexes are not valid. This usually happens when the order of indexes in the tuple is incorrect."
+                )
+            param_inst = param_comp
+
         target_name = str(param_inst)
 
         for con_comp in model.component_objects(pyo.Constraint, active=True):
@@ -223,6 +240,7 @@ def write_lp_with_symbolic_names(model: pyo.ConcreteModel, lp_path: str) -> None
 
     Operations:
       1) model.write(lp_path, io_options={'symbolic_solver_labels': True}).
+
     Returns:
       None
     """
@@ -236,6 +254,7 @@ def run_gurobi_cli_iis(lp_path: str, workdir: Optional[str] = None) -> Optional[
     Operations:
       1) Call: gurobi_cl DualReductions=0 IIS=1 <lp_path>.
       2) Detect the IIS .ilp file next to lp_path. Return its path if found.
+
     Returns:
       Path to generated .ilp, or None if CLI unavailable or fails.
     """
@@ -260,6 +279,7 @@ def iis2json(lp_like_path: str) -> Dict[str, List[str]]:
     Operations:
       1) Read the 'Subject To' section.
       2) Collect labels 'name:' and de-duplicate in order.
+
     Returns:
       {"constraints": [str, ...]}
     """
@@ -300,6 +320,7 @@ def infeasibility_diagnosis(
       2) If infeasible or INF_OR_UNBD, write symbolic LP; run gurobi_cl DualReductions=0 IIS=1.
          Fallback to pyomo.contrib.iis.write_iis on absence/failure.
       3) Parse IIS; append to registry['iis_history']; optionally save artifact.
+
     Returns:
       "Feedback from internal tools:\\n..." (plain text).
     """
@@ -377,6 +398,7 @@ def unique_component_name(model: pyo.ConcreteModel, base: str) -> str:
 
     Operations:
       1) If 'base' exists, append _2, _3, ... until unique.
+
     Returns:
       Unique name string.
     """
@@ -402,6 +424,7 @@ def feasibility_restoration(
       1) Deactivate target constraint; add relaxed copy with nonnegative slack.
       2) Add penalty to objective (sign handles min/max).
       3) Append to registry['repairs_applied']; re-solve.
+
     Returns:
       "Feedback from internal tools:\\n..." (plain text).
     """
@@ -484,6 +507,7 @@ def iterative_feasibility_restoration(
     Operations:
       1) For each iteration: solve → IIS (prefer gurobi_cl DualReductions=0; fallback Pyomo IIS) → apply first recommendation → continue.
       2) Logs every IIS to registry['iis_history'] and every fix to registry['repairs_applied'].
+
     Returns:
       "Feedback from internal tools:\\n..." (plain text summary).
     """
