@@ -1,6 +1,6 @@
 from __future__ import annotations
 from typing import Any, Dict, List, Optional
-import os, re, shutil, tempfile, subprocess
+import os, shutil, tempfile, subprocess
 from loguru import logger
 
 import pyomo.environ as pyo
@@ -64,17 +64,46 @@ def iis2json(lp_like_path: str) -> Dict[str, List[str]]:
       {"constraints": [str, ...]}
     """
     txt = open(lp_like_path, "r", encoding="utf-8", errors="replace").read()
-    m = re.search(r"Subject To(.*?)(Bounds|Binaries|Binary|Generals|General|End)", txt, flags=re.S | re.I)
-    block = m.group(1) if m else txt
+
+    capture = False
+    block_lines: List[str] = []
+    for raw_line in txt.splitlines():
+        stripped = raw_line.strip()
+        lower = stripped.lower()
+
+        if not capture:
+            if lower.startswith("subject to"):
+                capture = True
+                idx = lower.find("subject to")
+                remainder = raw_line[idx + len("subject to"):].strip()
+                if remainder:
+                    block_lines.append(remainder)
+            continue
+
+        if lower.startswith(("bounds", "binaries", "binary", "generals", "general", "end")):
+            break
+        block_lines.append(raw_line)
+
+    if not block_lines:
+        block_lines = txt.splitlines()
 
     names: List[str] = []
-    for line in block.splitlines():
-        line = line.strip()
+    for raw_line in block_lines:
+        line = raw_line.strip()
         if not line or line.startswith("\\"):
             continue
-        mm = re.match(r"([A-Za-z_][A-Za-z0-9_\[\],\.\-]*)\s*:", line)
-        if mm:
-            names.append(mm.group(1))
+
+        # Capture everything before the first ':'; IIS writers use that portion as the label.
+        if ":" not in line:
+            continue
+        candidate = line.split(":", 1)[0].strip()
+        if not candidate:
+            continue
+
+        # Gurobi may quote names with single/double quotes; remove them for consistency.
+        candidate = candidate.strip("'\"")
+        candidate = candidate.replace("(", "[").replace(")", "]")
+        names.append(candidate)
 
     seen, ordered = set(), []
     for n in names:
