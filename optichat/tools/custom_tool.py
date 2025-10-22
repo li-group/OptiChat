@@ -1,11 +1,15 @@
 from __future__ import annotations
 from typing import Any, Dict, List, Optional
 import os, re, shutil, tempfile, subprocess
+from loguru import logger
 
 import pyomo.environ as pyo
 from pyomo.contrib.iis import write_iis
+from pyomo.opt import SolverFactory, SolverStatus, TerminationCondition
 
-from .shortcut_functions import load_model, solve_model
+from google.adk.tools.tool_context import ToolContext
+from optichat.tools.shortcut_functions import load_model, solve_model
+from optichat.config.constants import MODELS_DICTIONARY, MODEL_VERSIONS 
 
 
 # =========================
@@ -119,55 +123,41 @@ def append_repairs_applied(version: str, models_dictionary: Dict[str, Any], reco
 
 def infeasibility_diagnosis(
     version: str,
-    tool_context: "ToolContext" = None,  # ADK: tool_context last
+    tool_context: ToolContext
 ) -> str:
     """
-    Brief: Diagnose infeasibility, prefer robust CLI IIS on a symbolic LP, fallback to Pyomo IIS, update registry, and summarize.
+    infeasibility_diagnosis is a tool that performs infeasibility diagnosis on a specified model version
 
-    Operations:
-      1) Read registry and config from application state.
-      2) Solve the model and check status.
-      3) If infeasible/INF_OR_UNBD: write symbolic LP; try gurobi_cl DualReductions=0 IIS=1; fallback to Pyomo IIS.
-      4) Parse IIS, save artifact (best-effort), append to iis_history, persist registry.
-
+    Args:
+        version (str): Model version to perform infeasibility diagnosis on. 
     Returns:
-      "Feedback from internal tools:\\n..." (plain text).
+        Dict[str, str]: a dictionary with two keys: "status" and "result"
+        "status": "success" or "error"
+        "result": a report about the Irreducible Infeasible Subsystem (IIS) that represent the minimal set of constraints causing infeasibility, 
+        and corresponding recommendations for feasibility restoration.
     """
-    if tool_context is None:
-        return "Feedback from internal tools: \nMissing tool_context."
+    # TODO: add these keys to constants when more options are considered
+    solver_name = tool_context.state.get("SOLVER_NAME", "gurobi")
+    solver_options = tool_context.state.get("SOLVER_OPTIONS", None)
+    tee = bool(tool_context.state.get("SOLVE_TEE", False))
+    save_iis_dir = tool_context.state.get("IIS_SAVE_DIR", os.path.join("tmp", "iis", version))
+    os.makedirs(save_iis_dir, exist_ok=True)
 
-    state = tool_context.state
-    try:
-        models_dictionary = state["MODELS_DICTIONARY"]
-    except KeyError:
-        return "Feedback from internal tools: \nMODELS_DICTIONARY not found in tool_context.state."
-
-    solver_name = state.get("SOLVER_NAME", "gurobi")
-    solver_options = state.get("SOLVER_OPTIONS", None)
-    tee = bool(state.get("SOLVE_TEE", False))
-    save_iis_dir = state.get("IIS_SAVE_DIR", os.path.join("tmp", "iis", version))
-
-    # Ensure save dir (best-effort)
-    try:
-        os.makedirs(save_iis_dir, exist_ok=True)
-    except Exception:
-        save_iis_dir = None
-
-    # Load and solve
+    # solve if not solved yet
+    models_dictionary = tool_context.state[MODELS_DICTIONARY].copy()
+    if models_dictionary.get(version, {}).get("obj", {}).get("sol_status", "unknown") == "unknown":
+        model = load_model(version, models_dictionary)
+        models_dictionary = solve_model(model, version, models_dictionary)
+        tool_context.state[MODELS_DICTIONARY] = models_dictionary
+    
+    models_dictionary = tool_context.state[MODELS_DICTIONARY].copy()
     model = load_model(version, models_dictionary)
-    models_dictionary = solve_model(
-        model, version, models_dictionary,
-        solver_name=solver_name, solver_options=solver_options, tee=tee
-    )
     info = models_dictionary.get(version, {}).get("obj", {})
-    status = str(info.get("sol_status", "unknown")).lower()
+    status = info.get("sol_status", "unknown")
     objval = info.get("value", "unknown")
-
-    feasible_like = ("optimal" in status) or ("feasible" in status and "infeasible" not in status)
-    if feasible_like:
-        state["MODELS_DICTIONARY"] = models_dictionary
-        return "Feedback from internal tools: \nModel is feasible; no IIS needed."
-
+    # stop if NOT infeasible
+    if status not in [TerminationCondition.infeasible, TerminationCondition.infeasibleOrUnbounded]:
+        return {"status": "success", "result": "Model is NOT infeasible; infeasibility diagnosis terminated directly."}
     # Produce IIS (robust path, then fallback)
     with tempfile.TemporaryDirectory() as td:
         lp_path = os.path.join(td, "model.lp")
@@ -190,8 +180,10 @@ def infeasibility_diagnosis(
                         "solve": {"status": status, "objective_value": objval},
                     },
                 )
-                state["MODELS_DICTIONARY"] = models_dictionary
-                return "Feedback from internal tools: \n" + f"IIS could not be generated: {e}"
+                tool_context.state[MODELS_DICTIONARY] = models_dictionary
+                logger.error(f"write_iis failed: {e}")
+                return {"status": "error", 
+                        "result": f"Model is infeasible, but write_iis (internal function) failed: {e}"}
 
         parsed = iis2json(iis_path)
         constraints = parsed.get("constraints", [])
@@ -213,28 +205,23 @@ def infeasibility_diagnosis(
     }
     append_iis_history(version, models_dictionary, iis_record)
 
-    state["MODELS_DICTIONARY"] = models_dictionary
+    tool_context.state[MODELS_DICTIONARY] = models_dictionary
 
     if constraints:
-        first = constraints[0]
         lines = [
-            f"IIS includes {len(constraints)} constraint(s).",
-            f"First recommendation: add slack to '{first}'.",
-        ]
-        if final_artifact:
-            lines.append(f"IIS artifact saved at: {final_artifact}")
-        return "Feedback from internal tools: \n" + "\n".join(lines)
+            f"IIS includes {len(constraints)} constraint(s): ", 
+        ] + constraints
+        return {"status": "success", "result": "\n".join(lines)}
     else:
-        return "Feedback from internal tools: \nNo constraints parsed from IIS artifact."
-
-
+        logger.warning("No constraints parsed from IIS artifact.")
+        return {"status": "error", "result": "\nNo constraints parsed from IIS artifact. iis2json might be problematic."}
 # Feasibility Restoration
 
 def feasibility_restoration(
     version: str,
     recommendation: Dict[str, Any],
-    slack_penalty: float = 1e6,
-    tool_context: "ToolContext" = None,  # ADK: tool_context last
+    slack_penalty: float,
+    tool_context: ToolContext,
 ) -> str:
     """
     Brief: Apply a single IIS-based restoration by adding penalized slack to the target constraint; update registry and re-solve.
@@ -333,13 +320,13 @@ def feasibility_restoration(
     return "Feedback from internal tools: \n" + f"Applied restoration: added penalized slack to '{tname}'. Created: {', '.join(created)}."
 
 
-# Iterative Infeasibility Restoration 
+# Iterative Infeasibility Restoration
 
 def iterative_feasibility_restoration(
     version: str,
-    max_iterations: int = 10,
-    slack_penalty: float = 1e6,
-    tool_context: "ToolContext" = None,  # ADK: tool_context last
+    max_iterations: int,
+    slack_penalty: float,
+    tool_context: ToolContext
 ) -> str:
     """
     Brief: Iteratively diagnose infeasibility, apply the first IIS-based restoration, and repeat until feasible or capped.
@@ -471,4 +458,3 @@ def iterative_feasibility_restoration(
 
     header = "Iterative restoration summary:"
     return "Feedback from internal tools: \n" + "\n".join([header] + iteration_summaries)
-

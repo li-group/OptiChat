@@ -116,12 +116,12 @@ def extract_model_var(model, termination_condition):
     var_info = {}
     for var in model.component_objects(pe.Var, active=True):
         for idx in var:
-            try:
-                v = var[idx].value
-            except Exception as e:
-                raise ValueError(f"Error accessing value of variable {pe.name(var)} with index {idx}: {e}")
+            if str(termination_condition) == 'optimal':
+                solution = var[idx].value
+            else:
+                solution = "unknown"
             var_info[pe.name(var[idx])] = {"component_type": "variable",
-                                           "solution": var[idx].value}
+                                               "solution": solution}
     return var_info
 
 

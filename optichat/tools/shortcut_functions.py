@@ -78,6 +78,17 @@ def solve_model(model: pe.ConcreteModel, version: str, models_dictionary: dict):
     return models_dictionary
 
 
+def relax_constraint_and_penalize_violation(constraint_name: str, 
+                                            penalty_coef: float | int, 
+                                            model: pe.ConcreteModel):
+    """
+    ```relax_constraint_and_penalize_violation(constraint_name: str, penalty_coef: float | int, model)```
+    relaxes a constraint in the model by adding slacks and penalizes the violation in the objective in place, returns nothing.
+    """
+    constraint = model.find_component(constraint_name)
+    
+
+
 # def fix_variable(variable_name: str, value_to_fix: float | int, model: pe.ConcreteModel):
 #     """
 #     ```fix_variable(variable_name: str, value_to_fix: float | int, model)```

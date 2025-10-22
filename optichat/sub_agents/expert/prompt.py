@@ -21,6 +21,9 @@ RESOURCES
     scientific papers associated with the optimization models.
 
 CONTEXT TOOLS
+    - `infeasibility_diagnosis`
+    resource access: <models>
+    result type: deterministic and slow, diagnose infeasibility of existing <models>
     - `get_model_components`
     resource access: <models>
     result type: deterministic and fast, retrieve information about model components in existing <models>

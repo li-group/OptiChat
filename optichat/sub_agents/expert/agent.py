@@ -9,7 +9,7 @@ from optichat.tools.python_repl import python_repl_func
 from optichat.tools.rag_tool import code_rag, paper_rag
 from optichat.tools.callback_tool import (check_is_expert_agent_used, check_expert_agent_runtime,
                                           check_llm_request, check_llm_response, check_tool_usage, check_tool_response)
-
+from optichat.tools.custom_tool import infeasibility_diagnosis
 
 def create_expert_agent(prompt_version=1, tools_version=1):
     expert_agent_prompt = get_expert_agent_prompt(prompt_version)
@@ -17,7 +17,8 @@ def create_expert_agent(prompt_version=1, tools_version=1):
         expert_agent_tools = [get_model_components,
                               python_repl_func,
                               code_rag,
-                              paper_rag]
+                              paper_rag,
+                              infeasibility_diagnosis] # TODO: infeasibility diagnosis under testing
     else:
         raise NotImplementedError(f"Tools version '{tools_version}' is not implemented.")
 
