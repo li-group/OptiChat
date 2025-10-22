@@ -82,36 +82,43 @@ def relax_constraint_and_penalize_violation(constraint_name: str,
                                             penalty_coef: float | int, 
                                             model: pe.ConcreteModel):
     """
-    ```relax_constraint_and_penalize_violation(constraint_name: str, penalty_coef: float | int, model)```
-    relaxes a constraint in the model by adding slacks and penalizes the violation in the objective in place, returns nothing.
+    ```relaxed_model = relax_constraint_and_penalize_violation(constraint_name: str, penalty_coef: float | int, model)```
+    relaxes a constraint in the model by adding slacks and penalizes the violation in the objective in place, returns the relaxed model.
     """
     obj = next(model.component_data_objects(pe.Objective, active=True))
     is_min = (obj.sense == pe.minimize)
     penalty_sign = 1.0 if is_min else -1.0
     constraint = model.find_component(constraint_name)
     if constraint:
-        # TODO
-        if constraint.has_ub() and constraint.has_lb():
+        if constraint.equality:
             us = pe.Var(domain=pe.NonNegativeReals)
             model.add_component(unique_component_name(model, f"uslack_{constraint_name}"), us)
             ls = pe.Var(domain=pe.NonNegativeReals)
             model.add_component(unique_component_name(model, f"lslack_{constraint_name}"), ls)
+            eqcon = pe.Constraint(expr=(constraint.body == pe.value(constraint.lower) + us - ls))
+            model.add_component(unique_component_name(model, f"relaxed_{constraint_name}"), eqcon)
+            obj.set_value(expr=obj.expr + penalty_sign * penalty_coef * (us + ls))
         elif constraint.has_ub():
             us = pe.Var(domain=pe.NonNegativeReals)
             model.add_component(unique_component_name(model, f"uslack_{constraint_name}"), us)
-            new_con = pe.Constraint(expr=(constraint.body <= pe.value(constraint.upper) + us))
+            ucon = pe.Constraint(expr=(constraint.body <= pe.value(constraint.upper) + us))
+            model.add_component(unique_component_name(model, f"relaxed_{constraint_name}"), ucon)
+            obj.set_value(expr=obj.expr + penalty_sign * penalty_coef * us)
         elif constraint.has_lb():
             ls = pe.Var(domain=pe.NonNegativeReals)
             model.add_component(unique_component_name(model, f"lslack_{constraint_name}"), ls)
-
-            # new_con = pe.Constraint(expr=(c.body <= pe.value(c.upper) + s))
-            # name_rel = unique_component_name(model, f"fr_relaxed_{safe}")
-            # model.add_component(name_rel, new_con)
-            # obj.set_value(obj.expr + penalty_sign * slack_penalty * s)
-            # created = [name_s, name_rel]
+            lcon = pe.Constraint(expr=(constraint.body >= pe.value(constraint.lower) - ls))
+            model.add_component(unique_component_name(model, f"relaxed_{constraint_name}"), lcon)
+            obj.set_value(expr=obj.expr + penalty_sign * penalty_coef * ls)
+        else:
+            raise Exception("Constraint has no bounds. No changes made.")
+        # deactivated constraint can still be found by model.find_component, delete it to avoid confusion
+        model.del_component(constraint)
+        print(f"Constraint {constraint_name} is relaxed with slacks.")
+        print(f"Constraint {constraint_name} violation is penalized in the objective with coefficient {penalty_coef}.")
     else: 
         print(f"Constraint {constraint_name} not found in the model. No changes made.")
-
+    return model
     
 
 
