@@ -138,12 +138,7 @@ def extract_model_constraint(model, termination_condition):
                 v = constraint[idx].expr
             except Exception as e:
                 raise ValueError(f"Error accessing expression of constraint {pe.name(constraint)} with index {idx}: {e}")
-            try:
-                lslack = constraint[idx].lslack()
-                uslack = constraint[idx].uslack()
-            except Exception as e:
-                raise ValueError(f"Error accessing slack of constraint {pe.name(constraint)} with index {idx}: {e}")
-            
+
             if str(termination_condition) == 'optimal':
                 if abs(constraint[idx].lslack()) < eps or abs(constraint[idx].uslack()) < eps:
                     is_binding = True
