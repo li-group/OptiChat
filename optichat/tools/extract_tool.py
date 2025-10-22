@@ -270,4 +270,21 @@ def auto_extract_function_docs(module_path: str) -> str:
         return "\n".join(docs)
     except ImportError as e:
         return f"Error importing module {module_path}: {e}"
+    
+
+def unique_component_name(model: pe.ConcreteModel, base: str) -> str:
+    """
+    Brief: Generate a unique component name under the model.
+
+    Operations:
+      1) If 'base' exists, append _2, _3, ... until unique
+    Returns:
+      str
+    """
+    if not hasattr(model, base):
+        return base
+    k = 2
+    while hasattr(model, f"{base}_{k}"):
+        k += 1
+    return f"{base}_{k}"
 

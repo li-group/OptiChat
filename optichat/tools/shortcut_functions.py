@@ -1,7 +1,7 @@
 from loguru import logger
 import pyomo.environ as pe
 from pyomo.opt import SolverFactory, SolverStatus, TerminationCondition
-from optichat.tools.extract_tool import extract_model_info, restore_model_object, save_model_object
+from optichat.tools.extract_tool import extract_model_info, restore_model_object, save_model_object, unique_component_name
 
 
 def load_model(version: str, models_dictionary: dict):
@@ -85,7 +85,33 @@ def relax_constraint_and_penalize_violation(constraint_name: str,
     ```relax_constraint_and_penalize_violation(constraint_name: str, penalty_coef: float | int, model)```
     relaxes a constraint in the model by adding slacks and penalizes the violation in the objective in place, returns nothing.
     """
+    obj = next(model.component_data_objects(pe.Objective, active=True))
+    is_min = (obj.sense == pe.minimize)
+    penalty_sign = 1.0 if is_min else -1.0
     constraint = model.find_component(constraint_name)
+    if constraint:
+        # TODO
+        if constraint.has_ub() and constraint.has_lb():
+            us = pe.Var(domain=pe.NonNegativeReals)
+            model.add_component(unique_component_name(model, f"uslack_{constraint_name}"), us)
+            ls = pe.Var(domain=pe.NonNegativeReals)
+            model.add_component(unique_component_name(model, f"lslack_{constraint_name}"), ls)
+        elif constraint.has_ub():
+            us = pe.Var(domain=pe.NonNegativeReals)
+            model.add_component(unique_component_name(model, f"uslack_{constraint_name}"), us)
+            new_con = pe.Constraint(expr=(constraint.body <= pe.value(constraint.upper) + us))
+        elif constraint.has_lb():
+            ls = pe.Var(domain=pe.NonNegativeReals)
+            model.add_component(unique_component_name(model, f"lslack_{constraint_name}"), ls)
+
+            # new_con = pe.Constraint(expr=(c.body <= pe.value(c.upper) + s))
+            # name_rel = unique_component_name(model, f"fr_relaxed_{safe}")
+            # model.add_component(name_rel, new_con)
+            # obj.set_value(obj.expr + penalty_sign * slack_penalty * s)
+            # created = [name_s, name_rel]
+    else: 
+        print(f"Constraint {constraint_name} not found in the model. No changes made.")
+
     
 
 
