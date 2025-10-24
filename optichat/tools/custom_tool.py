@@ -8,9 +8,12 @@ from pyomo.contrib.iis import write_iis
 from pyomo.opt import SolverFactory, SolverStatus, TerminationCondition
 
 from google.adk.tools.tool_context import ToolContext
-from optichat.tools.shortcut_functions import load_model, solve_model
+from optichat.tools.shortcut_functions import load_model, solve_model, parse_uncertainty_from_state
 from optichat.tools.extract_tool import unique_component_name
 from optichat.config.constants import MODELS_DICTIONARY, MODEL_VERSIONS 
+
+from optichat.tools.ldr_explain import core as ldr_core
+from optichat.tools.ldr_explain import extractor as ldr_extractor
 
 
 # =========================
@@ -150,6 +153,11 @@ def infeasibility_diagnosis(
         and corresponding recommendations for feasibility restoration.
     """
     # TODO: add these keys to constants when more options are considered
+
+    # Checking if the mdoel verison exists
+    if version not in tool_context.state.get(MODEL_VERSIONS, []):
+        return {"status": "error", "result": f"Model version '{version}' not found in tool_context.state. Specify the right version"}
+    
     solver_name = tool_context.state.get("SOLVER_NAME", "gurobi")
     solver_options = tool_context.state.get("SOLVER_OPTIONS", None)
     tee = bool(tool_context.state.get("SOLVE_TEE", False))
@@ -228,6 +236,194 @@ def infeasibility_diagnosis(
     else:
         logger.warning("No constraints parsed from IIS artifact.")
         return {"status": "error", "result": "\nNo constraints parsed from IIS artifact. iis2json might be problematic."}
+    
+
+# Linear Decision Rule Functions
+    
+def ldr_model_generator(
+    version: str,
+    uncertain_params: Optional[List[str]] = None,
+    bounds: Optional[Dict[str, tuple]] = None,
+    tool_context: ToolContext = None,
+) -> Dict[str, Any]:
+    """
+    Build primal/dual LDRs for a FEASIBLE base model `version`.
+    - No autosolve; we only use cached status and bail if not feasible.
+    - If `uncertain_params` / `bounds` missing, parse them from the latest user message in state.
+    - Stores derived models as {version}__ldr_primal / {version}__ldr_dual and attaches a compact summary to the base.
+    """
+
+    state = tool_context.state
+    md = state[MODELS_DICTIONARY].copy()
+    if md.get(version, {}).get("obj", {}).get("sol_status", "unknown") in [TerminationCondition.infeasible, TerminationCondition.infeasibleOrUnbounded]:
+        return {
+            "status": "error",
+            "result": f"Base model version '{version}' is not feasible; LDR generation aborted."
+        }
+
+    base_model = load_model(version, md)
+    print(base_model)
+
+    # ==== Uncertainty spec (from args or user message) ====
+    # if uncertain_params is None or bounds is None:
+    #     up_auto, b_auto = parse_uncertainty_from_state(state)
+    #     if uncertain_params is None:
+    #         uncertain_params = up_auto
+    #     if bounds is None:
+    #         bounds = b_auto
+
+    # if not uncertain_params or not bounds:
+    #     return {
+    #         "status": "error",
+    #         "result": "Missing 'uncertain_params' and/or 'bounds'. "
+    #                   "Pass them as tool args or include a JSON block / inline spec in your message."
+    #     }
+
+    uncertain_params = ["demand[1,1]", "demand[2,1]"]
+    bounds = [(12, 18), (10, 20)]
+
+    # ==== LDR core entrypoint check ====
+    Core = getattr(ldr_core, "LDRPrimalDualCore", ldr_core)
+    target = getattr(Core, "build_extract_solve_both", None)
+    if target is None or not callable(target):
+        raise RuntimeError("LDR core is missing 'build_extract_solve_both'.")
+
+    # Decide whether to pass 'param_box' or 'bounds' without try/except
+    code = getattr(target, "__code__", None)
+    varnames = set(code.co_varnames) if code is not None else set()
+    use_param_box = "param_box" in varnames
+    use_bounds_kw = "bounds" in varnames
+
+    kwargs = {"base_model": base_model, "uncertain_params": uncertain_params, "param_box": bounds, "xi_set": pyo.RangeSet(1, len(uncertain_params) +1),
+              "bounds": bounds, "return_models": True, "tee": False}
+    # if use_param_box:
+    #     kwargs["param_box"] = bounds
+    # elif use_bounds_kw:
+    #     kwargs["bounds"] = bounds
+    # else:
+    #     raise RuntimeError("LDR core 'build_extract_solve_both' expects 'param_box' or 'bounds' keyword.")
+
+    res = target(**kwargs)
+
+    # ==== Unpack result (dict / tuple / attribute) ====
+    primal_model = dual_model = None
+    obj_primal = obj_dual = None
+
+    primal_model = res.get("primal_ldr") 
+    dual_model   = res.get("dual_ldr")  
+    obj_primal   = res.get("primal_obj")
+    obj_dual     = res.get("dual_obj")
+    gap          = res.get("gap")
+    primal_model_status = res.get("primal_status").get("termination")
+    dual_model_status = res.get("dual_status").get("termination")
+
+    if primal_model is None or dual_model is None:
+        raise RuntimeError("LDR core did not return recognized 'primal_model' and 'dual_model'.")
+
+    # --- persist minimal LDR entries ---
+    p_ver = f"{version}__ldr_primal"
+    d_ver = f"{version}__ldr_dual"
+
+    md[p_ver] = {
+        "model": primal_model,
+        "parent_version": version,
+        "role": "ldr_primal",
+        "sol_status": "optimal",
+        "is_ldr": True,
+    }
+    md[d_ver] = {
+        "model": dual_model,
+        "parent_version": version,
+        "role": "ldr_dual",
+        "sol_status": "optimal",
+        "is_ldr": True,
+    }
+
+    # state[MODELS_DICTIONARY] = md
+
+    msg = (
+        f"LDR generated for '{version}'. "
+        f"Primal obj={obj_primal}, Dual obj={obj_dual}, "
+        f"Gap(abs)={gap}. "
+    )
+    return {"status": "success", "result": msg}
+
+def ldr_expression_generator(
+    version: str,
+    variable: Optional[str] = None,
+    side: Optional[str] = None,   # 'primal' | 'dual' | None
+    tool_context: ToolContext = None,
+) -> Dict[str, Any]:
+    """
+    Return the LDR expression text for `variable`.
+    - `version` may be the base version OR an LDR-derived version (…__ldr_primal / …__ldr_dual).
+    - If `side` omitted, defaults to 'primal'. If version suffix implies side, that wins.
+    - Uses tools/ldr_explainer/extractor.py if available; otherwise falls back to Pyomo string.
+    """
+    state = tool_context.state
+    md: Dict[str, Any] = state.get(MODELS_DICTIONARY, {})
+    entry = md.get(version)
+
+    # Map base version to LDR version if needed
+    if entry is None and version in md and md[version].get("is_ldr") is not True:
+        lsum = md[version].get("ldr", {}).get("summary", {})
+        target_ver = lsum.get("primal_version")
+        if (side or "").lower() == "dual":
+            target_ver = lsum.get("dual_version") or target_ver
+        version = target_ver or version
+        entry = md.get(version)
+
+    if entry is None:
+        return {"status": "error", "result": f"Version '{version}' not found in the registry."}
+    if not variable:
+        return {"status": "error", "result": "Variable name was not provided."}
+
+    # Decide side
+    side_txt = (side or "primal").lower()
+    if version.endswith("__ldr_primal"):
+        side_txt = "primal"
+    if version.endswith("__ldr_dual"):
+        side_txt = "dual"
+
+    model = entry["model"]
+
+    # Preferred extractor function name order
+    candidates = (
+        "ldr_expression",
+        "get_ldr_expression",
+        "expression_for",
+        "generate_expression",
+    )
+    fn = None
+    for name in candidates:
+        cand = getattr(ldr_extractor, name, None)
+        if callable(cand):
+            fn = cand
+            break
+    if fn is None:
+        raise RuntimeError("LDR extractor has no suitable expression function.")
+
+    # Call extractor in a single, explicit way (no try/except)
+    # Expected signature: (model=..., var_name=..., side=...)
+    if "var_name" in getattr(fn, "__code__", None).co_varnames:
+        expr_text = fn(model=model, var_name=variable, side=side_txt)
+    elif "variable" in getattr(fn, "__code__", None).co_varnames:
+        expr_text = fn(model=model, variable=variable, side=side_txt)
+    else:
+        raise RuntimeError("LDR extractor expression function must accept 'var_name' or 'variable'.")
+
+    # Fallback: if extractor returns None/empty, produce a generic Pyomo representation
+    if not expr_text:
+        base = variable.split("[", 1)[0]
+        comp = getattr(model, base)  # will raise AttributeError if missing — as desired
+        expr_text = str(comp)
+
+    return {
+        "status": "success",
+        "result": f"LDR {side_txt} expression for {variable} (version={version}):\n{expr_text}",
+        "data": {"version": version, "side": side_txt, "variable": variable, "expression": str(expr_text)},
+    }
+
 # Feasibility Restoration
 
 # def feasibility_restoration(

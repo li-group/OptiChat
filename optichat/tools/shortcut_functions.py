@@ -2,7 +2,9 @@ from loguru import logger
 import pyomo.environ as pe
 from pyomo.opt import SolverFactory, SolverStatus, TerminationCondition
 from optichat.tools.extract_tool import extract_model_info, restore_model_object, save_model_object, unique_component_name
-
+from typing import Any, Dict, List, Tuple
+import re, json
+from optichat.config.constants import USER_QUERY
 
 def load_model(version: str, models_dictionary: dict):
     """
@@ -119,8 +121,54 @@ def relax_constraint_and_penalize_violation(constraint_name: str,
     else: 
         print(f"Constraint {constraint_name} not found in the model. No changes made.")
     return model
-    
 
+
+# Parse user query and return the uncertain parameters and it's bounds
+def parse_uncertainty_from_state(state: Dict[str, Any]) -> Tuple[List[str], Dict[str, Tuple[float, float]]]:
+    """
+    Parse uncertainty specification from the most recent user message in `state`.
+    Priority:
+      1) A fenced JSON code block with keys:
+         {"uncertain_params":[...], "bounds":{"p":[lo,hi], ...}}
+      2) Inline fallback, e.g.:
+         "uncertain: p,q  bounds: p[0,10]; q[-5,5]"   or   "p in [0,10]"
+    Returns (uncertain_params, bounds) where bounds[k] = (lo, hi) as floats.
+    If nothing is found, returns ([], {}).
+    """
+    text = (state.get(USER_QUERY) or "").strip()
+    if not text:
+        return [], {}
+
+    # 1) JSON block (preferred)
+    m = re.search(r"```(?:json)?\s*({.*?})\s*```", text, re.DOTALL)
+    if m:
+        try:
+            blob = json.loads(m.group(1))
+            up = blob.get("uncertain_params") or blob.get("uncertain") or []
+            bd = blob.get("bounds") or {}
+            up = [str(u) for u in up]
+            bounds = {k: (float(v[0]), float(v[1])) for k, v in bd.items()}
+            if up or bounds:
+                return up, bounds
+        except Exception:
+            pass
+
+    # 2) Inline fallback
+    up: List[str] = []
+    bdict: Dict[str, Tuple[float, float]] = {}
+
+    mup = re.search(r"uncertain(?:\s*params)?\s*:\s*([A-Za-z0-9_,\s]+)", text, re.IGNORECASE)
+    if mup:
+        up = [u.strip() for u in mup.group(1).split(",") if u.strip()]
+
+    # patterns like  p[0,10]  |  p in [0,10]  |  demand[0,1e3]
+    for name, lo, hi in re.findall(
+        r"([A-Za-z_]\w*)\s*(?:in)?\s*\[\s*([-+]?\d*\.?\d+(?:[eE][-+]?\d+)?)\s*,\s*([-+]?\d*\.?\d+(?:[eE][-+]?\d+)?)\s*\]",
+        text,
+    ):
+        bdict[name] = (float(lo), float(hi))
+
+    return up, bdict
 
 # def fix_variable(variable_name: str, value_to_fix: float | int, model: pe.ConcreteModel):
 #     """
