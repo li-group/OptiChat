@@ -12,13 +12,58 @@ from optichat.tools.shortcut_functions import load_model, solve_model, parse_unc
 from optichat.tools.extract_tool import unique_component_name
 from optichat.config.constants import MODELS_DICTIONARY, MODEL_VERSIONS 
 
+#LDR
 from optichat.tools.ldr_explain import core as ldr_core
 from optichat.tools.ldr_explain import extractor as ldr_extractor
+
+#Robust Analysis
+from optichat.tools.robust_analysis import scenario_generator as robust_scenarios
+from optichat.tools.robust_analysis import robustness_analysis as robust_core
+
 
 
 # =========================
 # Helpers
 # =========================
+
+def _json_safe(obj: Any) -> Any:
+    """
+    Convert pandas/numpy outputs to plain-JSON types for the LLM.
+    - DataFrame -> {"schema":{"columns":[...], "rows":N}, "records":[{...}, ...]}
+    - numpy scalars -> builtins via .item()
+    - numpy arrays / Series -> .tolist()
+    - containers -> recurse
+    - else -> str(obj)
+    """
+    # pandas.DataFrame (duck-typed)
+    if hasattr(obj, "to_dict") and hasattr(obj, "columns") and hasattr(obj, "shape"):
+        records = obj.to_dict(orient="records")
+        records = [_json_safe(r) for r in records]
+        cols = [str(c) for c in list(obj.columns)]
+        return {"schema": {"columns": cols, "rows": int(obj.shape[0])}, "records": records}
+
+    # numpy scalar
+    if hasattr(obj, "item") and callable(getattr(obj, "item", None)):
+        try:
+            return obj.item()
+        except Exception:
+            pass
+
+    # numpy array / pandas Series
+    if hasattr(obj, "tolist") and callable(getattr(obj, "tolist", None)):
+        try:
+            return obj.tolist()
+        except Exception:
+            pass
+
+    if isinstance(obj, dict):
+        return {str(k): _json_safe(v) for k, v in obj.items()}
+    if isinstance(obj, (list, tuple)):
+        return type(obj)(_json_safe(v) for v in obj)
+    if isinstance(obj, (str, int, float, bool)) or obj is None:
+        return obj
+    return str(obj)
+
 
 def write_lp_with_symbolic_names(model: pyo.ConcreteModel, lp_path: str) -> None:
     """
@@ -262,7 +307,6 @@ def ldr_model_generator(
         }
 
     base_model = load_model(version, md)
-    print(base_model)
 
     # ==== Uncertainty spec (from args or user message) ====
     # if uncertain_params is None or bounds is None:
@@ -423,6 +467,77 @@ def ldr_expression_generator(
         "result": f"LDR {side_txt} expression for {variable} (version={version}):\n{expr_text}",
         "data": {"version": version, "side": side_txt, "variable": variable, "expression": str(expr_text)},
     }
+
+
+# Robustness Analysis
+def robustness_analysis(
+    version: str,
+    tool_context: ToolContext = None,
+    n_scenarios: int = 10,
+) -> Dict[str, Any]:
+    """
+    Generate uniform scenarios and run robustness analysis on a FEASIBLE base model `version`.
+    - No state/registry updates.
+    - Returns JSON-safe payload (DataFrame -> records), suitable for LLM consumption.
+    - `n_scenarios` defaults to 10; CSV path is intentionally unsupported here.
+    """
+    state = tool_context.state
+    md = state[MODELS_DICTIONARY].copy()
+
+    # Feasibility guard (mirrors your LDR style)
+    status_in_obj = md.get(version, {}).get("obj", {}).get("sol_status", "unknown")
+    if (
+        status_in_obj in [TerminationCondition.infeasible, TerminationCondition.infeasibleOrUnbounded]
+        or (isinstance(status_in_obj, str) and status_in_obj.lower() in {"infeasible", "infeasibleorunbounded"})
+    ):
+        return {
+            "status": "error",
+            "result": f"Base model version '{version}' is not feasible; robustness analysis aborted."
+        }
+
+    base_model = load_model(version, md)
+
+    # # --- Scenario generation (uniform by default) ---
+    # if hasattr(robust_scenarios, "generate_scenarios_from_model"):
+    #     scen_fn = robust_scenarios.generate_scenarios_from_model
+    #     scenarios_df = scen_fn(uncertain_params = ["demand[1,1]", "demand[2,1]"], bounds = [(12, 18), (10, 20)], n = n_scenarios)
+    # else:
+    #     raise RuntimeError(
+    #         "robust_analysis.scenario_generator has no supported entrypoint: "
+    #         "expected 'generate_uniform_scenarios' or 'generate_scenarios'."
+    #     )
+    
+    # print(scenarios_df) # Works till here, perfect
+
+    # --- Robustness analysis ---
+    if hasattr(robust_core, "run_robustness"):
+        robust_function = getattr(robust_core, "run_robustness")
+    else:
+        raise RuntimeError(
+            "robust_analysis.robustness_analysis has no supported entrypoint "
+            "Missing run_robustness function"
+        )
+    
+    robust_df = robust_function(model = base_model, uncertain_params = [base_model.demand[1,1], base_model.demand[2,1]], bounds = [(12, 18), (10, 20)],
+                                n_scenarios = n_scenarios, dist = "uniform")
+
+    print(robust_df)
+
+    # --- JSON-safe return (no Pyomo / pandas objects in payload) ---
+    js = _json_safe(robust_df)
+    rows = 0
+    try:
+        rows = int(js.get("schema", {}).get("rows", 0))
+    except Exception:
+        pass
+
+    return {
+        "status": "success",
+        "result": f"Robustness analysis (uniform, {n_scenarios} scenarios) completed for '{version}'. Rows: {rows}.",
+        "data": js,
+    }
+
+
 
 # Feasibility Restoration
 

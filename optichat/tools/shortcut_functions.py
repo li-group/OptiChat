@@ -170,6 +170,8 @@ def parse_uncertainty_from_state(state: Dict[str, Any]) -> Tuple[List[str], Dict
 
     return up, bdict
 
+
+
 # def fix_variable(variable_name: str, value_to_fix: float | int, model: pe.ConcreteModel):
 #     """
 #     ```fix_variable(variable_name: str, value_to_fix: float | int, model)```
