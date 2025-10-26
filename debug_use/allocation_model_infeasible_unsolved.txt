@@ -1,0 +1,1100 @@
+4 Set Declarations
+    R : Set of all Recipients
+        Size=1, Index=None, Ordered=Insertion
+        Key  : Dimen : Domain : Size : Members
+        None :     1 :    Any :    4 : {'Store_A', 'Store_B', 'Store_C', 'Store_D'}
+    S : Set of all Senders/Suppliers
+        Size=1, Index=None, Ordered=Insertion
+        Key  : Dimen : Domain : Size : Members
+        None :     1 :    Any :    3 : {'DC1', 'DC2', 'DC3'}
+    T : Set of all time periods
+        Size=1, Index=None, Ordered=Insertion
+        Key  : Dimen : Domain : Size : Members
+        None :     1 :    Any :    7 : {0, 1, 2, 3, 4, 5, 6}
+    T_plus : Set of all time periods except 0
+        Size=1, Index=None, Ordered=Insertion
+        Key  : Dimen : Domain : Size : Members
+        None :     1 :    Any :    6 : {1, 2, 3, 4, 5, 6}
+
+11 Param Declarations
+    LT : Lead time from supplier i to receiver j at time t
+        Size=84, Index=S*R*T, Domain=Any, Default=None, Mutable=True
+        Key                   : Value
+        ('DC1', 'Store_A', 0) :     1
+        ('DC1', 'Store_A', 1) :     1
+        ('DC1', 'Store_A', 2) :     1
+        ('DC1', 'Store_A', 3) :     1
+        ('DC1', 'Store_A', 4) :     1
+        ('DC1', 'Store_A', 5) :     1
+        ('DC1', 'Store_A', 6) :     1
+        ('DC1', 'Store_B', 0) :     1
+        ('DC1', 'Store_B', 1) :     1
+        ('DC1', 'Store_B', 2) :     1
+        ('DC1', 'Store_B', 3) :     1
+        ('DC1', 'Store_B', 4) :     1
+        ('DC1', 'Store_B', 5) :     1
+        ('DC1', 'Store_B', 6) :     1
+        ('DC1', 'Store_C', 0) :     2
+        ('DC1', 'Store_C', 1) :     2
+        ('DC1', 'Store_C', 2) :     2
+        ('DC1', 'Store_C', 3) :     2
+        ('DC1', 'Store_C', 4) :     2
+        ('DC1', 'Store_C', 5) :     2
+        ('DC1', 'Store_C', 6) :     2
+        ('DC1', 'Store_D', 0) :     2
+        ('DC1', 'Store_D', 1) :     2
+        ('DC1', 'Store_D', 2) :     2
+        ('DC1', 'Store_D', 3) :     2
+        ('DC1', 'Store_D', 4) :     2
+        ('DC1', 'Store_D', 5) :     2
+        ('DC1', 'Store_D', 6) :     2
+        ('DC2', 'Store_A', 0) :     1
+        ('DC2', 'Store_A', 1) :     1
+        ('DC2', 'Store_A', 2) :     1
+        ('DC2', 'Store_A', 3) :     1
+        ('DC2', 'Store_A', 4) :     1
+        ('DC2', 'Store_A', 5) :     1
+        ('DC2', 'Store_A', 6) :     1
+        ('DC2', 'Store_B', 0) :     1
+        ('DC2', 'Store_B', 1) :     1
+        ('DC2', 'Store_B', 2) :     1
+        ('DC2', 'Store_B', 3) :     1
+        ('DC2', 'Store_B', 4) :     1
+        ('DC2', 'Store_B', 5) :     1
+        ('DC2', 'Store_B', 6) :     1
+        ('DC2', 'Store_C', 0) :     1
+        ('DC2', 'Store_C', 1) :     1
+        ('DC2', 'Store_C', 2) :     1
+        ('DC2', 'Store_C', 3) :     1
+        ('DC2', 'Store_C', 4) :     1
+        ('DC2', 'Store_C', 5) :     1
+        ('DC2', 'Store_C', 6) :     1
+        ('DC2', 'Store_D', 0) :     1
+        ('DC2', 'Store_D', 1) :     1
+        ('DC2', 'Store_D', 2) :     1
+        ('DC2', 'Store_D', 3) :     1
+        ('DC2', 'Store_D', 4) :     1
+        ('DC2', 'Store_D', 5) :     1
+        ('DC2', 'Store_D', 6) :     1
+        ('DC3', 'Store_A', 0) :     2
+        ('DC3', 'Store_A', 1) :     2
+        ('DC3', 'Store_A', 2) :     2
+        ('DC3', 'Store_A', 3) :     2
+        ('DC3', 'Store_A', 4) :     2
+        ('DC3', 'Store_A', 5) :     2
+        ('DC3', 'Store_A', 6) :     2
+        ('DC3', 'Store_B', 0) :     2
+        ('DC3', 'Store_B', 1) :     2
+        ('DC3', 'Store_B', 2) :     2
+        ('DC3', 'Store_B', 3) :     2
+        ('DC3', 'Store_B', 4) :     2
+        ('DC3', 'Store_B', 5) :     2
+        ('DC3', 'Store_B', 6) :     2
+        ('DC3', 'Store_C', 0) :     1
+        ('DC3', 'Store_C', 1) :     1
+        ('DC3', 'Store_C', 2) :     1
+        ('DC3', 'Store_C', 3) :     1
+        ('DC3', 'Store_C', 4) :     1
+        ('DC3', 'Store_C', 5) :     1
+        ('DC3', 'Store_C', 6) :     1
+        ('DC3', 'Store_D', 0) :     1
+        ('DC3', 'Store_D', 1) :     1
+        ('DC3', 'Store_D', 2) :     1
+        ('DC3', 'Store_D', 3) :     1
+        ('DC3', 'Store_D', 4) :     1
+        ('DC3', 'Store_D', 5) :     1
+        ('DC3', 'Store_D', 6) :     1
+    M : Size=1, Index=None, Domain=Any, Default=None, Mutable=True
+        Key  : Value
+        None : 10000
+    RP : Reoder Point
+        Size=28, Index=R*T, Domain=Any, Default=None, Mutable=True
+        Key            : Value
+        ('Store_A', 0) :    25
+        ('Store_A', 1) :    25
+        ('Store_A', 2) :    25
+        ('Store_A', 3) :    25
+        ('Store_A', 4) :    25
+        ('Store_A', 5) :    25
+        ('Store_A', 6) :    25
+        ('Store_B', 0) :    20
+        ('Store_B', 1) :    20
+        ('Store_B', 2) :    20
+        ('Store_B', 3) :    20
+        ('Store_B', 4) :    20
+        ('Store_B', 5) :    20
+        ('Store_B', 6) :    20
+        ('Store_C', 0) :    15
+        ('Store_C', 1) :    15
+        ('Store_C', 2) :    15
+        ('Store_C', 3) :    15
+        ('Store_C', 4) :    15
+        ('Store_C', 5) :    15
+        ('Store_C', 6) :    15
+        ('Store_D', 0) :    22
+        ('Store_D', 1) :    22
+        ('Store_D', 2) :    22
+        ('Store_D', 3) :    22
+        ('Store_D', 4) :    22
+        ('Store_D', 5) :    22
+        ('Store_D', 6) :    22
+    RUTL : Reorder up to level
+        Size=28, Index=R*T, Domain=Any, Default=None, Mutable=True
+        Key            : Value
+        ('Store_A', 0) :    80
+        ('Store_A', 1) :    80
+        ('Store_A', 2) :    80
+        ('Store_A', 3) :    80
+        ('Store_A', 4) :    80
+        ('Store_A', 5) :    80
+        ('Store_A', 6) :    80
+        ('Store_B', 0) :    60
+        ('Store_B', 1) :    60
+        ('Store_B', 2) :    60
+        ('Store_B', 3) :    60
+        ('Store_B', 4) :    60
+        ('Store_B', 5) :    60
+        ('Store_B', 6) :    60
+        ('Store_C', 0) :    45
+        ('Store_C', 1) :    45
+        ('Store_C', 2) :    45
+        ('Store_C', 3) :    45
+        ('Store_C', 4) :    45
+        ('Store_C', 5) :    45
+        ('Store_C', 6) :    45
+        ('Store_D', 0) :    60
+        ('Store_D', 1) :    60
+        ('Store_D', 2) :    60
+        ('Store_D', 3) :    60
+        ('Store_D', 4) :    60
+        ('Store_D', 5) :    60
+        ('Store_D', 6) :    60
+    aim :  Aimed quantity at receiver j at time t
+        Size=28, Index=R*T, Domain=Any, Default=None, Mutable=True
+        Key            : Value
+        ('Store_A', 0) :    40
+        ('Store_A', 1) :    34
+        ('Store_A', 2) :    38
+        ('Store_A', 3) :    32
+        ('Store_A', 4) :    36
+        ('Store_A', 5) :    43
+        ('Store_A', 6) :    40
+        ('Store_B', 0) :    32
+        ('Store_B', 1) :    30
+        ('Store_B', 2) :    27
+        ('Store_B', 3) :    34
+        ('Store_B', 4) :    32
+        ('Store_B', 5) :    36
+        ('Store_B', 6) :    31
+        ('Store_C', 0) :    20
+        ('Store_C', 1) :    23
+        ('Store_C', 2) :    21
+        ('Store_C', 3) :    24
+        ('Store_C', 4) :    26
+        ('Store_C', 5) :    29
+        ('Store_C', 6) :    30
+        ('Store_D', 0) :    26
+        ('Store_D', 1) :    28
+        ('Store_D', 2) :    30
+        ('Store_D', 3) :    29
+        ('Store_D', 4) :    32
+        ('Store_D', 5) :    34
+        ('Store_D', 6) :    30
+    c : Cost of item to go from i to j
+        Size=12, Index=S*R, Domain=Any, Default=None, Mutable=True
+        Key                : Value
+        ('DC1', 'Store_A') :     5
+        ('DC1', 'Store_B') :     7
+        ('DC1', 'Store_C') :    15
+        ('DC1', 'Store_D') :    18
+        ('DC2', 'Store_A') :    12
+        ('DC2', 'Store_B') :    10
+        ('DC2', 'Store_C') :     8
+        ('DC2', 'Store_D') :    11
+        ('DC3', 'Store_A') :    20
+        ('DC3', 'Store_B') :    16
+        ('DC3', 'Store_C') :     6
+        ('DC3', 'Store_D') :     5
+    d : Demand at receiver j at time t
+        Size=28, Index=R*T, Domain=Any, Default=None, Mutable=True
+        Key            : Value
+        ('Store_A', 0) :    18
+        ('Store_A', 1) :    20
+        ('Store_A', 2) :    19
+        ('Store_A', 3) :    21
+        ('Store_A', 4) :    22
+        ('Store_A', 5) :    28
+        ('Store_A', 6) :    26
+        ('Store_B', 0) :    15
+        ('Store_B', 1) :    16
+        ('Store_B', 2) :    14
+        ('Store_B', 3) :    17
+        ('Store_B', 4) :    18
+        ('Store_B', 5) :    22
+        ('Store_B', 6) :    20
+        ('Store_C', 0) :    10
+        ('Store_C', 1) :    11
+        ('Store_C', 2) :    12
+        ('Store_C', 3) :    13
+        ('Store_C', 4) :    14
+        ('Store_C', 5) :    16
+        ('Store_C', 6) :    15
+        ('Store_D', 0) :    16
+        ('Store_D', 1) :    17
+        ('Store_D', 2) :    18
+        ('Store_D', 3) :    17
+        ('Store_D', 4) :    19
+        ('Store_D', 5) :    24
+        ('Store_D', 6) :    21
+    need : Need at location j at time t
+        Size=28, Index=R*T, Domain=Any, Default=None, Mutable=True
+        Key            : Value
+        ('Store_A', 0) :    45
+        ('Store_A', 1) :    38
+        ('Store_A', 2) :    42
+        ('Store_A', 3) :    35
+        ('Store_A', 4) :    40
+        ('Store_A', 5) :    48
+        ('Store_A', 6) :    45
+        ('Store_B', 0) :    38
+        ('Store_B', 1) :    35
+        ('Store_B', 2) :    32
+        ('Store_B', 3) :    40
+        ('Store_B', 4) :    38
+        ('Store_B', 5) :    42
+        ('Store_B', 6) :    36
+        ('Store_C', 0) :    27
+        ('Store_C', 1) :    30
+        ('Store_C', 2) :    28
+        ('Store_C', 3) :    32
+        ('Store_C', 4) :    35
+        ('Store_C', 5) :    38
+        ('Store_C', 6) :    40
+        ('Store_D', 0) :    32
+        ('Store_D', 1) :    35
+        ('Store_D', 2) :    38
+        ('Store_D', 3) :    36
+        ('Store_D', 4) :    40
+        ('Store_D', 5) :    42
+        ('Store_D', 6) :    38
+    need_min_param : limit for need quantites
+        Size=1, Index=None, Domain=Any, Default=None, Mutable=True
+        Key  : Value
+        None :    10
+    s0_i : Initial inventory of senders
+        Size=3, Index=S, Domain=Any, Default=None, Mutable=True
+        Key : Value
+        DC1 :   450
+        DC2 :   380
+        DC3 :   420
+    s0_j : Initial inventory of receipients
+        Size=4, Index=R, Domain=Any, Default=None, Mutable=True
+        Key     : Value
+        Store_A :    35
+        Store_B :    22
+        Store_C :    18
+        Store_D :    28
+
+7 Var Declarations
+    NI : Net inventory at receiver j at time t
+        Size=28, Index=R*T
+        Key            : Lower : Value : Upper : Fixed : Stale : Domain
+        ('Store_A', 0) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('Store_A', 1) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('Store_A', 2) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('Store_A', 3) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('Store_A', 4) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('Store_A', 5) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('Store_A', 6) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('Store_B', 0) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('Store_B', 1) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('Store_B', 2) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('Store_B', 3) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('Store_B', 4) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('Store_B', 5) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('Store_B', 6) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('Store_C', 0) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('Store_C', 1) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('Store_C', 2) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('Store_C', 3) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('Store_C', 4) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('Store_C', 5) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('Store_C', 6) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('Store_D', 0) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('Store_D', 1) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('Store_D', 2) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('Store_D', 3) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('Store_D', 4) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('Store_D', 5) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('Store_D', 6) :     0 :  None :  None : False :  True : NonNegativeReals
+    U_minus : Size=1, Index=None
+        Key  : Lower : Value : Upper : Fixed : Stale : Domain
+        None :     0 :  None :  None : False :  True : NonNegativeReals
+    U_plus : Size=1, Index=None
+        Key  : Lower : Value : Upper : Fixed : Stale : Domain
+        None :     0 :  None :  None : False :  True : NonNegativeReals
+    q : Quantity ordered from location i to j at time t
+        Size=84, Index=S*R*T
+        Key                   : Lower : Value : Upper : Fixed : Stale : Domain
+        ('DC1', 'Store_A', 0) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('DC1', 'Store_A', 1) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('DC1', 'Store_A', 2) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('DC1', 'Store_A', 3) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('DC1', 'Store_A', 4) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('DC1', 'Store_A', 5) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('DC1', 'Store_A', 6) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('DC1', 'Store_B', 0) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('DC1', 'Store_B', 1) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('DC1', 'Store_B', 2) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('DC1', 'Store_B', 3) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('DC1', 'Store_B', 4) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('DC1', 'Store_B', 5) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('DC1', 'Store_B', 6) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('DC1', 'Store_C', 0) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('DC1', 'Store_C', 1) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('DC1', 'Store_C', 2) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('DC1', 'Store_C', 3) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('DC1', 'Store_C', 4) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('DC1', 'Store_C', 5) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('DC1', 'Store_C', 6) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('DC1', 'Store_D', 0) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('DC1', 'Store_D', 1) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('DC1', 'Store_D', 2) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('DC1', 'Store_D', 3) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('DC1', 'Store_D', 4) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('DC1', 'Store_D', 5) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('DC1', 'Store_D', 6) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('DC2', 'Store_A', 0) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('DC2', 'Store_A', 1) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('DC2', 'Store_A', 2) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('DC2', 'Store_A', 3) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('DC2', 'Store_A', 4) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('DC2', 'Store_A', 5) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('DC2', 'Store_A', 6) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('DC2', 'Store_B', 0) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('DC2', 'Store_B', 1) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('DC2', 'Store_B', 2) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('DC2', 'Store_B', 3) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('DC2', 'Store_B', 4) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('DC2', 'Store_B', 5) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('DC2', 'Store_B', 6) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('DC2', 'Store_C', 0) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('DC2', 'Store_C', 1) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('DC2', 'Store_C', 2) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('DC2', 'Store_C', 3) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('DC2', 'Store_C', 4) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('DC2', 'Store_C', 5) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('DC2', 'Store_C', 6) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('DC2', 'Store_D', 0) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('DC2', 'Store_D', 1) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('DC2', 'Store_D', 2) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('DC2', 'Store_D', 3) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('DC2', 'Store_D', 4) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('DC2', 'Store_D', 5) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('DC2', 'Store_D', 6) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('DC3', 'Store_A', 0) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('DC3', 'Store_A', 1) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('DC3', 'Store_A', 2) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('DC3', 'Store_A', 3) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('DC3', 'Store_A', 4) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('DC3', 'Store_A', 5) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('DC3', 'Store_A', 6) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('DC3', 'Store_B', 0) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('DC3', 'Store_B', 1) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('DC3', 'Store_B', 2) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('DC3', 'Store_B', 3) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('DC3', 'Store_B', 4) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('DC3', 'Store_B', 5) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('DC3', 'Store_B', 6) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('DC3', 'Store_C', 0) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('DC3', 'Store_C', 1) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('DC3', 'Store_C', 2) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('DC3', 'Store_C', 3) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('DC3', 'Store_C', 4) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('DC3', 'Store_C', 5) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('DC3', 'Store_C', 6) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('DC3', 'Store_D', 0) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('DC3', 'Store_D', 1) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('DC3', 'Store_D', 2) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('DC3', 'Store_D', 3) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('DC3', 'Store_D', 4) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('DC3', 'Store_D', 5) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('DC3', 'Store_D', 6) :     0 :  None :  None : False :  True : NonNegativeReals
+    s : On-hand inventory at location i at time t
+        Size=49, Index={DC1, DC2, DC3, Store_A, Store_B, Store_C, Store_D}*T
+        Key            : Lower : Value : Upper : Fixed : Stale : Domain
+            ('DC1', 0) :     0 :  None :  None : False :  True : NonNegativeReals
+            ('DC1', 1) :     0 :  None :  None : False :  True : NonNegativeReals
+            ('DC1', 2) :     0 :  None :  None : False :  True : NonNegativeReals
+            ('DC1', 3) :     0 :  None :  None : False :  True : NonNegativeReals
+            ('DC1', 4) :     0 :  None :  None : False :  True : NonNegativeReals
+            ('DC1', 5) :     0 :  None :  None : False :  True : NonNegativeReals
+            ('DC1', 6) :     0 :  None :  None : False :  True : NonNegativeReals
+            ('DC2', 0) :     0 :  None :  None : False :  True : NonNegativeReals
+            ('DC2', 1) :     0 :  None :  None : False :  True : NonNegativeReals
+            ('DC2', 2) :     0 :  None :  None : False :  True : NonNegativeReals
+            ('DC2', 3) :     0 :  None :  None : False :  True : NonNegativeReals
+            ('DC2', 4) :     0 :  None :  None : False :  True : NonNegativeReals
+            ('DC2', 5) :     0 :  None :  None : False :  True : NonNegativeReals
+            ('DC2', 6) :     0 :  None :  None : False :  True : NonNegativeReals
+            ('DC3', 0) :     0 :  None :  None : False :  True : NonNegativeReals
+            ('DC3', 1) :     0 :  None :  None : False :  True : NonNegativeReals
+            ('DC3', 2) :     0 :  None :  None : False :  True : NonNegativeReals
+            ('DC3', 3) :     0 :  None :  None : False :  True : NonNegativeReals
+            ('DC3', 4) :     0 :  None :  None : False :  True : NonNegativeReals
+            ('DC3', 5) :     0 :  None :  None : False :  True : NonNegativeReals
+            ('DC3', 6) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('Store_A', 0) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('Store_A', 1) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('Store_A', 2) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('Store_A', 3) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('Store_A', 4) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('Store_A', 5) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('Store_A', 6) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('Store_B', 0) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('Store_B', 1) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('Store_B', 2) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('Store_B', 3) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('Store_B', 4) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('Store_B', 5) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('Store_B', 6) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('Store_C', 0) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('Store_C', 1) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('Store_C', 2) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('Store_C', 3) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('Store_C', 4) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('Store_C', 5) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('Store_C', 6) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('Store_D', 0) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('Store_D', 1) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('Store_D', 2) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('Store_D', 3) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('Store_D', 4) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('Store_D', 5) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('Store_D', 6) :     0 :  None :  None : False :  True : NonNegativeReals
+    sls : Expected Sales at j at time t
+        Size=28, Index=R*T
+        Key            : Lower : Value : Upper : Fixed : Stale : Domain
+        ('Store_A', 0) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('Store_A', 1) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('Store_A', 2) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('Store_A', 3) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('Store_A', 4) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('Store_A', 5) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('Store_A', 6) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('Store_B', 0) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('Store_B', 1) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('Store_B', 2) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('Store_B', 3) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('Store_B', 4) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('Store_B', 5) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('Store_B', 6) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('Store_C', 0) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('Store_C', 1) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('Store_C', 2) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('Store_C', 3) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('Store_C', 4) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('Store_C', 5) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('Store_C', 6) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('Store_D', 0) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('Store_D', 1) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('Store_D', 2) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('Store_D', 3) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('Store_D', 4) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('Store_D', 5) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('Store_D', 6) :     0 :  None :  None : False :  True : NonNegativeReals
+    x : Binary: 1 if shipping from i to j at t
+        Size=84, Index=S*R*T
+        Key                   : Lower : Value : Upper : Fixed : Stale : Domain
+        ('DC1', 'Store_A', 0) :     0 :  None :     1 : False :  True : Binary
+        ('DC1', 'Store_A', 1) :     0 :  None :     1 : False :  True : Binary
+        ('DC1', 'Store_A', 2) :     0 :  None :     1 : False :  True : Binary
+        ('DC1', 'Store_A', 3) :     0 :  None :     1 : False :  True : Binary
+        ('DC1', 'Store_A', 4) :     0 :  None :     1 : False :  True : Binary
+        ('DC1', 'Store_A', 5) :     0 :  None :     1 : False :  True : Binary
+        ('DC1', 'Store_A', 6) :     0 :  None :     1 : False :  True : Binary
+        ('DC1', 'Store_B', 0) :     0 :  None :     1 : False :  True : Binary
+        ('DC1', 'Store_B', 1) :     0 :  None :     1 : False :  True : Binary
+        ('DC1', 'Store_B', 2) :     0 :  None :     1 : False :  True : Binary
+        ('DC1', 'Store_B', 3) :     0 :  None :     1 : False :  True : Binary
+        ('DC1', 'Store_B', 4) :     0 :  None :     1 : False :  True : Binary
+        ('DC1', 'Store_B', 5) :     0 :  None :     1 : False :  True : Binary
+        ('DC1', 'Store_B', 6) :     0 :  None :     1 : False :  True : Binary
+        ('DC1', 'Store_C', 0) :     0 :  None :     1 : False :  True : Binary
+        ('DC1', 'Store_C', 1) :     0 :  None :     1 : False :  True : Binary
+        ('DC1', 'Store_C', 2) :     0 :  None :     1 : False :  True : Binary
+        ('DC1', 'Store_C', 3) :     0 :  None :     1 : False :  True : Binary
+        ('DC1', 'Store_C', 4) :     0 :  None :     1 : False :  True : Binary
+        ('DC1', 'Store_C', 5) :     0 :  None :     1 : False :  True : Binary
+        ('DC1', 'Store_C', 6) :     0 :  None :     1 : False :  True : Binary
+        ('DC1', 'Store_D', 0) :     0 :  None :     1 : False :  True : Binary
+        ('DC1', 'Store_D', 1) :     0 :  None :     1 : False :  True : Binary
+        ('DC1', 'Store_D', 2) :     0 :  None :     1 : False :  True : Binary
+        ('DC1', 'Store_D', 3) :     0 :  None :     1 : False :  True : Binary
+        ('DC1', 'Store_D', 4) :     0 :  None :     1 : False :  True : Binary
+        ('DC1', 'Store_D', 5) :     0 :  None :     1 : False :  True : Binary
+        ('DC1', 'Store_D', 6) :     0 :  None :     1 : False :  True : Binary
+        ('DC2', 'Store_A', 0) :     0 :  None :     1 : False :  True : Binary
+        ('DC2', 'Store_A', 1) :     0 :  None :     1 : False :  True : Binary
+        ('DC2', 'Store_A', 2) :     0 :  None :     1 : False :  True : Binary
+        ('DC2', 'Store_A', 3) :     0 :  None :     1 : False :  True : Binary
+        ('DC2', 'Store_A', 4) :     0 :  None :     1 : False :  True : Binary
+        ('DC2', 'Store_A', 5) :     0 :  None :     1 : False :  True : Binary
+        ('DC2', 'Store_A', 6) :     0 :  None :     1 : False :  True : Binary
+        ('DC2', 'Store_B', 0) :     0 :  None :     1 : False :  True : Binary
+        ('DC2', 'Store_B', 1) :     0 :  None :     1 : False :  True : Binary
+        ('DC2', 'Store_B', 2) :     0 :  None :     1 : False :  True : Binary
+        ('DC2', 'Store_B', 3) :     0 :  None :     1 : False :  True : Binary
+        ('DC2', 'Store_B', 4) :     0 :  None :     1 : False :  True : Binary
+        ('DC2', 'Store_B', 5) :     0 :  None :     1 : False :  True : Binary
+        ('DC2', 'Store_B', 6) :     0 :  None :     1 : False :  True : Binary
+        ('DC2', 'Store_C', 0) :     0 :  None :     1 : False :  True : Binary
+        ('DC2', 'Store_C', 1) :     0 :  None :     1 : False :  True : Binary
+        ('DC2', 'Store_C', 2) :     0 :  None :     1 : False :  True : Binary
+        ('DC2', 'Store_C', 3) :     0 :  None :     1 : False :  True : Binary
+        ('DC2', 'Store_C', 4) :     0 :  None :     1 : False :  True : Binary
+        ('DC2', 'Store_C', 5) :     0 :  None :     1 : False :  True : Binary
+        ('DC2', 'Store_C', 6) :     0 :  None :     1 : False :  True : Binary
+        ('DC2', 'Store_D', 0) :     0 :  None :     1 : False :  True : Binary
+        ('DC2', 'Store_D', 1) :     0 :  None :     1 : False :  True : Binary
+        ('DC2', 'Store_D', 2) :     0 :  None :     1 : False :  True : Binary
+        ('DC2', 'Store_D', 3) :     0 :  None :     1 : False :  True : Binary
+        ('DC2', 'Store_D', 4) :     0 :  None :     1 : False :  True : Binary
+        ('DC2', 'Store_D', 5) :     0 :  None :     1 : False :  True : Binary
+        ('DC2', 'Store_D', 6) :     0 :  None :     1 : False :  True : Binary
+        ('DC3', 'Store_A', 0) :     0 :  None :     1 : False :  True : Binary
+        ('DC3', 'Store_A', 1) :     0 :  None :     1 : False :  True : Binary
+        ('DC3', 'Store_A', 2) :     0 :  None :     1 : False :  True : Binary
+        ('DC3', 'Store_A', 3) :     0 :  None :     1 : False :  True : Binary
+        ('DC3', 'Store_A', 4) :     0 :  None :     1 : False :  True : Binary
+        ('DC3', 'Store_A', 5) :     0 :  None :     1 : False :  True : Binary
+        ('DC3', 'Store_A', 6) :     0 :  None :     1 : False :  True : Binary
+        ('DC3', 'Store_B', 0) :     0 :  None :     1 : False :  True : Binary
+        ('DC3', 'Store_B', 1) :     0 :  None :     1 : False :  True : Binary
+        ('DC3', 'Store_B', 2) :     0 :  None :     1 : False :  True : Binary
+        ('DC3', 'Store_B', 3) :     0 :  None :     1 : False :  True : Binary
+        ('DC3', 'Store_B', 4) :     0 :  None :     1 : False :  True : Binary
+        ('DC3', 'Store_B', 5) :     0 :  None :     1 : False :  True : Binary
+        ('DC3', 'Store_B', 6) :     0 :  None :     1 : False :  True : Binary
+        ('DC3', 'Store_C', 0) :     0 :  None :     1 : False :  True : Binary
+        ('DC3', 'Store_C', 1) :     0 :  None :     1 : False :  True : Binary
+        ('DC3', 'Store_C', 2) :     0 :  None :     1 : False :  True : Binary
+        ('DC3', 'Store_C', 3) :     0 :  None :     1 : False :  True : Binary
+        ('DC3', 'Store_C', 4) :     0 :  None :     1 : False :  True : Binary
+        ('DC3', 'Store_C', 5) :     0 :  None :     1 : False :  True : Binary
+        ('DC3', 'Store_C', 6) :     0 :  None :     1 : False :  True : Binary
+        ('DC3', 'Store_D', 0) :     0 :  None :     1 : False :  True : Binary
+        ('DC3', 'Store_D', 1) :     0 :  None :     1 : False :  True : Binary
+        ('DC3', 'Store_D', 2) :     0 :  None :     1 : False :  True : Binary
+        ('DC3', 'Store_D', 3) :     0 :  None :     1 : False :  True : Binary
+        ('DC3', 'Store_D', 4) :     0 :  None :     1 : False :  True : Binary
+        ('DC3', 'Store_D', 5) :     0 :  None :     1 : False :  True : Binary
+        ('DC3', 'Store_D', 6) :     0 :  None :     1 : False :  True : Binary
+
+1 Objective Declarations
+    obj : Size=1, Index=None, Active=True
+        Key  : Active : Sense    : Expression
+        None :   True : minimize : U_plus + U_minus + c[DC1,Store_A]*x[DC1,Store_A,0] + c[DC1,Store_A]*x[DC1,Store_A,1] + c[DC1,Store_A]*x[DC1,Store_A,2] + c[DC1,Store_A]*x[DC1,Store_A,3] + c[DC1,Store_A]*x[DC1,Store_A,4] + c[DC1,Store_A]*x[DC1,Store_A,5] + c[DC1,Store_A]*x[DC1,Store_A,6] + c[DC1,Store_B]*x[DC1,Store_B,0] + c[DC1,Store_B]*x[DC1,Store_B,1] + c[DC1,Store_B]*x[DC1,Store_B,2] + c[DC1,Store_B]*x[DC1,Store_B,3] + c[DC1,Store_B]*x[DC1,Store_B,4] + c[DC1,Store_B]*x[DC1,Store_B,5] + c[DC1,Store_B]*x[DC1,Store_B,6] + c[DC1,Store_C]*x[DC1,Store_C,0] + c[DC1,Store_C]*x[DC1,Store_C,1] + c[DC1,Store_C]*x[DC1,Store_C,2] + c[DC1,Store_C]*x[DC1,Store_C,3] + c[DC1,Store_C]*x[DC1,Store_C,4] + c[DC1,Store_C]*x[DC1,Store_C,5] + c[DC1,Store_C]*x[DC1,Store_C,6] + c[DC1,Store_D]*x[DC1,Store_D,0] + c[DC1,Store_D]*x[DC1,Store_D,1] + c[DC1,Store_D]*x[DC1,Store_D,2] + c[DC1,Store_D]*x[DC1,Store_D,3] + c[DC1,Store_D]*x[DC1,Store_D,4] + c[DC1,Store_D]*x[DC1,Store_D,5] + c[DC1,Store_D]*x[DC1,Store_D,6] + c[DC2,Store_A]*x[DC2,Store_A,0] + c[DC2,Store_A]*x[DC2,Store_A,1] + c[DC2,Store_A]*x[DC2,Store_A,2] + c[DC2,Store_A]*x[DC2,Store_A,3] + c[DC2,Store_A]*x[DC2,Store_A,4] + c[DC2,Store_A]*x[DC2,Store_A,5] + c[DC2,Store_A]*x[DC2,Store_A,6] + c[DC2,Store_B]*x[DC2,Store_B,0] + c[DC2,Store_B]*x[DC2,Store_B,1] + c[DC2,Store_B]*x[DC2,Store_B,2] + c[DC2,Store_B]*x[DC2,Store_B,3] + c[DC2,Store_B]*x[DC2,Store_B,4] + c[DC2,Store_B]*x[DC2,Store_B,5] + c[DC2,Store_B]*x[DC2,Store_B,6] + c[DC2,Store_C]*x[DC2,Store_C,0] + c[DC2,Store_C]*x[DC2,Store_C,1] + c[DC2,Store_C]*x[DC2,Store_C,2] + c[DC2,Store_C]*x[DC2,Store_C,3] + c[DC2,Store_C]*x[DC2,Store_C,4] + c[DC2,Store_C]*x[DC2,Store_C,5] + c[DC2,Store_C]*x[DC2,Store_C,6] + c[DC2,Store_D]*x[DC2,Store_D,0] + c[DC2,Store_D]*x[DC2,Store_D,1] + c[DC2,Store_D]*x[DC2,Store_D,2] + c[DC2,Store_D]*x[DC2,Store_D,3] + c[DC2,Store_D]*x[DC2,Store_D,4] + c[DC2,Store_D]*x[DC2,Store_D,5] + c[DC2,Store_D]*x[DC2,Store_D,6] + c[DC3,Store_A]*x[DC3,Store_A,0] + c[DC3,Store_A]*x[DC3,Store_A,1] + c[DC3,Store_A]*x[DC3,Store_A,2] + c[DC3,Store_A]*x[DC3,Store_A,3] + c[DC3,Store_A]*x[DC3,Store_A,4] + c[DC3,Store_A]*x[DC3,Store_A,5] + c[DC3,Store_A]*x[DC3,Store_A,6] + c[DC3,Store_B]*x[DC3,Store_B,0] + c[DC3,Store_B]*x[DC3,Store_B,1] + c[DC3,Store_B]*x[DC3,Store_B,2] + c[DC3,Store_B]*x[DC3,Store_B,3] + c[DC3,Store_B]*x[DC3,Store_B,4] + c[DC3,Store_B]*x[DC3,Store_B,5] + c[DC3,Store_B]*x[DC3,Store_B,6] + c[DC3,Store_C]*x[DC3,Store_C,0] + c[DC3,Store_C]*x[DC3,Store_C,1] + c[DC3,Store_C]*x[DC3,Store_C,2] + c[DC3,Store_C]*x[DC3,Store_C,3] + c[DC3,Store_C]*x[DC3,Store_C,4] + c[DC3,Store_C]*x[DC3,Store_C,5] + c[DC3,Store_C]*x[DC3,Store_C,6] + c[DC3,Store_D]*x[DC3,Store_D,0] + c[DC3,Store_D]*x[DC3,Store_D,1] + c[DC3,Store_D]*x[DC3,Store_D,2] + c[DC3,Store_D]*x[DC3,Store_D,3] + c[DC3,Store_D]*x[DC3,Store_D,4] + c[DC3,Store_D]*x[DC3,Store_D,5] + c[DC3,Store_D]*x[DC3,Store_D,6] - 2*(q[DC1,Store_A,0] + q[DC1,Store_A,1] + q[DC1,Store_A,2] + q[DC1,Store_A,3] + q[DC1,Store_A,4] + q[DC1,Store_A,5] + q[DC1,Store_A,6] + q[DC1,Store_B,0] + q[DC1,Store_B,1] + q[DC1,Store_B,2] + q[DC1,Store_B,3] + q[DC1,Store_B,4] + q[DC1,Store_B,5] + q[DC1,Store_B,6] + q[DC1,Store_C,0] + q[DC1,Store_C,1] + q[DC1,Store_C,2] + q[DC1,Store_C,3] + q[DC1,Store_C,4] + q[DC1,Store_C,5] + q[DC1,Store_C,6] + q[DC1,Store_D,0] + q[DC1,Store_D,1] + q[DC1,Store_D,2] + q[DC1,Store_D,3] + q[DC1,Store_D,4] + q[DC1,Store_D,5] + q[DC1,Store_D,6] + q[DC2,Store_A,0] + q[DC2,Store_A,1] + q[DC2,Store_A,2] + q[DC2,Store_A,3] + q[DC2,Store_A,4] + q[DC2,Store_A,5] + q[DC2,Store_A,6] + q[DC2,Store_B,0] + q[DC2,Store_B,1] + q[DC2,Store_B,2] + q[DC2,Store_B,3] + q[DC2,Store_B,4] + q[DC2,Store_B,5] + q[DC2,Store_B,6] + q[DC2,Store_C,0] + q[DC2,Store_C,1] + q[DC2,Store_C,2] + q[DC2,Store_C,3] + q[DC2,Store_C,4] + q[DC2,Store_C,5] + q[DC2,Store_C,6] + q[DC2,Store_D,0] + q[DC2,Store_D,1] + q[DC2,Store_D,2] + q[DC2,Store_D,3] + q[DC2,Store_D,4] + q[DC2,Store_D,5] + q[DC2,Store_D,6] + q[DC3,Store_A,0] + q[DC3,Store_A,1] + q[DC3,Store_A,2] + q[DC3,Store_A,3] + q[DC3,Store_A,4] + q[DC3,Store_A,5] + q[DC3,Store_A,6] + q[DC3,Store_B,0] + q[DC3,Store_B,1] + q[DC3,Store_B,2] + q[DC3,Store_B,3] + q[DC3,Store_B,4] + q[DC3,Store_B,5] + q[DC3,Store_B,6] + q[DC3,Store_C,0] + q[DC3,Store_C,1] + q[DC3,Store_C,2] + q[DC3,Store_C,3] + q[DC3,Store_C,4] + q[DC3,Store_C,5] + q[DC3,Store_C,6] + q[DC3,Store_D,0] + q[DC3,Store_D,1] + q[DC3,Store_D,2] + q[DC3,Store_D,3] + q[DC3,Store_D,4] + q[DC3,Store_D,5] + q[DC3,Store_D,6])
+
+16 Constraint Declarations
+    big_m_constraint : Big M constraint: (M * sum over i of x[i,j,t]) >= NI[j,t] - RP[j,t] for all j in R, t
+        Size=28, Index=R*T, Active=True
+        Key            : Lower : Body                                                                                       : Upper : Active
+        ('Store_A', 0) :  -Inf : NI[Store_A,0] - RP[Store_A,0] - M*(x[DC1,Store_A,0] + x[DC2,Store_A,0] + x[DC3,Store_A,0]) :   0.0 :   True
+        ('Store_A', 1) :  -Inf : NI[Store_A,1] - RP[Store_A,1] - M*(x[DC1,Store_A,1] + x[DC2,Store_A,1] + x[DC3,Store_A,1]) :   0.0 :   True
+        ('Store_A', 2) :  -Inf : NI[Store_A,2] - RP[Store_A,2] - M*(x[DC1,Store_A,2] + x[DC2,Store_A,2] + x[DC3,Store_A,2]) :   0.0 :   True
+        ('Store_A', 3) :  -Inf : NI[Store_A,3] - RP[Store_A,3] - M*(x[DC1,Store_A,3] + x[DC2,Store_A,3] + x[DC3,Store_A,3]) :   0.0 :   True
+        ('Store_A', 4) :  -Inf : NI[Store_A,4] - RP[Store_A,4] - M*(x[DC1,Store_A,4] + x[DC2,Store_A,4] + x[DC3,Store_A,4]) :   0.0 :   True
+        ('Store_A', 5) :  -Inf : NI[Store_A,5] - RP[Store_A,5] - M*(x[DC1,Store_A,5] + x[DC2,Store_A,5] + x[DC3,Store_A,5]) :   0.0 :   True
+        ('Store_A', 6) :  -Inf : NI[Store_A,6] - RP[Store_A,6] - M*(x[DC1,Store_A,6] + x[DC2,Store_A,6] + x[DC3,Store_A,6]) :   0.0 :   True
+        ('Store_B', 0) :  -Inf : NI[Store_B,0] - RP[Store_B,0] - M*(x[DC1,Store_B,0] + x[DC2,Store_B,0] + x[DC3,Store_B,0]) :   0.0 :   True
+        ('Store_B', 1) :  -Inf : NI[Store_B,1] - RP[Store_B,1] - M*(x[DC1,Store_B,1] + x[DC2,Store_B,1] + x[DC3,Store_B,1]) :   0.0 :   True
+        ('Store_B', 2) :  -Inf : NI[Store_B,2] - RP[Store_B,2] - M*(x[DC1,Store_B,2] + x[DC2,Store_B,2] + x[DC3,Store_B,2]) :   0.0 :   True
+        ('Store_B', 3) :  -Inf : NI[Store_B,3] - RP[Store_B,3] - M*(x[DC1,Store_B,3] + x[DC2,Store_B,3] + x[DC3,Store_B,3]) :   0.0 :   True
+        ('Store_B', 4) :  -Inf : NI[Store_B,4] - RP[Store_B,4] - M*(x[DC1,Store_B,4] + x[DC2,Store_B,4] + x[DC3,Store_B,4]) :   0.0 :   True
+        ('Store_B', 5) :  -Inf : NI[Store_B,5] - RP[Store_B,5] - M*(x[DC1,Store_B,5] + x[DC2,Store_B,5] + x[DC3,Store_B,5]) :   0.0 :   True
+        ('Store_B', 6) :  -Inf : NI[Store_B,6] - RP[Store_B,6] - M*(x[DC1,Store_B,6] + x[DC2,Store_B,6] + x[DC3,Store_B,6]) :   0.0 :   True
+        ('Store_C', 0) :  -Inf : NI[Store_C,0] - RP[Store_C,0] - M*(x[DC1,Store_C,0] + x[DC2,Store_C,0] + x[DC3,Store_C,0]) :   0.0 :   True
+        ('Store_C', 1) :  -Inf : NI[Store_C,1] - RP[Store_C,1] - M*(x[DC1,Store_C,1] + x[DC2,Store_C,1] + x[DC3,Store_C,1]) :   0.0 :   True
+        ('Store_C', 2) :  -Inf : NI[Store_C,2] - RP[Store_C,2] - M*(x[DC1,Store_C,2] + x[DC2,Store_C,2] + x[DC3,Store_C,2]) :   0.0 :   True
+        ('Store_C', 3) :  -Inf : NI[Store_C,3] - RP[Store_C,3] - M*(x[DC1,Store_C,3] + x[DC2,Store_C,3] + x[DC3,Store_C,3]) :   0.0 :   True
+        ('Store_C', 4) :  -Inf : NI[Store_C,4] - RP[Store_C,4] - M*(x[DC1,Store_C,4] + x[DC2,Store_C,4] + x[DC3,Store_C,4]) :   0.0 :   True
+        ('Store_C', 5) :  -Inf : NI[Store_C,5] - RP[Store_C,5] - M*(x[DC1,Store_C,5] + x[DC2,Store_C,5] + x[DC3,Store_C,5]) :   0.0 :   True
+        ('Store_C', 6) :  -Inf : NI[Store_C,6] - RP[Store_C,6] - M*(x[DC1,Store_C,6] + x[DC2,Store_C,6] + x[DC3,Store_C,6]) :   0.0 :   True
+        ('Store_D', 0) :  -Inf : NI[Store_D,0] - RP[Store_D,0] - M*(x[DC1,Store_D,0] + x[DC2,Store_D,0] + x[DC3,Store_D,0]) :   0.0 :   True
+        ('Store_D', 1) :  -Inf : NI[Store_D,1] - RP[Store_D,1] - M*(x[DC1,Store_D,1] + x[DC2,Store_D,1] + x[DC3,Store_D,1]) :   0.0 :   True
+        ('Store_D', 2) :  -Inf : NI[Store_D,2] - RP[Store_D,2] - M*(x[DC1,Store_D,2] + x[DC2,Store_D,2] + x[DC3,Store_D,2]) :   0.0 :   True
+        ('Store_D', 3) :  -Inf : NI[Store_D,3] - RP[Store_D,3] - M*(x[DC1,Store_D,3] + x[DC2,Store_D,3] + x[DC3,Store_D,3]) :   0.0 :   True
+        ('Store_D', 4) :  -Inf : NI[Store_D,4] - RP[Store_D,4] - M*(x[DC1,Store_D,4] + x[DC2,Store_D,4] + x[DC3,Store_D,4]) :   0.0 :   True
+        ('Store_D', 5) :  -Inf : NI[Store_D,5] - RP[Store_D,5] - M*(x[DC1,Store_D,5] + x[DC2,Store_D,5] + x[DC3,Store_D,5]) :   0.0 :   True
+        ('Store_D', 6) :  -Inf : NI[Store_D,6] - RP[Store_D,6] - M*(x[DC1,Store_D,6] + x[DC2,Store_D,6] + x[DC3,Store_D,6]) :   0.0 :   True
+    init_recipient_inventory : Initial recipient inventory: s[j,t0] = s0_j for all j in R
+        Size=4, Index=R, Active=True
+        Key     : Lower         : Body         : Upper         : Active
+        Store_A : s0_j[Store_A] : s[Store_A,0] : s0_j[Store_A] :   True
+        Store_B : s0_j[Store_B] : s[Store_B,0] : s0_j[Store_B] :   True
+        Store_C : s0_j[Store_C] : s[Store_C,0] : s0_j[Store_C] :   True
+        Store_D : s0_j[Store_D] : s[Store_D,0] : s0_j[Store_D] :   True
+    init_sender_inventory : Initial sender inventory: s[i,t0] = s0_i for all i in S
+        Size=3, Index=S, Active=True
+        Key : Lower     : Body     : Upper     : Active
+        DC1 : s0_i[DC1] : s[DC1,0] : s0_i[DC1] :   True
+        DC2 : s0_i[DC2] : s[DC2,0] : s0_i[DC2] :   True
+        DC3 : s0_i[DC3] : s[DC3,0] : s0_i[DC3] :   True
+    inventory_capacity : Inventory Capacity Constraint
+        Size=49, Index={DC1, DC2, DC3, Store_A, Store_B, Store_C, Store_D}*T, Active=True
+        Key            : Lower : Body         : Upper : Active
+            ('DC1', 0) :  -Inf :     s[DC1,0] : 150.0 :   True
+            ('DC1', 1) :  -Inf :     s[DC1,1] : 150.0 :   True
+            ('DC1', 2) :  -Inf :     s[DC1,2] : 150.0 :   True
+            ('DC1', 3) :  -Inf :     s[DC1,3] : 150.0 :   True
+            ('DC1', 4) :  -Inf :     s[DC1,4] : 150.0 :   True
+            ('DC1', 5) :  -Inf :     s[DC1,5] : 150.0 :   True
+            ('DC1', 6) :  -Inf :     s[DC1,6] : 150.0 :   True
+            ('DC2', 0) :  -Inf :     s[DC2,0] : 350.0 :   True
+            ('DC2', 1) :  -Inf :     s[DC2,1] : 350.0 :   True
+            ('DC2', 2) :  -Inf :     s[DC2,2] : 350.0 :   True
+            ('DC2', 3) :  -Inf :     s[DC2,3] : 350.0 :   True
+            ('DC2', 4) :  -Inf :     s[DC2,4] : 350.0 :   True
+            ('DC2', 5) :  -Inf :     s[DC2,5] : 350.0 :   True
+            ('DC2', 6) :  -Inf :     s[DC2,6] : 350.0 :   True
+            ('DC3', 0) :  -Inf :     s[DC3,0] : 380.0 :   True
+            ('DC3', 1) :  -Inf :     s[DC3,1] : 380.0 :   True
+            ('DC3', 2) :  -Inf :     s[DC3,2] : 380.0 :   True
+            ('DC3', 3) :  -Inf :     s[DC3,3] : 380.0 :   True
+            ('DC3', 4) :  -Inf :     s[DC3,4] : 380.0 :   True
+            ('DC3', 5) :  -Inf :     s[DC3,5] : 380.0 :   True
+            ('DC3', 6) :  -Inf :     s[DC3,6] : 380.0 :   True
+        ('Store_A', 0) :  -Inf : s[Store_A,0] :  70.0 :   True
+        ('Store_A', 1) :  -Inf : s[Store_A,1] :  70.0 :   True
+        ('Store_A', 2) :  -Inf : s[Store_A,2] :  70.0 :   True
+        ('Store_A', 3) :  -Inf : s[Store_A,3] :  70.0 :   True
+        ('Store_A', 4) :  -Inf : s[Store_A,4] :  70.0 :   True
+        ('Store_A', 5) :  -Inf : s[Store_A,5] :  70.0 :   True
+        ('Store_A', 6) :  -Inf : s[Store_A,6] :  70.0 :   True
+        ('Store_B', 0) :  -Inf : s[Store_B,0] :  50.0 :   True
+        ('Store_B', 1) :  -Inf : s[Store_B,1] :  50.0 :   True
+        ('Store_B', 2) :  -Inf : s[Store_B,2] :  50.0 :   True
+        ('Store_B', 3) :  -Inf : s[Store_B,3] :  50.0 :   True
+        ('Store_B', 4) :  -Inf : s[Store_B,4] :  50.0 :   True
+        ('Store_B', 5) :  -Inf : s[Store_B,5] :  50.0 :   True
+        ('Store_B', 6) :  -Inf : s[Store_B,6] :  50.0 :   True
+        ('Store_C', 0) :  -Inf : s[Store_C,0] :  40.0 :   True
+        ('Store_C', 1) :  -Inf : s[Store_C,1] :  40.0 :   True
+        ('Store_C', 2) :  -Inf : s[Store_C,2] :  40.0 :   True
+        ('Store_C', 3) :  -Inf : s[Store_C,3] :  40.0 :   True
+        ('Store_C', 4) :  -Inf : s[Store_C,4] :  40.0 :   True
+        ('Store_C', 5) :  -Inf : s[Store_C,5] :  40.0 :   True
+        ('Store_C', 6) :  -Inf : s[Store_C,6] :  40.0 :   True
+        ('Store_D', 0) :  -Inf : s[Store_D,0] :  55.0 :   True
+        ('Store_D', 1) :  -Inf : s[Store_D,1] :  55.0 :   True
+        ('Store_D', 2) :  -Inf : s[Store_D,2] :  55.0 :   True
+        ('Store_D', 3) :  -Inf : s[Store_D,3] :  55.0 :   True
+        ('Store_D', 4) :  -Inf : s[Store_D,4] :  55.0 :   True
+        ('Store_D', 5) :  -Inf : s[Store_D,5] :  55.0 :   True
+        ('Store_D', 6) :  -Inf : s[Store_D,6] :  55.0 :   True
+    linking : Linking constraint: q[i,j,t] <= need[j,t] * x[i,j,t] for all i,j,t
+        Size=84, Index=S*R*T, Active=True
+        Key                   : Lower : Body                                                : Upper : Active
+        ('DC1', 'Store_A', 0) :  -Inf : q[DC1,Store_A,0] - need[Store_A,0]*x[DC1,Store_A,0] :   0.0 :   True
+        ('DC1', 'Store_A', 1) :  -Inf : q[DC1,Store_A,1] - need[Store_A,1]*x[DC1,Store_A,1] :   0.0 :   True
+        ('DC1', 'Store_A', 2) :  -Inf : q[DC1,Store_A,2] - need[Store_A,2]*x[DC1,Store_A,2] :   0.0 :   True
+        ('DC1', 'Store_A', 3) :  -Inf : q[DC1,Store_A,3] - need[Store_A,3]*x[DC1,Store_A,3] :   0.0 :   True
+        ('DC1', 'Store_A', 4) :  -Inf : q[DC1,Store_A,4] - need[Store_A,4]*x[DC1,Store_A,4] :   0.0 :   True
+        ('DC1', 'Store_A', 5) :  -Inf : q[DC1,Store_A,5] - need[Store_A,5]*x[DC1,Store_A,5] :   0.0 :   True
+        ('DC1', 'Store_A', 6) :  -Inf : q[DC1,Store_A,6] - need[Store_A,6]*x[DC1,Store_A,6] :   0.0 :   True
+        ('DC1', 'Store_B', 0) :  -Inf : q[DC1,Store_B,0] - need[Store_B,0]*x[DC1,Store_B,0] :   0.0 :   True
+        ('DC1', 'Store_B', 1) :  -Inf : q[DC1,Store_B,1] - need[Store_B,1]*x[DC1,Store_B,1] :   0.0 :   True
+        ('DC1', 'Store_B', 2) :  -Inf : q[DC1,Store_B,2] - need[Store_B,2]*x[DC1,Store_B,2] :   0.0 :   True
+        ('DC1', 'Store_B', 3) :  -Inf : q[DC1,Store_B,3] - need[Store_B,3]*x[DC1,Store_B,3] :   0.0 :   True
+        ('DC1', 'Store_B', 4) :  -Inf : q[DC1,Store_B,4] - need[Store_B,4]*x[DC1,Store_B,4] :   0.0 :   True
+        ('DC1', 'Store_B', 5) :  -Inf : q[DC1,Store_B,5] - need[Store_B,5]*x[DC1,Store_B,5] :   0.0 :   True
+        ('DC1', 'Store_B', 6) :  -Inf : q[DC1,Store_B,6] - need[Store_B,6]*x[DC1,Store_B,6] :   0.0 :   True
+        ('DC1', 'Store_C', 0) :  -Inf : q[DC1,Store_C,0] - need[Store_C,0]*x[DC1,Store_C,0] :   0.0 :   True
+        ('DC1', 'Store_C', 1) :  -Inf : q[DC1,Store_C,1] - need[Store_C,1]*x[DC1,Store_C,1] :   0.0 :   True
+        ('DC1', 'Store_C', 2) :  -Inf : q[DC1,Store_C,2] - need[Store_C,2]*x[DC1,Store_C,2] :   0.0 :   True
+        ('DC1', 'Store_C', 3) :  -Inf : q[DC1,Store_C,3] - need[Store_C,3]*x[DC1,Store_C,3] :   0.0 :   True
+        ('DC1', 'Store_C', 4) :  -Inf : q[DC1,Store_C,4] - need[Store_C,4]*x[DC1,Store_C,4] :   0.0 :   True
+        ('DC1', 'Store_C', 5) :  -Inf : q[DC1,Store_C,5] - need[Store_C,5]*x[DC1,Store_C,5] :   0.0 :   True
+        ('DC1', 'Store_C', 6) :  -Inf : q[DC1,Store_C,6] - need[Store_C,6]*x[DC1,Store_C,6] :   0.0 :   True
+        ('DC1', 'Store_D', 0) :  -Inf : q[DC1,Store_D,0] - need[Store_D,0]*x[DC1,Store_D,0] :   0.0 :   True
+        ('DC1', 'Store_D', 1) :  -Inf : q[DC1,Store_D,1] - need[Store_D,1]*x[DC1,Store_D,1] :   0.0 :   True
+        ('DC1', 'Store_D', 2) :  -Inf : q[DC1,Store_D,2] - need[Store_D,2]*x[DC1,Store_D,2] :   0.0 :   True
+        ('DC1', 'Store_D', 3) :  -Inf : q[DC1,Store_D,3] - need[Store_D,3]*x[DC1,Store_D,3] :   0.0 :   True
+        ('DC1', 'Store_D', 4) :  -Inf : q[DC1,Store_D,4] - need[Store_D,4]*x[DC1,Store_D,4] :   0.0 :   True
+        ('DC1', 'Store_D', 5) :  -Inf : q[DC1,Store_D,5] - need[Store_D,5]*x[DC1,Store_D,5] :   0.0 :   True
+        ('DC1', 'Store_D', 6) :  -Inf : q[DC1,Store_D,6] - need[Store_D,6]*x[DC1,Store_D,6] :   0.0 :   True
+        ('DC2', 'Store_A', 0) :  -Inf : q[DC2,Store_A,0] - need[Store_A,0]*x[DC2,Store_A,0] :   0.0 :   True
+        ('DC2', 'Store_A', 1) :  -Inf : q[DC2,Store_A,1] - need[Store_A,1]*x[DC2,Store_A,1] :   0.0 :   True
+        ('DC2', 'Store_A', 2) :  -Inf : q[DC2,Store_A,2] - need[Store_A,2]*x[DC2,Store_A,2] :   0.0 :   True
+        ('DC2', 'Store_A', 3) :  -Inf : q[DC2,Store_A,3] - need[Store_A,3]*x[DC2,Store_A,3] :   0.0 :   True
+        ('DC2', 'Store_A', 4) :  -Inf : q[DC2,Store_A,4] - need[Store_A,4]*x[DC2,Store_A,4] :   0.0 :   True
+        ('DC2', 'Store_A', 5) :  -Inf : q[DC2,Store_A,5] - need[Store_A,5]*x[DC2,Store_A,5] :   0.0 :   True
+        ('DC2', 'Store_A', 6) :  -Inf : q[DC2,Store_A,6] - need[Store_A,6]*x[DC2,Store_A,6] :   0.0 :   True
+        ('DC2', 'Store_B', 0) :  -Inf : q[DC2,Store_B,0] - need[Store_B,0]*x[DC2,Store_B,0] :   0.0 :   True
+        ('DC2', 'Store_B', 1) :  -Inf : q[DC2,Store_B,1] - need[Store_B,1]*x[DC2,Store_B,1] :   0.0 :   True
+        ('DC2', 'Store_B', 2) :  -Inf : q[DC2,Store_B,2] - need[Store_B,2]*x[DC2,Store_B,2] :   0.0 :   True
+        ('DC2', 'Store_B', 3) :  -Inf : q[DC2,Store_B,3] - need[Store_B,3]*x[DC2,Store_B,3] :   0.0 :   True
+        ('DC2', 'Store_B', 4) :  -Inf : q[DC2,Store_B,4] - need[Store_B,4]*x[DC2,Store_B,4] :   0.0 :   True
+        ('DC2', 'Store_B', 5) :  -Inf : q[DC2,Store_B,5] - need[Store_B,5]*x[DC2,Store_B,5] :   0.0 :   True
+        ('DC2', 'Store_B', 6) :  -Inf : q[DC2,Store_B,6] - need[Store_B,6]*x[DC2,Store_B,6] :   0.0 :   True
+        ('DC2', 'Store_C', 0) :  -Inf : q[DC2,Store_C,0] - need[Store_C,0]*x[DC2,Store_C,0] :   0.0 :   True
+        ('DC2', 'Store_C', 1) :  -Inf : q[DC2,Store_C,1] - need[Store_C,1]*x[DC2,Store_C,1] :   0.0 :   True
+        ('DC2', 'Store_C', 2) :  -Inf : q[DC2,Store_C,2] - need[Store_C,2]*x[DC2,Store_C,2] :   0.0 :   True
+        ('DC2', 'Store_C', 3) :  -Inf : q[DC2,Store_C,3] - need[Store_C,3]*x[DC2,Store_C,3] :   0.0 :   True
+        ('DC2', 'Store_C', 4) :  -Inf : q[DC2,Store_C,4] - need[Store_C,4]*x[DC2,Store_C,4] :   0.0 :   True
+        ('DC2', 'Store_C', 5) :  -Inf : q[DC2,Store_C,5] - need[Store_C,5]*x[DC2,Store_C,5] :   0.0 :   True
+        ('DC2', 'Store_C', 6) :  -Inf : q[DC2,Store_C,6] - need[Store_C,6]*x[DC2,Store_C,6] :   0.0 :   True
+        ('DC2', 'Store_D', 0) :  -Inf : q[DC2,Store_D,0] - need[Store_D,0]*x[DC2,Store_D,0] :   0.0 :   True
+        ('DC2', 'Store_D', 1) :  -Inf : q[DC2,Store_D,1] - need[Store_D,1]*x[DC2,Store_D,1] :   0.0 :   True
+        ('DC2', 'Store_D', 2) :  -Inf : q[DC2,Store_D,2] - need[Store_D,2]*x[DC2,Store_D,2] :   0.0 :   True
+        ('DC2', 'Store_D', 3) :  -Inf : q[DC2,Store_D,3] - need[Store_D,3]*x[DC2,Store_D,3] :   0.0 :   True
+        ('DC2', 'Store_D', 4) :  -Inf : q[DC2,Store_D,4] - need[Store_D,4]*x[DC2,Store_D,4] :   0.0 :   True
+        ('DC2', 'Store_D', 5) :  -Inf : q[DC2,Store_D,5] - need[Store_D,5]*x[DC2,Store_D,5] :   0.0 :   True
+        ('DC2', 'Store_D', 6) :  -Inf : q[DC2,Store_D,6] - need[Store_D,6]*x[DC2,Store_D,6] :   0.0 :   True
+        ('DC3', 'Store_A', 0) :  -Inf : q[DC3,Store_A,0] - need[Store_A,0]*x[DC3,Store_A,0] :   0.0 :   True
+        ('DC3', 'Store_A', 1) :  -Inf : q[DC3,Store_A,1] - need[Store_A,1]*x[DC3,Store_A,1] :   0.0 :   True
+        ('DC3', 'Store_A', 2) :  -Inf : q[DC3,Store_A,2] - need[Store_A,2]*x[DC3,Store_A,2] :   0.0 :   True
+        ('DC3', 'Store_A', 3) :  -Inf : q[DC3,Store_A,3] - need[Store_A,3]*x[DC3,Store_A,3] :   0.0 :   True
+        ('DC3', 'Store_A', 4) :  -Inf : q[DC3,Store_A,4] - need[Store_A,4]*x[DC3,Store_A,4] :   0.0 :   True
+        ('DC3', 'Store_A', 5) :  -Inf : q[DC3,Store_A,5] - need[Store_A,5]*x[DC3,Store_A,5] :   0.0 :   True
+        ('DC3', 'Store_A', 6) :  -Inf : q[DC3,Store_A,6] - need[Store_A,6]*x[DC3,Store_A,6] :   0.0 :   True
+        ('DC3', 'Store_B', 0) :  -Inf : q[DC3,Store_B,0] - need[Store_B,0]*x[DC3,Store_B,0] :   0.0 :   True
+        ('DC3', 'Store_B', 1) :  -Inf : q[DC3,Store_B,1] - need[Store_B,1]*x[DC3,Store_B,1] :   0.0 :   True
+        ('DC3', 'Store_B', 2) :  -Inf : q[DC3,Store_B,2] - need[Store_B,2]*x[DC3,Store_B,2] :   0.0 :   True
+        ('DC3', 'Store_B', 3) :  -Inf : q[DC3,Store_B,3] - need[Store_B,3]*x[DC3,Store_B,3] :   0.0 :   True
+        ('DC3', 'Store_B', 4) :  -Inf : q[DC3,Store_B,4] - need[Store_B,4]*x[DC3,Store_B,4] :   0.0 :   True
+        ('DC3', 'Store_B', 5) :  -Inf : q[DC3,Store_B,5] - need[Store_B,5]*x[DC3,Store_B,5] :   0.0 :   True
+        ('DC3', 'Store_B', 6) :  -Inf : q[DC3,Store_B,6] - need[Store_B,6]*x[DC3,Store_B,6] :   0.0 :   True
+        ('DC3', 'Store_C', 0) :  -Inf : q[DC3,Store_C,0] - need[Store_C,0]*x[DC3,Store_C,0] :   0.0 :   True
+        ('DC3', 'Store_C', 1) :  -Inf : q[DC3,Store_C,1] - need[Store_C,1]*x[DC3,Store_C,1] :   0.0 :   True
+        ('DC3', 'Store_C', 2) :  -Inf : q[DC3,Store_C,2] - need[Store_C,2]*x[DC3,Store_C,2] :   0.0 :   True
+        ('DC3', 'Store_C', 3) :  -Inf : q[DC3,Store_C,3] - need[Store_C,3]*x[DC3,Store_C,3] :   0.0 :   True
+        ('DC3', 'Store_C', 4) :  -Inf : q[DC3,Store_C,4] - need[Store_C,4]*x[DC3,Store_C,4] :   0.0 :   True
+        ('DC3', 'Store_C', 5) :  -Inf : q[DC3,Store_C,5] - need[Store_C,5]*x[DC3,Store_C,5] :   0.0 :   True
+        ('DC3', 'Store_C', 6) :  -Inf : q[DC3,Store_C,6] - need[Store_C,6]*x[DC3,Store_C,6] :   0.0 :   True
+        ('DC3', 'Store_D', 0) :  -Inf : q[DC3,Store_D,0] - need[Store_D,0]*x[DC3,Store_D,0] :   0.0 :   True
+        ('DC3', 'Store_D', 1) :  -Inf : q[DC3,Store_D,1] - need[Store_D,1]*x[DC3,Store_D,1] :   0.0 :   True
+        ('DC3', 'Store_D', 2) :  -Inf : q[DC3,Store_D,2] - need[Store_D,2]*x[DC3,Store_D,2] :   0.0 :   True
+        ('DC3', 'Store_D', 3) :  -Inf : q[DC3,Store_D,3] - need[Store_D,3]*x[DC3,Store_D,3] :   0.0 :   True
+        ('DC3', 'Store_D', 4) :  -Inf : q[DC3,Store_D,4] - need[Store_D,4]*x[DC3,Store_D,4] :   0.0 :   True
+        ('DC3', 'Store_D', 5) :  -Inf : q[DC3,Store_D,5] - need[Store_D,5]*x[DC3,Store_D,5] :   0.0 :   True
+        ('DC3', 'Store_D', 6) :  -Inf : q[DC3,Store_D,6] - need[Store_D,6]*x[DC3,Store_D,6] :   0.0 :   True
+    need_min : Need bounded my minimum need
+        Size=28, Index=R*T, Active=True
+        Key            : Lower : Body            : Upper          : Active
+        ('Store_A', 0) :  -Inf : need[Store_A,0] : need_min_param :   True
+        ('Store_A', 1) :  -Inf : need[Store_A,1] : need_min_param :   True
+        ('Store_A', 2) :  -Inf : need[Store_A,2] : need_min_param :   True
+        ('Store_A', 3) :  -Inf : need[Store_A,3] : need_min_param :   True
+        ('Store_A', 4) :  -Inf : need[Store_A,4] : need_min_param :   True
+        ('Store_A', 5) :  -Inf : need[Store_A,5] : need_min_param :   True
+        ('Store_A', 6) :  -Inf : need[Store_A,6] : need_min_param :   True
+        ('Store_B', 0) :  -Inf : need[Store_B,0] : need_min_param :   True
+        ('Store_B', 1) :  -Inf : need[Store_B,1] : need_min_param :   True
+        ('Store_B', 2) :  -Inf : need[Store_B,2] : need_min_param :   True
+        ('Store_B', 3) :  -Inf : need[Store_B,3] : need_min_param :   True
+        ('Store_B', 4) :  -Inf : need[Store_B,4] : need_min_param :   True
+        ('Store_B', 5) :  -Inf : need[Store_B,5] : need_min_param :   True
+        ('Store_B', 6) :  -Inf : need[Store_B,6] : need_min_param :   True
+        ('Store_C', 0) :  -Inf : need[Store_C,0] : need_min_param :   True
+        ('Store_C', 1) :  -Inf : need[Store_C,1] : need_min_param :   True
+        ('Store_C', 2) :  -Inf : need[Store_C,2] : need_min_param :   True
+        ('Store_C', 3) :  -Inf : need[Store_C,3] : need_min_param :   True
+        ('Store_C', 4) :  -Inf : need[Store_C,4] : need_min_param :   True
+        ('Store_C', 5) :  -Inf : need[Store_C,5] : need_min_param :   True
+        ('Store_C', 6) :  -Inf : need[Store_C,6] : need_min_param :   True
+        ('Store_D', 0) :  -Inf : need[Store_D,0] : need_min_param :   True
+        ('Store_D', 1) :  -Inf : need[Store_D,1] : need_min_param :   True
+        ('Store_D', 2) :  -Inf : need[Store_D,2] : need_min_param :   True
+        ('Store_D', 3) :  -Inf : need[Store_D,3] : need_min_param :   True
+        ('Store_D', 4) :  -Inf : need[Store_D,4] : need_min_param :   True
+        ('Store_D', 5) :  -Inf : need[Store_D,5] : need_min_param :   True
+        ('Store_D', 6) :  -Inf : need[Store_D,6] : need_min_param :   True
+    net_inventory_update : NI[j,t+1] = s[j,t] + sum over i sum over u in (t-LT[i,j,t], t) of q[i,j,u]
+        Size=24, Index=R*T, Active=True
+        Key            : Lower : Body                                                                                                       : Upper : Active
+        ('Store_A', 0) :   0.0 :                    NI[Store_A,1] - (s[Store_A,0] + q[DC1,Store_A,0] + q[DC2,Store_A,0] + q[DC3,Store_A,0]) :   0.0 :   True
+        ('Store_A', 1) :   0.0 : NI[Store_A,2] - (s[Store_A,1] + q[DC1,Store_A,1] + q[DC2,Store_A,1] + q[DC3,Store_A,0] + q[DC3,Store_A,1]) :   0.0 :   True
+        ('Store_A', 2) :   0.0 : NI[Store_A,3] - (s[Store_A,2] + q[DC1,Store_A,2] + q[DC2,Store_A,2] + q[DC3,Store_A,1] + q[DC3,Store_A,2]) :   0.0 :   True
+        ('Store_A', 3) :   0.0 : NI[Store_A,4] - (s[Store_A,3] + q[DC1,Store_A,3] + q[DC2,Store_A,3] + q[DC3,Store_A,2] + q[DC3,Store_A,3]) :   0.0 :   True
+        ('Store_A', 4) :   0.0 : NI[Store_A,5] - (s[Store_A,4] + q[DC1,Store_A,4] + q[DC2,Store_A,4] + q[DC3,Store_A,3] + q[DC3,Store_A,4]) :   0.0 :   True
+        ('Store_A', 5) :   0.0 : NI[Store_A,6] - (s[Store_A,5] + q[DC1,Store_A,5] + q[DC2,Store_A,5] + q[DC3,Store_A,4] + q[DC3,Store_A,5]) :   0.0 :   True
+        ('Store_B', 0) :   0.0 :                    NI[Store_B,1] - (s[Store_B,0] + q[DC1,Store_B,0] + q[DC2,Store_B,0] + q[DC3,Store_B,0]) :   0.0 :   True
+        ('Store_B', 1) :   0.0 : NI[Store_B,2] - (s[Store_B,1] + q[DC1,Store_B,1] + q[DC2,Store_B,1] + q[DC3,Store_B,0] + q[DC3,Store_B,1]) :   0.0 :   True
+        ('Store_B', 2) :   0.0 : NI[Store_B,3] - (s[Store_B,2] + q[DC1,Store_B,2] + q[DC2,Store_B,2] + q[DC3,Store_B,1] + q[DC3,Store_B,2]) :   0.0 :   True
+        ('Store_B', 3) :   0.0 : NI[Store_B,4] - (s[Store_B,3] + q[DC1,Store_B,3] + q[DC2,Store_B,3] + q[DC3,Store_B,2] + q[DC3,Store_B,3]) :   0.0 :   True
+        ('Store_B', 4) :   0.0 : NI[Store_B,5] - (s[Store_B,4] + q[DC1,Store_B,4] + q[DC2,Store_B,4] + q[DC3,Store_B,3] + q[DC3,Store_B,4]) :   0.0 :   True
+        ('Store_B', 5) :   0.0 : NI[Store_B,6] - (s[Store_B,5] + q[DC1,Store_B,5] + q[DC2,Store_B,5] + q[DC3,Store_B,4] + q[DC3,Store_B,5]) :   0.0 :   True
+        ('Store_C', 0) :   0.0 :                    NI[Store_C,1] - (s[Store_C,0] + q[DC1,Store_C,0] + q[DC2,Store_C,0] + q[DC3,Store_C,0]) :   0.0 :   True
+        ('Store_C', 1) :   0.0 : NI[Store_C,2] - (s[Store_C,1] + q[DC1,Store_C,0] + q[DC1,Store_C,1] + q[DC2,Store_C,1] + q[DC3,Store_C,1]) :   0.0 :   True
+        ('Store_C', 2) :   0.0 : NI[Store_C,3] - (s[Store_C,2] + q[DC1,Store_C,1] + q[DC1,Store_C,2] + q[DC2,Store_C,2] + q[DC3,Store_C,2]) :   0.0 :   True
+        ('Store_C', 3) :   0.0 : NI[Store_C,4] - (s[Store_C,3] + q[DC1,Store_C,2] + q[DC1,Store_C,3] + q[DC2,Store_C,3] + q[DC3,Store_C,3]) :   0.0 :   True
+        ('Store_C', 4) :   0.0 : NI[Store_C,5] - (s[Store_C,4] + q[DC1,Store_C,3] + q[DC1,Store_C,4] + q[DC2,Store_C,4] + q[DC3,Store_C,4]) :   0.0 :   True
+        ('Store_C', 5) :   0.0 : NI[Store_C,6] - (s[Store_C,5] + q[DC1,Store_C,4] + q[DC1,Store_C,5] + q[DC2,Store_C,5] + q[DC3,Store_C,5]) :   0.0 :   True
+        ('Store_D', 0) :   0.0 :                    NI[Store_D,1] - (s[Store_D,0] + q[DC1,Store_D,0] + q[DC2,Store_D,0] + q[DC3,Store_D,0]) :   0.0 :   True
+        ('Store_D', 1) :   0.0 : NI[Store_D,2] - (s[Store_D,1] + q[DC1,Store_D,0] + q[DC1,Store_D,1] + q[DC2,Store_D,1] + q[DC3,Store_D,1]) :   0.0 :   True
+        ('Store_D', 2) :   0.0 : NI[Store_D,3] - (s[Store_D,2] + q[DC1,Store_D,1] + q[DC1,Store_D,2] + q[DC2,Store_D,2] + q[DC3,Store_D,2]) :   0.0 :   True
+        ('Store_D', 3) :   0.0 : NI[Store_D,4] - (s[Store_D,3] + q[DC1,Store_D,2] + q[DC1,Store_D,3] + q[DC2,Store_D,3] + q[DC3,Store_D,3]) :   0.0 :   True
+        ('Store_D', 4) :   0.0 : NI[Store_D,5] - (s[Store_D,4] + q[DC1,Store_D,3] + q[DC1,Store_D,4] + q[DC2,Store_D,4] + q[DC3,Store_D,4]) :   0.0 :   True
+        ('Store_D', 5) :   0.0 : NI[Store_D,6] - (s[Store_D,5] + q[DC1,Store_D,4] + q[DC1,Store_D,5] + q[DC2,Store_D,5] + q[DC3,Store_D,5]) :   0.0 :   True
+    recipient_inventory_update : s[j,t+1] = s[j,t] - sls[j,t] + sum over i of q[i,j,t-LT[i,j,t]]
+        Size=24, Index=R*T, Active=True
+        Key            : Lower : Body                                                                                                    : Upper : Active
+        ('Store_A', 0) :   0.0 :                                                          s[Store_A,1] - (s[Store_A,0] - sls[Store_A,0]) :   0.0 :   True
+        ('Store_A', 1) :   0.0 :                    s[Store_A,2] - (s[Store_A,1] - sls[Store_A,1] + q[DC1,Store_A,0] + q[DC2,Store_A,0]) :   0.0 :   True
+        ('Store_A', 2) :   0.0 : s[Store_A,3] - (s[Store_A,2] - sls[Store_A,2] + q[DC1,Store_A,1] + q[DC2,Store_A,1] + q[DC3,Store_A,0]) :   0.0 :   True
+        ('Store_A', 3) :   0.0 : s[Store_A,4] - (s[Store_A,3] - sls[Store_A,3] + q[DC1,Store_A,2] + q[DC2,Store_A,2] + q[DC3,Store_A,1]) :   0.0 :   True
+        ('Store_A', 4) :   0.0 : s[Store_A,5] - (s[Store_A,4] - sls[Store_A,4] + q[DC1,Store_A,3] + q[DC2,Store_A,3] + q[DC3,Store_A,2]) :   0.0 :   True
+        ('Store_A', 5) :   0.0 : s[Store_A,6] - (s[Store_A,5] - sls[Store_A,5] + q[DC1,Store_A,4] + q[DC2,Store_A,4] + q[DC3,Store_A,3]) :   0.0 :   True
+        ('Store_B', 0) :   0.0 :                                                          s[Store_B,1] - (s[Store_B,0] - sls[Store_B,0]) :   0.0 :   True
+        ('Store_B', 1) :   0.0 :                    s[Store_B,2] - (s[Store_B,1] - sls[Store_B,1] + q[DC1,Store_B,0] + q[DC2,Store_B,0]) :   0.0 :   True
+        ('Store_B', 2) :   0.0 : s[Store_B,3] - (s[Store_B,2] - sls[Store_B,2] + q[DC1,Store_B,1] + q[DC2,Store_B,1] + q[DC3,Store_B,0]) :   0.0 :   True
+        ('Store_B', 3) :   0.0 : s[Store_B,4] - (s[Store_B,3] - sls[Store_B,3] + q[DC1,Store_B,2] + q[DC2,Store_B,2] + q[DC3,Store_B,1]) :   0.0 :   True
+        ('Store_B', 4) :   0.0 : s[Store_B,5] - (s[Store_B,4] - sls[Store_B,4] + q[DC1,Store_B,3] + q[DC2,Store_B,3] + q[DC3,Store_B,2]) :   0.0 :   True
+        ('Store_B', 5) :   0.0 : s[Store_B,6] - (s[Store_B,5] - sls[Store_B,5] + q[DC1,Store_B,4] + q[DC2,Store_B,4] + q[DC3,Store_B,3]) :   0.0 :   True
+        ('Store_C', 0) :   0.0 :                                                          s[Store_C,1] - (s[Store_C,0] - sls[Store_C,0]) :   0.0 :   True
+        ('Store_C', 1) :   0.0 :                    s[Store_C,2] - (s[Store_C,1] - sls[Store_C,1] + q[DC2,Store_C,0] + q[DC3,Store_C,0]) :   0.0 :   True
+        ('Store_C', 2) :   0.0 : s[Store_C,3] - (s[Store_C,2] - sls[Store_C,2] + q[DC1,Store_C,0] + q[DC2,Store_C,1] + q[DC3,Store_C,1]) :   0.0 :   True
+        ('Store_C', 3) :   0.0 : s[Store_C,4] - (s[Store_C,3] - sls[Store_C,3] + q[DC1,Store_C,1] + q[DC2,Store_C,2] + q[DC3,Store_C,2]) :   0.0 :   True
+        ('Store_C', 4) :   0.0 : s[Store_C,5] - (s[Store_C,4] - sls[Store_C,4] + q[DC1,Store_C,2] + q[DC2,Store_C,3] + q[DC3,Store_C,3]) :   0.0 :   True
+        ('Store_C', 5) :   0.0 : s[Store_C,6] - (s[Store_C,5] - sls[Store_C,5] + q[DC1,Store_C,3] + q[DC2,Store_C,4] + q[DC3,Store_C,4]) :   0.0 :   True
+        ('Store_D', 0) :   0.0 :                                                          s[Store_D,1] - (s[Store_D,0] - sls[Store_D,0]) :   0.0 :   True
+        ('Store_D', 1) :   0.0 :                    s[Store_D,2] - (s[Store_D,1] - sls[Store_D,1] + q[DC2,Store_D,0] + q[DC3,Store_D,0]) :   0.0 :   True
+        ('Store_D', 2) :   0.0 : s[Store_D,3] - (s[Store_D,2] - sls[Store_D,2] + q[DC1,Store_D,0] + q[DC2,Store_D,1] + q[DC3,Store_D,1]) :   0.0 :   True
+        ('Store_D', 3) :   0.0 : s[Store_D,4] - (s[Store_D,3] - sls[Store_D,3] + q[DC1,Store_D,1] + q[DC2,Store_D,2] + q[DC3,Store_D,2]) :   0.0 :   True
+        ('Store_D', 4) :   0.0 : s[Store_D,5] - (s[Store_D,4] - sls[Store_D,4] + q[DC1,Store_D,2] + q[DC2,Store_D,3] + q[DC3,Store_D,3]) :   0.0 :   True
+        ('Store_D', 5) :   0.0 : s[Store_D,6] - (s[Store_D,5] - sls[Store_D,5] + q[DC1,Store_D,3] + q[DC2,Store_D,4] + q[DC3,Store_D,4]) :   0.0 :   True
+    recipient_need : Recipient need constraint: sum over i of q[i,j,t] <= need[j,t] for all j in R, t
+        Size=28, Index=R*T, Active=True
+        Key            : Lower : Body                                                   : Upper           : Active
+        ('Store_A', 0) :  -Inf : q[DC1,Store_A,0] + q[DC2,Store_A,0] + q[DC3,Store_A,0] : need[Store_A,0] :   True
+        ('Store_A', 1) :  -Inf : q[DC1,Store_A,1] + q[DC2,Store_A,1] + q[DC3,Store_A,1] : need[Store_A,1] :   True
+        ('Store_A', 2) :  -Inf : q[DC1,Store_A,2] + q[DC2,Store_A,2] + q[DC3,Store_A,2] : need[Store_A,2] :   True
+        ('Store_A', 3) :  -Inf : q[DC1,Store_A,3] + q[DC2,Store_A,3] + q[DC3,Store_A,3] : need[Store_A,3] :   True
+        ('Store_A', 4) :  -Inf : q[DC1,Store_A,4] + q[DC2,Store_A,4] + q[DC3,Store_A,4] : need[Store_A,4] :   True
+        ('Store_A', 5) :  -Inf : q[DC1,Store_A,5] + q[DC2,Store_A,5] + q[DC3,Store_A,5] : need[Store_A,5] :   True
+        ('Store_A', 6) :  -Inf : q[DC1,Store_A,6] + q[DC2,Store_A,6] + q[DC3,Store_A,6] : need[Store_A,6] :   True
+        ('Store_B', 0) :  -Inf : q[DC1,Store_B,0] + q[DC2,Store_B,0] + q[DC3,Store_B,0] : need[Store_B,0] :   True
+        ('Store_B', 1) :  -Inf : q[DC1,Store_B,1] + q[DC2,Store_B,1] + q[DC3,Store_B,1] : need[Store_B,1] :   True
+        ('Store_B', 2) :  -Inf : q[DC1,Store_B,2] + q[DC2,Store_B,2] + q[DC3,Store_B,2] : need[Store_B,2] :   True
+        ('Store_B', 3) :  -Inf : q[DC1,Store_B,3] + q[DC2,Store_B,3] + q[DC3,Store_B,3] : need[Store_B,3] :   True
+        ('Store_B', 4) :  -Inf : q[DC1,Store_B,4] + q[DC2,Store_B,4] + q[DC3,Store_B,4] : need[Store_B,4] :   True
+        ('Store_B', 5) :  -Inf : q[DC1,Store_B,5] + q[DC2,Store_B,5] + q[DC3,Store_B,5] : need[Store_B,5] :   True
+        ('Store_B', 6) :  -Inf : q[DC1,Store_B,6] + q[DC2,Store_B,6] + q[DC3,Store_B,6] : need[Store_B,6] :   True
+        ('Store_C', 0) :  -Inf : q[DC1,Store_C,0] + q[DC2,Store_C,0] + q[DC3,Store_C,0] : need[Store_C,0] :   True
+        ('Store_C', 1) :  -Inf : q[DC1,Store_C,1] + q[DC2,Store_C,1] + q[DC3,Store_C,1] : need[Store_C,1] :   True
+        ('Store_C', 2) :  -Inf : q[DC1,Store_C,2] + q[DC2,Store_C,2] + q[DC3,Store_C,2] : need[Store_C,2] :   True
+        ('Store_C', 3) :  -Inf : q[DC1,Store_C,3] + q[DC2,Store_C,3] + q[DC3,Store_C,3] : need[Store_C,3] :   True
+        ('Store_C', 4) :  -Inf : q[DC1,Store_C,4] + q[DC2,Store_C,4] + q[DC3,Store_C,4] : need[Store_C,4] :   True
+        ('Store_C', 5) :  -Inf : q[DC1,Store_C,5] + q[DC2,Store_C,5] + q[DC3,Store_C,5] : need[Store_C,5] :   True
+        ('Store_C', 6) :  -Inf : q[DC1,Store_C,6] + q[DC2,Store_C,6] + q[DC3,Store_C,6] : need[Store_C,6] :   True
+        ('Store_D', 0) :  -Inf : q[DC1,Store_D,0] + q[DC2,Store_D,0] + q[DC3,Store_D,0] : need[Store_D,0] :   True
+        ('Store_D', 1) :  -Inf : q[DC1,Store_D,1] + q[DC2,Store_D,1] + q[DC3,Store_D,1] : need[Store_D,1] :   True
+        ('Store_D', 2) :  -Inf : q[DC1,Store_D,2] + q[DC2,Store_D,2] + q[DC3,Store_D,2] : need[Store_D,2] :   True
+        ('Store_D', 3) :  -Inf : q[DC1,Store_D,3] + q[DC2,Store_D,3] + q[DC3,Store_D,3] : need[Store_D,3] :   True
+        ('Store_D', 4) :  -Inf : q[DC1,Store_D,4] + q[DC2,Store_D,4] + q[DC3,Store_D,4] : need[Store_D,4] :   True
+        ('Store_D', 5) :  -Inf : q[DC1,Store_D,5] + q[DC2,Store_D,5] + q[DC3,Store_D,5] : need[Store_D,5] :   True
+        ('Store_D', 6) :  -Inf : q[DC1,Store_D,6] + q[DC2,Store_D,6] + q[DC3,Store_D,6] : need[Store_D,6] :   True
+    rutl_constraint : RUTL constraint: s[j,t] + sum over i of q[i,j,t] <= RUTL[j,t] for all j in R, t
+        Size=28, Index=R*T, Active=True
+        Key            : Lower : Body                                                                  : Upper           : Active
+        ('Store_A', 0) :  -Inf : q[DC1,Store_A,0] + q[DC2,Store_A,0] + q[DC3,Store_A,0] + s[Store_A,0] : RUTL[Store_A,0] :   True
+        ('Store_A', 1) :  -Inf : q[DC1,Store_A,1] + q[DC2,Store_A,1] + q[DC3,Store_A,1] + s[Store_A,1] : RUTL[Store_A,1] :   True
+        ('Store_A', 2) :  -Inf : q[DC1,Store_A,2] + q[DC2,Store_A,2] + q[DC3,Store_A,2] + s[Store_A,2] : RUTL[Store_A,2] :   True
+        ('Store_A', 3) :  -Inf : q[DC1,Store_A,3] + q[DC2,Store_A,3] + q[DC3,Store_A,3] + s[Store_A,3] : RUTL[Store_A,3] :   True
+        ('Store_A', 4) :  -Inf : q[DC1,Store_A,4] + q[DC2,Store_A,4] + q[DC3,Store_A,4] + s[Store_A,4] : RUTL[Store_A,4] :   True
+        ('Store_A', 5) :  -Inf : q[DC1,Store_A,5] + q[DC2,Store_A,5] + q[DC3,Store_A,5] + s[Store_A,5] : RUTL[Store_A,5] :   True
+        ('Store_A', 6) :  -Inf : q[DC1,Store_A,6] + q[DC2,Store_A,6] + q[DC3,Store_A,6] + s[Store_A,6] : RUTL[Store_A,6] :   True
+        ('Store_B', 0) :  -Inf : q[DC1,Store_B,0] + q[DC2,Store_B,0] + q[DC3,Store_B,0] + s[Store_B,0] : RUTL[Store_B,0] :   True
+        ('Store_B', 1) :  -Inf : q[DC1,Store_B,1] + q[DC2,Store_B,1] + q[DC3,Store_B,1] + s[Store_B,1] : RUTL[Store_B,1] :   True
+        ('Store_B', 2) :  -Inf : q[DC1,Store_B,2] + q[DC2,Store_B,2] + q[DC3,Store_B,2] + s[Store_B,2] : RUTL[Store_B,2] :   True
+        ('Store_B', 3) :  -Inf : q[DC1,Store_B,3] + q[DC2,Store_B,3] + q[DC3,Store_B,3] + s[Store_B,3] : RUTL[Store_B,3] :   True
+        ('Store_B', 4) :  -Inf : q[DC1,Store_B,4] + q[DC2,Store_B,4] + q[DC3,Store_B,4] + s[Store_B,4] : RUTL[Store_B,4] :   True
+        ('Store_B', 5) :  -Inf : q[DC1,Store_B,5] + q[DC2,Store_B,5] + q[DC3,Store_B,5] + s[Store_B,5] : RUTL[Store_B,5] :   True
+        ('Store_B', 6) :  -Inf : q[DC1,Store_B,6] + q[DC2,Store_B,6] + q[DC3,Store_B,6] + s[Store_B,6] : RUTL[Store_B,6] :   True
+        ('Store_C', 0) :  -Inf : q[DC1,Store_C,0] + q[DC2,Store_C,0] + q[DC3,Store_C,0] + s[Store_C,0] : RUTL[Store_C,0] :   True
+        ('Store_C', 1) :  -Inf : q[DC1,Store_C,1] + q[DC2,Store_C,1] + q[DC3,Store_C,1] + s[Store_C,1] : RUTL[Store_C,1] :   True
+        ('Store_C', 2) :  -Inf : q[DC1,Store_C,2] + q[DC2,Store_C,2] + q[DC3,Store_C,2] + s[Store_C,2] : RUTL[Store_C,2] :   True
+        ('Store_C', 3) :  -Inf : q[DC1,Store_C,3] + q[DC2,Store_C,3] + q[DC3,Store_C,3] + s[Store_C,3] : RUTL[Store_C,3] :   True
+        ('Store_C', 4) :  -Inf : q[DC1,Store_C,4] + q[DC2,Store_C,4] + q[DC3,Store_C,4] + s[Store_C,4] : RUTL[Store_C,4] :   True
+        ('Store_C', 5) :  -Inf : q[DC1,Store_C,5] + q[DC2,Store_C,5] + q[DC3,Store_C,5] + s[Store_C,5] : RUTL[Store_C,5] :   True
+        ('Store_C', 6) :  -Inf : q[DC1,Store_C,6] + q[DC2,Store_C,6] + q[DC3,Store_C,6] + s[Store_C,6] : RUTL[Store_C,6] :   True
+        ('Store_D', 0) :  -Inf : q[DC1,Store_D,0] + q[DC2,Store_D,0] + q[DC3,Store_D,0] + s[Store_D,0] : RUTL[Store_D,0] :   True
+        ('Store_D', 1) :  -Inf : q[DC1,Store_D,1] + q[DC2,Store_D,1] + q[DC3,Store_D,1] + s[Store_D,1] : RUTL[Store_D,1] :   True
+        ('Store_D', 2) :  -Inf : q[DC1,Store_D,2] + q[DC2,Store_D,2] + q[DC3,Store_D,2] + s[Store_D,2] : RUTL[Store_D,2] :   True
+        ('Store_D', 3) :  -Inf : q[DC1,Store_D,3] + q[DC2,Store_D,3] + q[DC3,Store_D,3] + s[Store_D,3] : RUTL[Store_D,3] :   True
+        ('Store_D', 4) :  -Inf : q[DC1,Store_D,4] + q[DC2,Store_D,4] + q[DC3,Store_D,4] + s[Store_D,4] : RUTL[Store_D,4] :   True
+        ('Store_D', 5) :  -Inf : q[DC1,Store_D,5] + q[DC2,Store_D,5] + q[DC3,Store_D,5] + s[Store_D,5] : RUTL[Store_D,5] :   True
+        ('Store_D', 6) :  -Inf : q[DC1,Store_D,6] + q[DC2,Store_D,6] + q[DC3,Store_D,6] + s[Store_D,6] : RUTL[Store_D,6] :   True
+    sales_upper1 : Sales constraint: sls[j,t] = s[j,t] for all j in R, t
+        Size=28, Index=R*T, Active=True
+        Key            : Lower : Body                          : Upper : Active
+        ('Store_A', 0) :  -Inf : sls[Store_A,0] - s[Store_A,0] :   0.0 :   True
+        ('Store_A', 1) :  -Inf : sls[Store_A,1] - s[Store_A,1] :   0.0 :   True
+        ('Store_A', 2) :  -Inf : sls[Store_A,2] - s[Store_A,2] :   0.0 :   True
+        ('Store_A', 3) :  -Inf : sls[Store_A,3] - s[Store_A,3] :   0.0 :   True
+        ('Store_A', 4) :  -Inf : sls[Store_A,4] - s[Store_A,4] :   0.0 :   True
+        ('Store_A', 5) :  -Inf : sls[Store_A,5] - s[Store_A,5] :   0.0 :   True
+        ('Store_A', 6) :  -Inf : sls[Store_A,6] - s[Store_A,6] :   0.0 :   True
+        ('Store_B', 0) :  -Inf : sls[Store_B,0] - s[Store_B,0] :   0.0 :   True
+        ('Store_B', 1) :  -Inf : sls[Store_B,1] - s[Store_B,1] :   0.0 :   True
+        ('Store_B', 2) :  -Inf : sls[Store_B,2] - s[Store_B,2] :   0.0 :   True
+        ('Store_B', 3) :  -Inf : sls[Store_B,3] - s[Store_B,3] :   0.0 :   True
+        ('Store_B', 4) :  -Inf : sls[Store_B,4] - s[Store_B,4] :   0.0 :   True
+        ('Store_B', 5) :  -Inf : sls[Store_B,5] - s[Store_B,5] :   0.0 :   True
+        ('Store_B', 6) :  -Inf : sls[Store_B,6] - s[Store_B,6] :   0.0 :   True
+        ('Store_C', 0) :  -Inf : sls[Store_C,0] - s[Store_C,0] :   0.0 :   True
+        ('Store_C', 1) :  -Inf : sls[Store_C,1] - s[Store_C,1] :   0.0 :   True
+        ('Store_C', 2) :  -Inf : sls[Store_C,2] - s[Store_C,2] :   0.0 :   True
+        ('Store_C', 3) :  -Inf : sls[Store_C,3] - s[Store_C,3] :   0.0 :   True
+        ('Store_C', 4) :  -Inf : sls[Store_C,4] - s[Store_C,4] :   0.0 :   True
+        ('Store_C', 5) :  -Inf : sls[Store_C,5] - s[Store_C,5] :   0.0 :   True
+        ('Store_C', 6) :  -Inf : sls[Store_C,6] - s[Store_C,6] :   0.0 :   True
+        ('Store_D', 0) :  -Inf : sls[Store_D,0] - s[Store_D,0] :   0.0 :   True
+        ('Store_D', 1) :  -Inf : sls[Store_D,1] - s[Store_D,1] :   0.0 :   True
+        ('Store_D', 2) :  -Inf : sls[Store_D,2] - s[Store_D,2] :   0.0 :   True
+        ('Store_D', 3) :  -Inf : sls[Store_D,3] - s[Store_D,3] :   0.0 :   True
+        ('Store_D', 4) :  -Inf : sls[Store_D,4] - s[Store_D,4] :   0.0 :   True
+        ('Store_D', 5) :  -Inf : sls[Store_D,5] - s[Store_D,5] :   0.0 :   True
+        ('Store_D', 6) :  -Inf : sls[Store_D,6] - s[Store_D,6] :   0.0 :   True
+    sales_upper2 : Sales constraint: sls[j,t] <= d[j,t] for all j in R, t
+        Size=28, Index=R*T, Active=True
+        Key            : Lower : Body           : Upper        : Active
+        ('Store_A', 0) :  -Inf : sls[Store_A,0] : d[Store_A,0] :   True
+        ('Store_A', 1) :  -Inf : sls[Store_A,1] : d[Store_A,1] :   True
+        ('Store_A', 2) :  -Inf : sls[Store_A,2] : d[Store_A,2] :   True
+        ('Store_A', 3) :  -Inf : sls[Store_A,3] : d[Store_A,3] :   True
+        ('Store_A', 4) :  -Inf : sls[Store_A,4] : d[Store_A,4] :   True
+        ('Store_A', 5) :  -Inf : sls[Store_A,5] : d[Store_A,5] :   True
+        ('Store_A', 6) :  -Inf : sls[Store_A,6] : d[Store_A,6] :   True
+        ('Store_B', 0) :  -Inf : sls[Store_B,0] : d[Store_B,0] :   True
+        ('Store_B', 1) :  -Inf : sls[Store_B,1] : d[Store_B,1] :   True
+        ('Store_B', 2) :  -Inf : sls[Store_B,2] : d[Store_B,2] :   True
+        ('Store_B', 3) :  -Inf : sls[Store_B,3] : d[Store_B,3] :   True
+        ('Store_B', 4) :  -Inf : sls[Store_B,4] : d[Store_B,4] :   True
+        ('Store_B', 5) :  -Inf : sls[Store_B,5] : d[Store_B,5] :   True
+        ('Store_B', 6) :  -Inf : sls[Store_B,6] : d[Store_B,6] :   True
+        ('Store_C', 0) :  -Inf : sls[Store_C,0] : d[Store_C,0] :   True
+        ('Store_C', 1) :  -Inf : sls[Store_C,1] : d[Store_C,1] :   True
+        ('Store_C', 2) :  -Inf : sls[Store_C,2] : d[Store_C,2] :   True
+        ('Store_C', 3) :  -Inf : sls[Store_C,3] : d[Store_C,3] :   True
+        ('Store_C', 4) :  -Inf : sls[Store_C,4] : d[Store_C,4] :   True
+        ('Store_C', 5) :  -Inf : sls[Store_C,5] : d[Store_C,5] :   True
+        ('Store_C', 6) :  -Inf : sls[Store_C,6] : d[Store_C,6] :   True
+        ('Store_D', 0) :  -Inf : sls[Store_D,0] : d[Store_D,0] :   True
+        ('Store_D', 1) :  -Inf : sls[Store_D,1] : d[Store_D,1] :   True
+        ('Store_D', 2) :  -Inf : sls[Store_D,2] : d[Store_D,2] :   True
+        ('Store_D', 3) :  -Inf : sls[Store_D,3] : d[Store_D,3] :   True
+        ('Store_D', 4) :  -Inf : sls[Store_D,4] : d[Store_D,4] :   True
+        ('Store_D', 5) :  -Inf : sls[Store_D,5] : d[Store_D,5] :   True
+        ('Store_D', 6) :  -Inf : sls[Store_D,6] : d[Store_D,6] :   True
+    sender_capacity : Sender capacity constraint: sum over j,t of q[i,j,t] <= s[i,t] for all i in S, t
+        Size=21, Index=S*T, Active=True
+        Key        : Lower : Body                                                                                 : Upper : Active
+        ('DC1', 0) :  -Inf : q[DC1,Store_A,0] + q[DC1,Store_B,0] + q[DC1,Store_C,0] + q[DC1,Store_D,0] - s[DC1,0] :   0.0 :   True
+        ('DC1', 1) :  -Inf : q[DC1,Store_A,1] + q[DC1,Store_B,1] + q[DC1,Store_C,1] + q[DC1,Store_D,1] - s[DC1,1] :   0.0 :   True
+        ('DC1', 2) :  -Inf : q[DC1,Store_A,2] + q[DC1,Store_B,2] + q[DC1,Store_C,2] + q[DC1,Store_D,2] - s[DC1,2] :   0.0 :   True
+        ('DC1', 3) :  -Inf : q[DC1,Store_A,3] + q[DC1,Store_B,3] + q[DC1,Store_C,3] + q[DC1,Store_D,3] - s[DC1,3] :   0.0 :   True
+        ('DC1', 4) :  -Inf : q[DC1,Store_A,4] + q[DC1,Store_B,4] + q[DC1,Store_C,4] + q[DC1,Store_D,4] - s[DC1,4] :   0.0 :   True
+        ('DC1', 5) :  -Inf : q[DC1,Store_A,5] + q[DC1,Store_B,5] + q[DC1,Store_C,5] + q[DC1,Store_D,5] - s[DC1,5] :   0.0 :   True
+        ('DC1', 6) :  -Inf : q[DC1,Store_A,6] + q[DC1,Store_B,6] + q[DC1,Store_C,6] + q[DC1,Store_D,6] - s[DC1,6] :   0.0 :   True
+        ('DC2', 0) :  -Inf : q[DC2,Store_A,0] + q[DC2,Store_B,0] + q[DC2,Store_C,0] + q[DC2,Store_D,0] - s[DC2,0] :   0.0 :   True
+        ('DC2', 1) :  -Inf : q[DC2,Store_A,1] + q[DC2,Store_B,1] + q[DC2,Store_C,1] + q[DC2,Store_D,1] - s[DC2,1] :   0.0 :   True
+        ('DC2', 2) :  -Inf : q[DC2,Store_A,2] + q[DC2,Store_B,2] + q[DC2,Store_C,2] + q[DC2,Store_D,2] - s[DC2,2] :   0.0 :   True
+        ('DC2', 3) :  -Inf : q[DC2,Store_A,3] + q[DC2,Store_B,3] + q[DC2,Store_C,3] + q[DC2,Store_D,3] - s[DC2,3] :   0.0 :   True
+        ('DC2', 4) :  -Inf : q[DC2,Store_A,4] + q[DC2,Store_B,4] + q[DC2,Store_C,4] + q[DC2,Store_D,4] - s[DC2,4] :   0.0 :   True
+        ('DC2', 5) :  -Inf : q[DC2,Store_A,5] + q[DC2,Store_B,5] + q[DC2,Store_C,5] + q[DC2,Store_D,5] - s[DC2,5] :   0.0 :   True
+        ('DC2', 6) :  -Inf : q[DC2,Store_A,6] + q[DC2,Store_B,6] + q[DC2,Store_C,6] + q[DC2,Store_D,6] - s[DC2,6] :   0.0 :   True
+        ('DC3', 0) :  -Inf : q[DC3,Store_A,0] + q[DC3,Store_B,0] + q[DC3,Store_C,0] + q[DC3,Store_D,0] - s[DC3,0] :   0.0 :   True
+        ('DC3', 1) :  -Inf : q[DC3,Store_A,1] + q[DC3,Store_B,1] + q[DC3,Store_C,1] + q[DC3,Store_D,1] - s[DC3,1] :   0.0 :   True
+        ('DC3', 2) :  -Inf : q[DC3,Store_A,2] + q[DC3,Store_B,2] + q[DC3,Store_C,2] + q[DC3,Store_D,2] - s[DC3,2] :   0.0 :   True
+        ('DC3', 3) :  -Inf : q[DC3,Store_A,3] + q[DC3,Store_B,3] + q[DC3,Store_C,3] + q[DC3,Store_D,3] - s[DC3,3] :   0.0 :   True
+        ('DC3', 4) :  -Inf : q[DC3,Store_A,4] + q[DC3,Store_B,4] + q[DC3,Store_C,4] + q[DC3,Store_D,4] - s[DC3,4] :   0.0 :   True
+        ('DC3', 5) :  -Inf : q[DC3,Store_A,5] + q[DC3,Store_B,5] + q[DC3,Store_C,5] + q[DC3,Store_D,5] - s[DC3,5] :   0.0 :   True
+        ('DC3', 6) :  -Inf : q[DC3,Store_A,6] + q[DC3,Store_B,6] + q[DC3,Store_C,6] + q[DC3,Store_D,6] - s[DC3,6] :   0.0 :   True
+    sender_inventory_update : Sender inventory update: s[i,t+1] = s[i,t] - sum over j of q[i,j,t] for all i in S, t
+        Size=18, Index=S*T, Active=True
+        Key        : Lower : Body                                                                                                : Upper : Active
+        ('DC1', 0) :   0.0 : s[DC1,1] - (s[DC1,0] - (q[DC1,Store_A,0] + q[DC1,Store_B,0] + q[DC1,Store_C,0] + q[DC1,Store_D,0])) :   0.0 :   True
+        ('DC1', 1) :   0.0 : s[DC1,2] - (s[DC1,1] - (q[DC1,Store_A,1] + q[DC1,Store_B,1] + q[DC1,Store_C,1] + q[DC1,Store_D,1])) :   0.0 :   True
+        ('DC1', 2) :   0.0 : s[DC1,3] - (s[DC1,2] - (q[DC1,Store_A,2] + q[DC1,Store_B,2] + q[DC1,Store_C,2] + q[DC1,Store_D,2])) :   0.0 :   True
+        ('DC1', 3) :   0.0 : s[DC1,4] - (s[DC1,3] - (q[DC1,Store_A,3] + q[DC1,Store_B,3] + q[DC1,Store_C,3] + q[DC1,Store_D,3])) :   0.0 :   True
+        ('DC1', 4) :   0.0 : s[DC1,5] - (s[DC1,4] - (q[DC1,Store_A,4] + q[DC1,Store_B,4] + q[DC1,Store_C,4] + q[DC1,Store_D,4])) :   0.0 :   True
+        ('DC1', 5) :   0.0 : s[DC1,6] - (s[DC1,5] - (q[DC1,Store_A,5] + q[DC1,Store_B,5] + q[DC1,Store_C,5] + q[DC1,Store_D,5])) :   0.0 :   True
+        ('DC2', 0) :   0.0 : s[DC2,1] - (s[DC2,0] - (q[DC2,Store_A,0] + q[DC2,Store_B,0] + q[DC2,Store_C,0] + q[DC2,Store_D,0])) :   0.0 :   True
+        ('DC2', 1) :   0.0 : s[DC2,2] - (s[DC2,1] - (q[DC2,Store_A,1] + q[DC2,Store_B,1] + q[DC2,Store_C,1] + q[DC2,Store_D,1])) :   0.0 :   True
+        ('DC2', 2) :   0.0 : s[DC2,3] - (s[DC2,2] - (q[DC2,Store_A,2] + q[DC2,Store_B,2] + q[DC2,Store_C,2] + q[DC2,Store_D,2])) :   0.0 :   True
+        ('DC2', 3) :   0.0 : s[DC2,4] - (s[DC2,3] - (q[DC2,Store_A,3] + q[DC2,Store_B,3] + q[DC2,Store_C,3] + q[DC2,Store_D,3])) :   0.0 :   True
+        ('DC2', 4) :   0.0 : s[DC2,5] - (s[DC2,4] - (q[DC2,Store_A,4] + q[DC2,Store_B,4] + q[DC2,Store_C,4] + q[DC2,Store_D,4])) :   0.0 :   True
+        ('DC2', 5) :   0.0 : s[DC2,6] - (s[DC2,5] - (q[DC2,Store_A,5] + q[DC2,Store_B,5] + q[DC2,Store_C,5] + q[DC2,Store_D,5])) :   0.0 :   True
+        ('DC3', 0) :   0.0 : s[DC3,1] - (s[DC3,0] - (q[DC3,Store_A,0] + q[DC3,Store_B,0] + q[DC3,Store_C,0] + q[DC3,Store_D,0])) :   0.0 :   True
+        ('DC3', 1) :   0.0 : s[DC3,2] - (s[DC3,1] - (q[DC3,Store_A,1] + q[DC3,Store_B,1] + q[DC3,Store_C,1] + q[DC3,Store_D,1])) :   0.0 :   True
+        ('DC3', 2) :   0.0 : s[DC3,3] - (s[DC3,2] - (q[DC3,Store_A,2] + q[DC3,Store_B,2] + q[DC3,Store_C,2] + q[DC3,Store_D,2])) :   0.0 :   True
+        ('DC3', 3) :   0.0 : s[DC3,4] - (s[DC3,3] - (q[DC3,Store_A,3] + q[DC3,Store_B,3] + q[DC3,Store_C,3] + q[DC3,Store_D,3])) :   0.0 :   True
+        ('DC3', 4) :   0.0 : s[DC3,5] - (s[DC3,4] - (q[DC3,Store_A,4] + q[DC3,Store_B,4] + q[DC3,Store_C,4] + q[DC3,Store_D,4])) :   0.0 :   True
+        ('DC3', 5) :   0.0 : s[DC3,6] - (s[DC3,5] - (q[DC3,Store_A,5] + q[DC3,Store_B,5] + q[DC3,Store_C,5] + q[DC3,Store_D,5])) :   0.0 :   True
+    u_minus_constraint :  U_minus constraint: U_minus >= aim[j,t] - sum over i of q[i,j,t] for all j in R, t
+        Size=28, Index=R*T, Active=True
+        Key            : Lower : Body                                                                                : Upper : Active
+        ('Store_A', 0) :  -Inf : aim[Store_A,0] - (q[DC1,Store_A,0] + q[DC2,Store_A,0] + q[DC3,Store_A,0]) - U_minus :   0.0 :   True
+        ('Store_A', 1) :  -Inf : aim[Store_A,1] - (q[DC1,Store_A,1] + q[DC2,Store_A,1] + q[DC3,Store_A,1]) - U_minus :   0.0 :   True
+        ('Store_A', 2) :  -Inf : aim[Store_A,2] - (q[DC1,Store_A,2] + q[DC2,Store_A,2] + q[DC3,Store_A,2]) - U_minus :   0.0 :   True
+        ('Store_A', 3) :  -Inf : aim[Store_A,3] - (q[DC1,Store_A,3] + q[DC2,Store_A,3] + q[DC3,Store_A,3]) - U_minus :   0.0 :   True
+        ('Store_A', 4) :  -Inf : aim[Store_A,4] - (q[DC1,Store_A,4] + q[DC2,Store_A,4] + q[DC3,Store_A,4]) - U_minus :   0.0 :   True
+        ('Store_A', 5) :  -Inf : aim[Store_A,5] - (q[DC1,Store_A,5] + q[DC2,Store_A,5] + q[DC3,Store_A,5]) - U_minus :   0.0 :   True
+        ('Store_A', 6) :  -Inf : aim[Store_A,6] - (q[DC1,Store_A,6] + q[DC2,Store_A,6] + q[DC3,Store_A,6]) - U_minus :   0.0 :   True
+        ('Store_B', 0) :  -Inf : aim[Store_B,0] - (q[DC1,Store_B,0] + q[DC2,Store_B,0] + q[DC3,Store_B,0]) - U_minus :   0.0 :   True
+        ('Store_B', 1) :  -Inf : aim[Store_B,1] - (q[DC1,Store_B,1] + q[DC2,Store_B,1] + q[DC3,Store_B,1]) - U_minus :   0.0 :   True
+        ('Store_B', 2) :  -Inf : aim[Store_B,2] - (q[DC1,Store_B,2] + q[DC2,Store_B,2] + q[DC3,Store_B,2]) - U_minus :   0.0 :   True
+        ('Store_B', 3) :  -Inf : aim[Store_B,3] - (q[DC1,Store_B,3] + q[DC2,Store_B,3] + q[DC3,Store_B,3]) - U_minus :   0.0 :   True
+        ('Store_B', 4) :  -Inf : aim[Store_B,4] - (q[DC1,Store_B,4] + q[DC2,Store_B,4] + q[DC3,Store_B,4]) - U_minus :   0.0 :   True
+        ('Store_B', 5) :  -Inf : aim[Store_B,5] - (q[DC1,Store_B,5] + q[DC2,Store_B,5] + q[DC3,Store_B,5]) - U_minus :   0.0 :   True
+        ('Store_B', 6) :  -Inf : aim[Store_B,6] - (q[DC1,Store_B,6] + q[DC2,Store_B,6] + q[DC3,Store_B,6]) - U_minus :   0.0 :   True
+        ('Store_C', 0) :  -Inf : aim[Store_C,0] - (q[DC1,Store_C,0] + q[DC2,Store_C,0] + q[DC3,Store_C,0]) - U_minus :   0.0 :   True
+        ('Store_C', 1) :  -Inf : aim[Store_C,1] - (q[DC1,Store_C,1] + q[DC2,Store_C,1] + q[DC3,Store_C,1]) - U_minus :   0.0 :   True
+        ('Store_C', 2) :  -Inf : aim[Store_C,2] - (q[DC1,Store_C,2] + q[DC2,Store_C,2] + q[DC3,Store_C,2]) - U_minus :   0.0 :   True
+        ('Store_C', 3) :  -Inf : aim[Store_C,3] - (q[DC1,Store_C,3] + q[DC2,Store_C,3] + q[DC3,Store_C,3]) - U_minus :   0.0 :   True
+        ('Store_C', 4) :  -Inf : aim[Store_C,4] - (q[DC1,Store_C,4] + q[DC2,Store_C,4] + q[DC3,Store_C,4]) - U_minus :   0.0 :   True
+        ('Store_C', 5) :  -Inf : aim[Store_C,5] - (q[DC1,Store_C,5] + q[DC2,Store_C,5] + q[DC3,Store_C,5]) - U_minus :   0.0 :   True
+        ('Store_C', 6) :  -Inf : aim[Store_C,6] - (q[DC1,Store_C,6] + q[DC2,Store_C,6] + q[DC3,Store_C,6]) - U_minus :   0.0 :   True
+        ('Store_D', 0) :  -Inf : aim[Store_D,0] - (q[DC1,Store_D,0] + q[DC2,Store_D,0] + q[DC3,Store_D,0]) - U_minus :   0.0 :   True
+        ('Store_D', 1) :  -Inf : aim[Store_D,1] - (q[DC1,Store_D,1] + q[DC2,Store_D,1] + q[DC3,Store_D,1]) - U_minus :   0.0 :   True
+        ('Store_D', 2) :  -Inf : aim[Store_D,2] - (q[DC1,Store_D,2] + q[DC2,Store_D,2] + q[DC3,Store_D,2]) - U_minus :   0.0 :   True
+        ('Store_D', 3) :  -Inf : aim[Store_D,3] - (q[DC1,Store_D,3] + q[DC2,Store_D,3] + q[DC3,Store_D,3]) - U_minus :   0.0 :   True
+        ('Store_D', 4) :  -Inf : aim[Store_D,4] - (q[DC1,Store_D,4] + q[DC2,Store_D,4] + q[DC3,Store_D,4]) - U_minus :   0.0 :   True
+        ('Store_D', 5) :  -Inf : aim[Store_D,5] - (q[DC1,Store_D,5] + q[DC2,Store_D,5] + q[DC3,Store_D,5]) - U_minus :   0.0 :   True
+        ('Store_D', 6) :  -Inf : aim[Store_D,6] - (q[DC1,Store_D,6] + q[DC2,Store_D,6] + q[DC3,Store_D,6]) - U_minus :   0.0 :   True
+    u_plus_constraint : U_plus constraint: U_plus >= sum over i of q[i,j,t] - aim[j,t] for all j in R, t
+        Size=28, Index=R*T, Active=True
+        Key            : Lower : Body                                                                             : Upper : Active
+        ('Store_A', 0) :  -Inf : q[DC1,Store_A,0] + q[DC2,Store_A,0] + q[DC3,Store_A,0] - aim[Store_A,0] - U_plus :   0.0 :   True
+        ('Store_A', 1) :  -Inf : q[DC1,Store_A,1] + q[DC2,Store_A,1] + q[DC3,Store_A,1] - aim[Store_A,1] - U_plus :   0.0 :   True
+        ('Store_A', 2) :  -Inf : q[DC1,Store_A,2] + q[DC2,Store_A,2] + q[DC3,Store_A,2] - aim[Store_A,2] - U_plus :   0.0 :   True
+        ('Store_A', 3) :  -Inf : q[DC1,Store_A,3] + q[DC2,Store_A,3] + q[DC3,Store_A,3] - aim[Store_A,3] - U_plus :   0.0 :   True
+        ('Store_A', 4) :  -Inf : q[DC1,Store_A,4] + q[DC2,Store_A,4] + q[DC3,Store_A,4] - aim[Store_A,4] - U_plus :   0.0 :   True
+        ('Store_A', 5) :  -Inf : q[DC1,Store_A,5] + q[DC2,Store_A,5] + q[DC3,Store_A,5] - aim[Store_A,5] - U_plus :   0.0 :   True
+        ('Store_A', 6) :  -Inf : q[DC1,Store_A,6] + q[DC2,Store_A,6] + q[DC3,Store_A,6] - aim[Store_A,6] - U_plus :   0.0 :   True
+        ('Store_B', 0) :  -Inf : q[DC1,Store_B,0] + q[DC2,Store_B,0] + q[DC3,Store_B,0] - aim[Store_B,0] - U_plus :   0.0 :   True
+        ('Store_B', 1) :  -Inf : q[DC1,Store_B,1] + q[DC2,Store_B,1] + q[DC3,Store_B,1] - aim[Store_B,1] - U_plus :   0.0 :   True
+        ('Store_B', 2) :  -Inf : q[DC1,Store_B,2] + q[DC2,Store_B,2] + q[DC3,Store_B,2] - aim[Store_B,2] - U_plus :   0.0 :   True
+        ('Store_B', 3) :  -Inf : q[DC1,Store_B,3] + q[DC2,Store_B,3] + q[DC3,Store_B,3] - aim[Store_B,3] - U_plus :   0.0 :   True
+        ('Store_B', 4) :  -Inf : q[DC1,Store_B,4] + q[DC2,Store_B,4] + q[DC3,Store_B,4] - aim[Store_B,4] - U_plus :   0.0 :   True
+        ('Store_B', 5) :  -Inf : q[DC1,Store_B,5] + q[DC2,Store_B,5] + q[DC3,Store_B,5] - aim[Store_B,5] - U_plus :   0.0 :   True
+        ('Store_B', 6) :  -Inf : q[DC1,Store_B,6] + q[DC2,Store_B,6] + q[DC3,Store_B,6] - aim[Store_B,6] - U_plus :   0.0 :   True
+        ('Store_C', 0) :  -Inf : q[DC1,Store_C,0] + q[DC2,Store_C,0] + q[DC3,Store_C,0] - aim[Store_C,0] - U_plus :   0.0 :   True
+        ('Store_C', 1) :  -Inf : q[DC1,Store_C,1] + q[DC2,Store_C,1] + q[DC3,Store_C,1] - aim[Store_C,1] - U_plus :   0.0 :   True
+        ('Store_C', 2) :  -Inf : q[DC1,Store_C,2] + q[DC2,Store_C,2] + q[DC3,Store_C,2] - aim[Store_C,2] - U_plus :   0.0 :   True
+        ('Store_C', 3) :  -Inf : q[DC1,Store_C,3] + q[DC2,Store_C,3] + q[DC3,Store_C,3] - aim[Store_C,3] - U_plus :   0.0 :   True
+        ('Store_C', 4) :  -Inf : q[DC1,Store_C,4] + q[DC2,Store_C,4] + q[DC3,Store_C,4] - aim[Store_C,4] - U_plus :   0.0 :   True
+        ('Store_C', 5) :  -Inf : q[DC1,Store_C,5] + q[DC2,Store_C,5] + q[DC3,Store_C,5] - aim[Store_C,5] - U_plus :   0.0 :   True
+        ('Store_C', 6) :  -Inf : q[DC1,Store_C,6] + q[DC2,Store_C,6] + q[DC3,Store_C,6] - aim[Store_C,6] - U_plus :   0.0 :   True
+        ('Store_D', 0) :  -Inf : q[DC1,Store_D,0] + q[DC2,Store_D,0] + q[DC3,Store_D,0] - aim[Store_D,0] - U_plus :   0.0 :   True
+        ('Store_D', 1) :  -Inf : q[DC1,Store_D,1] + q[DC2,Store_D,1] + q[DC3,Store_D,1] - aim[Store_D,1] - U_plus :   0.0 :   True
+        ('Store_D', 2) :  -Inf : q[DC1,Store_D,2] + q[DC2,Store_D,2] + q[DC3,Store_D,2] - aim[Store_D,2] - U_plus :   0.0 :   True
+        ('Store_D', 3) :  -Inf : q[DC1,Store_D,3] + q[DC2,Store_D,3] + q[DC3,Store_D,3] - aim[Store_D,3] - U_plus :   0.0 :   True
+        ('Store_D', 4) :  -Inf : q[DC1,Store_D,4] + q[DC2,Store_D,4] + q[DC3,Store_D,4] - aim[Store_D,4] - U_plus :   0.0 :   True
+        ('Store_D', 5) :  -Inf : q[DC1,Store_D,5] + q[DC2,Store_D,5] + q[DC3,Store_D,5] - aim[Store_D,5] - U_plus :   0.0 :   True
+        ('Store_D', 6) :  -Inf : q[DC1,Store_D,6] + q[DC2,Store_D,6] + q[DC3,Store_D,6] - aim[Store_D,6] - U_plus :   0.0 :   True
+
+39 Declarations: S R T T_plus c s0_i s0_j need aim M RP RUTL d LT need_min_param U_plus U_minus q x s NI sls obj need_min sender_capacity recipient_need linking u_minus_constraint u_plus_constraint init_sender_inventory init_recipient_inventory sender_inventory_update big_m_constraint rutl_constraint sales_upper1 sales_upper2 recipient_inventory_update net_inventory_update inventory_capacity

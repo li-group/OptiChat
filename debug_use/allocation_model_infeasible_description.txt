@@ -1,0 +1,29 @@
+Introduction to the Optimization Model
+This optimization model is designed for a supply chain management scenario, specifically for a retail distribution network. It involves managing the distribution of goods from several distribution centers (DCs) to multiple retail stores over a series of time periods (weeks). The primary users of this model are supply chain managers and logistics coordinators who aim to optimize the flow of goods while minimizing costs and ensuring that each store's needs are met as closely as possible.
+The model's goal is to determine the optimal quantities of goods to be shipped from each distribution center to each store, each week, in a way that balances cost efficiency with the need to meet store demands and maintain inventory levels within specified limits.
+Decisions (Variables)
+The model includes several decision variables:
+Quantity Ordered (q[i,j,t]): The amount of goods to be shipped from distribution center i to store j in week t.
+Shipping Decision (x[i,j,t]): A binary variable that indicates whether shipping occurs from DC i to store j in week t.
+Inventory Levels (s[i,t]): The inventory level at location i (which could be a DC or a store) at the end of week t.
+Net Inventory (NI[j,t]): The net inventory at store j at the end of week t, considering both on-hand and in-transit goods.
+Expected Sales (sls[j,t]): The expected sales at store j in week t.
+Surplus (U_plus) and Shortfall (U_minus): Variables representing the total amount by which the actual shipments exceed or fall short of the targeted levels across all stores and time periods.
+Data or Information (Parameters)
+The model uses various parameters:
+Transportation Costs (c[i,j]): Costs associated with shipping goods from DC i to store j.
+Initial Inventories (s0_i for DCs, s0_j for stores): Starting inventory levels at each location.
+Store Needs (need[j,t]) and Aimed Quantities (aim[j,t]): The required and targeted inventory levels for each store j in each week t.
+Reorder Points (RP[j,t]) and Reorder Up To Levels (RUTL[j,t]): Inventory thresholds that trigger reordering and the maximum inventory levels, respectively.
+Demand/Sales (d[j,t]): Actual customer demand at store j in week t.
+Lead Times (LT[i,j,t]): Time taken for shipments to go from DC i to store j.
+Constraints
+The model's constraints ensure that:
+Shipments do not exceed the sender's capacity or the recipient's need.
+Inventory levels do not exceed capacity limits at any location.
+The net inventory at each store is maintained above the reorder point but below the maximum level.
+The actual shipments align with the binary shipping decisions.
+Sales do not exceed the available inventory or the expected demand.
+Objective
+The objective of the model is to minimize the total cost of transportation, the surplus (U_plus), and the shortfall (U_minus) in supply, while also subtracting a value proportional to the total quantity shipped. This function aims to balance cost minimization with the goal of meeting supply targets as accurately as possible.
+By optimizing these variables within the given constraints, the model helps supply chain managers efficiently allocate resources, minimize costs, and ensure that each store's inventory levels are adequate to meet anticipated sales demands.

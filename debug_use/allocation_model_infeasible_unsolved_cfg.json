@@ -1,0 +1,14 @@
+{   "model_name": "allocation_model",
+    "models": {
+        "local_resources": [
+            "debug_use/allocation_model_infeasible_unsolved.pkl"
+        ],
+        "is_solved": false,
+        "is_lp": false
+    },
+    "models_code": {
+        "local_resources": [
+            "debug_use/allocation_model_infeasible.py"
+        ]
+    }
+}
