@@ -1,0 +1,259 @@
+import os
+from datetime import datetime
+from typing import Dict
+from loguru import logger
+from google.adk.tools.tool_context import ToolContext
+
+from optichat.config.constants import (
+    TMP_MODEL_OBJECT_FOLDER,
+    MODELS_DICTIONARY,
+    MODEL_FOR_PAPER_GENERATION,
+    CFG
+)
+
+
+def format_models_dict_for_llm(models_dictionary: Dict) -> str:
+    """
+    Format models_dictionary into readable markdown for LLM consumption.
+
+    Groups components by type and creates clear listings with values/expressions.
+
+    Args:
+        models_dictionary: Full model data from extract_model_info()
+
+    Returns:
+        Formatted markdown string
+
+    Example output:
+        ## Parameters
+        - demand[0]: 100
+        - demand[1]: 150
+        ...
+
+        ## Variables
+        - production[0]: Solution = 75.5
+        ...
+    """
+    sections = []
+
+    # Group components by type
+    parameters = {}
+    variables = {}
+    constraints = {}
+    objectives = {}
+
+    for comp_name, comp_data in models_dictionary.items():
+        if not isinstance(comp_data, dict):
+            continue
+        comp_type = comp_data.get("component_type", "unknown")
+
+        if comp_type == "parameter":
+            parameters[comp_name] = comp_data
+        elif comp_type == "variable":
+            variables[comp_name] = comp_data
+        elif comp_type == "constraint":
+            constraints[comp_name] = comp_data
+        elif comp_type == "objective":
+            objectives[comp_name] = comp_data
+
+    # Format Parameters
+    if parameters:
+        param_lines = ["## Parameters\n"]
+        for name, data in sorted(parameters.items())[:50]:  # Limit to first 50 for brevity
+            value = data.get("value", "unknown")
+            param_lines.append(f"- **{name}**: {value}")
+
+        if len(parameters) > 50:
+            param_lines.append(f"\n... and {len(parameters) - 50} more parameters")
+
+        sections.append("\n".join(param_lines))
+
+    # Format Variables
+    if variables:
+        var_lines = ["## Variables\n"]
+        for name, data in sorted(variables.items())[:50]:
+            solution = data.get("solution", "unknown")
+            if solution != "unknown":
+                var_lines.append(f"- **{name}**: Solution = {solution}")
+            else:
+                var_lines.append(f"- **{name}**: (not yet solved)")
+
+        if len(variables) > 50:
+            var_lines.append(f"\n... and {len(variables) - 50} more variables")
+
+        sections.append("\n".join(var_lines))
+
+    # Format Constraints
+    if constraints:
+        cons_lines = ["## Constraints\n"]
+        for name, data in sorted(constraints.items())[:30]:  # Fewer constraints shown
+            expression = data.get("expression", "")
+            is_binding = data.get("is_binding", "unknown")
+
+            cons_lines.append(f"- **{name}**: {expression}")
+            if is_binding is True:
+                cons_lines.append(f"  _(Binding)_")
+
+        if len(constraints) > 30:
+            cons_lines.append(f"\n... and {len(constraints) - 30} more constraints")
+
+        sections.append("\n".join(cons_lines))
+
+    # Format Objectives
+    if objectives:
+        obj_lines = ["## Objective\n"]
+        for name, data in objectives.items():
+            expression = data.get("expression", "")
+            value = data.get("value", "unknown")
+            sol_status = data.get("sol_status", "unknown")
+
+            obj_lines.append(f"- **{name}**: {expression}")
+            obj_lines.append(f"  - Objective value: {value}")
+            obj_lines.append(f"  - Solution status: {sol_status}")
+
+        sections.append("\n".join(obj_lines))
+
+    # Summary
+    summary = f"""## Model Summary
+
+Total components:
+- Parameters: {len(parameters)}
+- Variables: {len(variables)}
+- Constraints: {len(constraints)}
+- Objectives: {len(objectives)}
+"""
+    sections.insert(0, summary)
+
+    return "\n\n".join(sections)
+
+
+def save_synthetic_paper(description: str, model_name: str) -> str:
+    """
+    Save generated model description as a .txt file (synthetic paper).
+
+    Creates a timestamped markdown file that can be used by paper_rag.
+
+    Args:
+        description: Generated model description (markdown format)
+        model_name: Name of the model
+
+    Returns:
+        Absolute path to saved synthetic paper file
+
+    Example:
+        >>> path = save_synthetic_paper(description, "supply_chain")
+        >>> print(path)
+        "/path/to/tmp/model_objects/generated_papers/supply_chain_description.txt"
+    """
+    # Create generated_papers directory
+    papers_dir = os.path.join(TMP_MODEL_OBJECT_FOLDER, "generated_papers")
+    os.makedirs(papers_dir, exist_ok=True)
+
+    # Create filename
+    filename = f"{model_name}_description.txt"
+    file_path = os.path.join(papers_dir, filename)
+
+    # Add metadata header
+    timestamp = datetime.now().isoformat()
+    full_content = f"""# {model_name} - Optimization Model Description
+
+**Generated**: {timestamp}
+**Generated by**: OptiChat Illustrator Agent
+**Model**: {model_name}
+
+---
+
+{description}
+
+---
+
+*This description was automatically generated by the OptiChat Illustrator Agent.
+It provides a comprehensive overview of the optimization model for practitioners
+in the relevant domain who may not have formal optimization training.*
+"""
+
+    # Save to file
+    with open(file_path, 'w', encoding='utf-8') as f:
+        f.write(full_content)
+
+    logger.info(f"✓ Saved synthetic paper to: {file_path}")
+    return os.path.abspath(file_path)
+
+
+def get_model_info_for_description(request: str, tool_context: ToolContext) -> str:
+    """
+    Retrieve model components and code from session state for description generation.
+
+    This tool is specifically for the illustrator agent to access the model information
+    it needs to generate a comprehensive description.
+
+    Args:
+        request: The request string (e.g., "generate"). Required for tool schema generation.
+        tool_context: Tool context containing session state
+
+    Returns:
+        Formatted string containing model components and optionally source code
+
+    Example:
+        >>> info = get_model_info_for_description("generate", context)
+        >>> print(info[:100])
+        "# Model Components\n\n## Model Summary\n\nTotal components:\n- Parameters: 15\n..."
+    """
+    try:
+        # Retrieve model information from state
+        models_dictionary = tool_context.state.get(MODELS_DICTIONARY, {})
+        model_name = tool_context.state.get(MODEL_FOR_PAPER_GENERATION, "unknown_model")
+        cfg = tool_context.state.get(CFG, {})
+
+        logger.info(f"[ILLUSTRATOR_TOOL] Retrieving model info for: {model_name}")
+        
+        if not models_dictionary:
+            logger.warning("[ILLUSTRATOR_TOOL] No models found in state")
+            return "Error: No models available in session state."
+
+        # Get the specific model's components
+        model_components = models_dictionary.get(model_name)
+        if not model_components:
+            # Fallback: if model_name not found, try the first available model
+            if len(models_dictionary) > 0:
+                first_model = list(models_dictionary.keys())[0]
+                logger.warning(f"[ILLUSTRATOR_TOOL] Model '{model_name}' not found. Using '{first_model}' instead.")
+                model_name = first_model
+                model_components = models_dictionary[first_model]
+            else:
+                logger.warning(f"[ILLUSTRATOR_TOOL] Model '{model_name}' not found in models_dictionary")
+                return f"Error: Model '{model_name}' not found in session state."
+
+        logger.info(f"[ILLUSTRATOR_TOOL] Model has {len(model_components)} components")
+
+        # Format model components
+        formatted_components = format_models_dict_for_llm(model_components)
+
+        # Build response with model info
+        response_parts = [
+            f"# Model Information for '{model_name}'\n",
+            "## Model Components\n",
+            formatted_components
+        ]
+
+        # Add source code if available
+        models_code_cfg = cfg.get("models_code", {})
+        if models_code_cfg and "local_resources" in models_code_cfg:
+            code_files = models_code_cfg["local_resources"]
+            logger.info(f"[ILLUSTRATOR_TOOL] Source code files available: {code_files}")
+            response_parts.append(f"\n\n## Source Code Files\n")
+            response_parts.append(f"Available code files: {', '.join(code_files)}")
+            response_parts.append("\n(Code content can be retrieved if needed)")
+        else:
+            logger.info("[ILLUSTRATOR_TOOL] No source code available")
+            response_parts.append("\n\n## Source Code\n(Source code not provided)")
+
+        result = "\n".join(response_parts)
+        logger.info(f"[ILLUSTRATOR_TOOL] Generated model info ({len(result)} characters)")
+        return result
+
+    except Exception as e:
+        logger.error(f"[ILLUSTRATOR_TOOL] Failed to retrieve model info: {e}")
+        import traceback
+        logger.debug(traceback.format_exc())
+        return f"Error retrieving model information: {str(e)}"

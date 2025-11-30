@@ -22,6 +22,7 @@ build/
 env/
 venv/
 ENV/
+.env
 
 # IDEs
 .vscode/
@@ -65,3 +66,8 @@ tmp/
 
 # Ignore kb
 chroma_langchain_db/
+
+# Ignore tool function
+regenerate_pickle.py
+/.claude
+CLAUDE.md

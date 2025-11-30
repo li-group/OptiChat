@@ -213,7 +213,8 @@ def infeasibility_diagnosis(
     models_dictionary = tool_context.state[MODELS_DICTIONARY].copy()
     if models_dictionary.get(version, {}).get("obj", {}).get("sol_status", "unknown") == "unknown":
         model = load_model(version, models_dictionary)
-        models_dictionary = solve_model(model, version, models_dictionary)
+        description = f"Solving model {version} for infeasibility diagnosis"
+        models_dictionary = solve_model(model, version, models_dictionary, tool_context, description)
         tool_context.state[MODELS_DICTIONARY] = models_dictionary
     
     models_dictionary = tool_context.state[MODELS_DICTIONARY].copy()

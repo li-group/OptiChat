@@ -16,7 +16,10 @@ IMPORTANT ADDITIONAL GUIDELINES
 
 RESOURCES
 <models> (dynamic availability: {IS_MODELS_DICTIONARY_AVAILABLE}):
-    the optimization models labelled with version names, {MODEL_VERSIONS}.
+    Available models: {MODELS_METADATA_FORMATTED}
+
+    Use get_model_components(version, ...) to retrieve detailed component data.
+    Model data is loaded on-demand when accessing historical models.
 
 <models_code> (dynamic availability: {IS_MODELS_CODE_AVAILABLE}):
     code used to implement the optimization models.
@@ -62,8 +65,8 @@ WORKFLOW
        - If available:
             i. Apply `relax_constraint_and_penalize_violation` on the *first constraint* identified by `infeasibility_diagnosis`
                with a penalty coefficient of **10**.
-           ii. Solve the newly relaxed model. Make sure the newly relaxed model is a part of model dictionary (DO NOT MAKE UP RANDOM MODEL NAMES), if not double check the version name you are using.
-           iii. Return to the user:
+            ii. Solve the newly relaxed model. Make sure the newly relaxed model is a part of model dictionary (DO NOT MAKE UP RANDOM MODEL NAMES), if not double check the version name you are using.
+            iii. Return to the user:
                 • the constraint that was relaxed
                 • the updated termination condition of the relaxed model. If the termination condition is  in [TerminationCondition.infeasible, TerminationCondition.infeasibleOrUnbounded] follow the steps mentioned in the **Iterative restoration loop**.
                   If the updated termination condition is in [TerminationCondition.optimal, TerminationCondition.feasible] follow the steps mentioned in  **Termination condition**.
@@ -126,12 +129,62 @@ TOOL CONVENTIONS
     - ONLY used when necessary:
     only when USER QUERY explicitly falls into the categories that requires new <models> in PRIOR KNOWLEDGE
     - Concise code snippet:
-    STOP the code snippet as soon as new <models> are programmed to be solved. 
+    STOP the code snippet as soon as new <models> are programmed to be solved.
     NEVER look up information about new <models> in the code snippet. Use `get_model_components` instead
+    - Model naming convention:
+    When creating new model versions via solve_model(), use this naming pattern:
+        <base_model>__<param_name>_<index>_<operation><value>
+    Examples:
+        • Original model: "supply_chain_model"
+        • After modifying demand[3,1] += 10: "supply_chain_model__demand_3_1_plus10"
+        • After modifying cost[0] = 50: "supply_chain_model__cost_0_set50"
+        • After modifying capacity *= 2: "supply_chain_model__capacity_times2"
+    Rules:
+        • Replace array brackets with underscores: [3,1] → 3_1
+        • Use operation keywords: plus (add), minus (subtract), set (assign), times (multiply), div (divide)
+        • ALWAYS check MODEL_VERSIONS to ensure the name doesn't already exist
+        • If creating a similar modification, use a descriptive suffix to differentiate
     - Shortcut functions:
     models_dictionary is a internal object that stores all <models> and has already been loaded for you.
+    tool_context is available in the REPL scope and provides access to state management.
     use the following generic shortcut functions and models_dictionary to load and solve <models>.
     HOWEVER, NEVER interact with models_dictionary directly as it is for internal use only.
+
+    CRITICAL - Description Generation Requirement:
+    When calling solve_model(), you MUST provide a description as the 5th argument.
+    The description should be a concise (50-100 words), informative summary that includes:
+      - Type of analysis (basing on the type of analysis below)
+      - What changed and why (specific parameters, values, constraints)
+      - Purpose or hypothesis being tested
+
+    Type of analysis:
+    - Diagnosing query: Identifies the causes or reasons behind a specific problem or unexpected outcome in a model or system.
+    Example: “Why did the optimization run fail to converge?”
+    - Retrieval query: Requests factual information or specific data from a knowledge base, model, or dataset.
+    Example: “What do you believe are the best aircraft assignments for the ORD-SAN route?”
+    - Sensitivity query: Examines how changes to input parameters or assumptions affect the results or outputs of a model.
+    Example: “Winter is coming. How will our total profit be affected by the seasonal fluctuation in customer orders?”
+    - What-if query: Explores hypothetical scenarios by modifying certain variables or conditions to see the projected impact on outcomes.
+    Example: “Can our plant still meet demand if the national regulation now cuts the limit of carbon dioxide emissions by 10%?”
+    - Why-not query: Investigates why a particular result, solution, or expected output was not produced by a model or system.
+    Example: “Why is it not recommended to at least build a steam boiler or a furnace to supply sufficient heat?”
+
+    Format: solve_model(model, version_name, models_dictionary, tool_context, description)
+
+    Example code pattern:
+        ```python
+        # Define description BEFORE solving
+        description = "What-if analysis: increased demand[3,1] by 10 units to evaluate capacity constraints during peak season and assess production feasibility"
+
+        # Load and modify model
+        model = load_model('supply_chain_model', models_dictionary)
+        model.demand[3,1] = model.demand[3,1].value + 10
+
+        # Solve with description
+        models_dictionary = solve_model(model, 'supply_chain_model__demand_3_1_plus10',
+                                       models_dictionary, tool_context, description)
+        ```
+
     __SHORTCUT_FUNCTIONS_PLACEHOLDER__
 `code_rag` & `paper_rag` conventions
     - ONLY used in the end:
@@ -157,7 +210,11 @@ and answers the USER QUERY based on the interactions.
 
 RESOURCES
 <models> (dynamic availability: {IS_MODELS_DICTIONARY_AVAILABLE}):
-    the optimization models labelled with version names, {MODEL_VERSIONS}.
+    Available models:
+{MODELS_METADATA_FORMATTED}
+
+    Use get_model_components(version, ...) to retrieve detailed component data.
+    Model data is loaded on-demand when accessing historical models.
 
 <models_code> (dynamic availability: {IS_MODELS_CODE_AVAILABLE}):
     code used to implement the optimization models.

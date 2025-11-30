@@ -1,6 +1,4 @@
 from google.adk.agents import LlmAgent, BaseAgent, LoopAgent, SequentialAgent, ParallelAgent, Agent
-# from google.adk.tools.agent_tool import AgentTool
-# from google.adk.events import Event
 from optichat.llm import *
 from optichat.config.constants import *
 from optichat.sub_agents.expert.prompt import get_expert_agent_prompt

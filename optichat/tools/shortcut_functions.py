@@ -2,6 +2,8 @@ from loguru import logger
 import pyomo.environ as pe
 from pyomo.opt import SolverFactory, SolverStatus, TerminationCondition
 from optichat.tools.extract_tool import extract_model_info, restore_model_object, save_model_object, unique_component_name
+from optichat.tools.metadata_store import (load_metadata, save_metadata, save_model_data,
+                                           add_model_to_metadata)
 from typing import Any, Dict, List, Tuple
 import re, json
 from optichat.config.constants import USER_QUERY
@@ -48,11 +50,39 @@ def add_dual_suffix(model: pe.ConcreteModel):
     return model 
 
 
-def solve_model(model: pe.ConcreteModel, version: str, models_dictionary: dict):
+def solve_model(model: pe.ConcreteModel, version: str, models_dictionary: dict, tool_context=None, description=None):
     """
-    ```new_models_dictionary = solve_model(model, version: str, models_dictionary: dict)```
+    ```new_models_dictionary = solve_model(model, version: str, models_dictionary: dict, tool_context=None, description=None)```
     solves the model and update it in the models_dictionary by labelling it with the given version.
+
+    Args:
+        model: Pyomo ConcreteModel to solve
+        version: Version name for this model
+        models_dictionary: Runtime cache of model data
+        tool_context: Optional ToolContext for state management
+        description: Optional human-readable description of this model variant (RECOMMENDED)
+                    Example: "What-if analysis: increased demand[3,1] by 10 to test capacity constraints"
+
+    Example usage:
+        ```python
+        # Define description before solving
+        description = "What-if analysis: increased demand[3,1] by 10 to test peak season capacity"
+        model = load_model('supply_chain_model', models_dictionary)
+        model.demand[3,1] += 10
+        models_dictionary = solve_model(model, 'supply_chain_model__demand_3_1_plus10',
+                                       models_dictionary, tool_context, description)
+        ```
     """
+    # Ensure version name uniqueness (safeguard against duplicate names)
+    original_version = version
+    if version in models_dictionary:
+        counter = 2
+        base_version = version
+        while version in models_dictionary:
+            version = f"{base_version}_{counter}"
+            counter += 1
+        print(f"⚠️  Version name conflict! Using '{version}' instead of '{base_version}'")
+
     time_limit_seconds = 180
     print(f"Solving model with time limit of {time_limit_seconds} seconds...")
     solver = SolverFactory('gurobi')
@@ -76,7 +106,48 @@ def solve_model(model: pe.ConcreteModel, version: str, models_dictionary: dict):
     })
     print(f"Model, in version of {version}, is updated in the models_dictionary.")
 
+    # Infer base model from version name
+    # Format: <base_model>__<param_name>_<index>_<operation><value>
+    base_model = None
+
+    if "__" in version:
+        # This is a modified model
+        parts = version.split("__")
+        base_model = parts[0]
+    else:
+        # This might be an initial model or a simple variant
+        # Check if any existing models could be the base
+        for existing_version in models_dictionary.keys():
+            if existing_version in version and existing_version != version:
+                base_model = existing_version
+                break
+
+    # Add to runtime cache
     models_dictionary.update({version: info})
+
+    # Save model data to individual file
+    try:
+        save_model_data(version, info)
+        logger.info(f"Saved model data for {version}")
+    except Exception as e:
+        logger.error(f"Failed to save model data for {version}: {e}")
+
+    # Update metadata (with expert-provided description)
+    try:
+        metadata = load_metadata()
+        metadata = add_model_to_metadata(
+            metadata=metadata,
+            version_name=version,
+            model_info=info,
+            base_model=base_model,
+            description=description  # Expert-provided description
+        )
+        save_metadata(metadata)
+        logger.info(f"Updated metadata for {version} with description: {description}")
+    except Exception as e:
+        logger.error(f"Failed to update metadata for {version}: {e}")
+        # Continue execution even if save fails
+
     return models_dictionary
 
 

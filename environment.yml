@@ -1,0 +1,36 @@
+name: optichat_front
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.11
+  - pip
+  - pip:
+    - streamlit
+    - google-adk
+    - openai
+    - pyomo
+    - gurobipy
+    - python-dotenv
+    - matplotlib
+    - networkx
+    - numpy
+    - pandas
+    - tiktoken
+    - loguru
+    - google-genai
+    - google-cloud-aiplatform
+    - google-cloud-storage
+    - google-cloud-logging
+    - langchain
+    - langchain-openai
+    - langchain-community
+    - langchain-experimental
+    - chromadb
+    - pydantic
+    - pydantic-settings
+    - litellm
+    - loguru
+    - tenacity
+    - tiktoken
+    - langchain-chroma

@@ -34,6 +34,11 @@ def python_repl_func(code_snippet: str, tool_context: ToolContext) -> Dict[str, 
     models_dictionary = tool_context.state[MODELS_DICTIONARY].copy()
     python_repl.globals[MODELS_DICTIONARY.lower()] = models_dictionary
     logger.info(f"Injected models_dictionary into REPL")
+
+    # Inject tool_context so solve_model() can access USER_QUERY
+    python_repl.globals['tool_context'] = tool_context
+    logger.info(f"Injected tool_context into REPL")
+
     # execute the code snippet
     logger.info(f"Python code to execute:\n{code_snippet}")
     result = str(python_repl.run(code_snippet))

@@ -4,8 +4,9 @@ import re
 import json
 from loguru import logger
 from google.adk.tools.tool_context import ToolContext
-from optichat.config.constants import MODELS_DICTIONARY, MODEL_VERSIONS
+from optichat.config.constants import MODELS_DICTIONARY, MODEL_VERSIONS, HISTORICAL_MODELS_METADATA
 from optichat.tools.shortcut_functions import load_model, solve_model
+from optichat.tools.metadata_store import load_model_data
 
 
 def wildcard_to_regex(pattern: str) -> str:
@@ -26,6 +27,18 @@ def wildcard_to_regex(pattern: str) -> str:
     regex_pattern = regex_pattern.replace(r'\*', '.*').replace(r'\?', '.')
     # Anchor the pattern to match the whole string
     return f'^{regex_pattern}$'
+
+
+def get_all_versions_from_metadata(metadata: Dict[str, Any]) -> set:
+    """Extract all model versions from the tree-based metadata structure."""
+    versions = set()
+    for date_key, date_models in metadata.items():
+        for base_name, base_data in date_models.items():
+            versions.add(base_name)
+            modified_models = base_data.get("modified_models", {})
+            for mod_name in modified_models:
+                versions.add(mod_name)
+    return versions
 
 
 def get_model_components(version: List[str], component_type: str, pattern: str,
@@ -53,6 +66,11 @@ def get_model_components(version: List[str], component_type: str, pattern: str,
         "result": the information about the model components that match the specified version, component_type and pattern
     """
     models_dictionary = tool_context.state[MODELS_DICTIONARY].copy()
+    historical_metadata = tool_context.state.get(HISTORICAL_MODELS_METADATA, {})
+    
+    # Extract all versions from metadata tree
+    all_historical_versions = get_all_versions_from_metadata(historical_metadata)
+    
     versions = version
     is_valid = True
     result = ""
@@ -67,20 +85,52 @@ def get_model_components(version: List[str], component_type: str, pattern: str,
         is_valid = False
         result += (f"**ERROR** component_type must be one of {valid_component_types}, "
                    f"but got '{component_type}'")
-    available_versions = list(models_dictionary.keys())
+    # Check both runtime cache (models_dictionary) and metadata index (historical_metadata)
+    available_versions = list(set(models_dictionary.keys()) | all_historical_versions)
     missing_versions = [v for v in versions if v not in available_versions]
     if missing_versions:
         is_valid = False
         result += (f"**ERROR** available versions are {available_versions}, "
                    f"but got '{missing_versions}'")
+        
+    # If the input is invalid, return the error message.
+    if not is_valid:
+        return {"status": "error", "result": result}
 
     result_dictionary = {}
+
     # Process each version
     for ver in versions:
+        # Check if model data is in runtime cache
+        if ver not in models_dictionary:
+            # Lazy load from file if it exists in historical metadata
+            if ver in all_historical_versions:
+                logger.info(f"Lazy loading model data for {ver} from file")
+                try:
+                    model_data = load_model_data(ver)
+                    # Add to runtime cache
+                    models_dictionary[ver] = model_data
+                    tool_context.state[MODELS_DICTIONARY] = models_dictionary
+                    logger.info(f"Successfully loaded model data for {ver}")
+                except FileNotFoundError as e:
+                    # Model metadata exists but data file missing
+                    logger.error(f"Failed to lazy load {ver}: {e}")
+                    return {
+                        "status": "error",
+                        "result": f"Model data file not found for {ver}. Metadata exists but data file is missing."
+                    }
+            else:
+                # Model doesn't exist at all
+                return {
+                    "status": "error",
+                    "result": f"Model {ver} not found in metadata or models_dictionary"
+                }
+
         # Pre-processing: solve if not solved yet
         if models_dictionary[ver]["obj"].get("sol_status", "unknown") != "optimal":
             model = load_model(ver, models_dictionary)
-            models_dictionary = solve_model(model, ver, models_dictionary)
+            description = f"Re-solving model {ver} to retrieve component information"
+            models_dictionary = solve_model(model, ver, models_dictionary, tool_context, description)
             tool_context.state[MODELS_DICTIONARY] = models_dictionary
             tool_context.state[MODEL_VERSIONS] = list(models_dictionary.keys())
 
