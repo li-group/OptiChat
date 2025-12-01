@@ -261,17 +261,43 @@ def parse_uncertainty_from_state(state: Dict[str, Any]) -> Tuple[List[str], Dict
 #     var.unfix()
 
 
-# def add_constraint(constraint_name: str, expression: str, model: pe.ConcreteModel):
-#     """
-#     ```add_constraint(constraint_name: str, expression: str, model)```
-#     adds a constraint to the model in place, returns nothing.
-# TODO: the most difficult part
-# reconstruct pyomo expression from string
-# - model.find_component(component_name) can get the actual pyomo component
-# - need a way to rearrange the components into a valid pyomo expression from expression string
-# need a way to parse indexed expression into pyomo rule function
-#     """
-#     pass
+def add_constraint(constraint_name: str, model: pe.ConcreteModel, expression: str = None, rule: Any = None, indices: List[Any] = None):
+    """
+    ```add_constraint(constraint_name: str, model, expression: str = None, rule: Callable = None, indices: List[Any] = None)```
+    adds a constraint to the model in place, returns nothing.
+    
+    Args:
+        constraint_name: Name of the new constraint
+        model: The Pyomo model object
+        expression: String expression for simple constraints (e.g., "model.x + model.y <= 10")
+        rule: Python callable (function) for complex/indexed constraints
+        indices: List of sets for indexed constraints (e.g., [model.T, model.R])
+    """
+    if model.find_component(constraint_name):
+        print(f"Constraint {constraint_name} already exists in the model. No changes made.")
+        return
+
+    if expression is None and rule is None:
+        print("Error: Either 'expression' or 'rule' must be provided.")
+        return
+
+    try:
+        if expression is not None:
+            context = {'model': model, 'pe': pe}
+            rule_expr = eval(expression, context)
+            new_constraint = pe.Constraint(expr=rule_expr)
+            
+        elif rule is not None:
+            if indices:
+                new_constraint = pe.Constraint(*indices, rule=rule)
+            else:
+                new_constraint = pe.Constraint(rule=rule)
+        
+        model.add_component(constraint_name, new_constraint)
+        print(f"Constraint {constraint_name} added to the model.")
+        
+    except Exception as e:
+        print(f"Failed to add constraint {constraint_name}. Error: {e}")
 
 
 # def deactivate_constraint(constraint_name: str, model: pe.ConcreteModel):

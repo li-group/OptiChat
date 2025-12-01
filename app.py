@@ -53,7 +53,6 @@ if metadata:
                     for mod_name in sorted(model_info["modified_models"].keys()):
                         mod_key = f"chk_{date}_{base_model_name}_{mod_name}"
                         if st.checkbox(mod_name, key=mod_key):
-                        if st.checkbox(mod_name, key=mod_key):
                             selected_models.append(mod_name)
                 
                 st.divider()
