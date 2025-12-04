@@ -126,8 +126,7 @@ def get_model_components(version: List[str], component_type: str, pattern: str,
                     "result": f"Model {ver} not found in metadata or models_dictionary"
                 }
 
-        # Pre-processing: solve if not solved yet
-        if models_dictionary[ver]["obj"].get("sol_status", "unknown") != "optimal":
+        if models_dictionary[ver]["obj"].get("sol_status", "unknown") == "unknown":
             model = load_model(ver, models_dictionary)
             description = f"Re-solving model {ver} to retrieve component information"
             models_dictionary = solve_model(model, ver, models_dictionary, tool_context, description)

@@ -186,7 +186,16 @@ def relax_constraint_and_penalize_violation(constraint_name: str,
         else:
             raise Exception("Constraint has no bounds. No changes made.")
         # deactivated constraint can still be found by model.find_component, delete it to avoid confusion
-        model.del_component(constraint)
+        if constraint.is_indexed():
+             model.del_component(constraint)
+        else:
+             parent = constraint.parent_component()
+             if parent is constraint:
+                 # ScalarConstraint
+                 model.del_component(constraint)
+             else:
+                 del parent[constraint.index()]
+        
         print(f"Constraint {constraint_name} is relaxed with slacks.")
         print(f"Constraint {constraint_name} violation is penalized in the objective with coefficient {penalty_coef}.")
     else: 

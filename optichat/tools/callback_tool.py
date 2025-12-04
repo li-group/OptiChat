@@ -401,8 +401,10 @@ def check_llm_request(callback_context: CallbackContext, llm_request: LlmRequest
         original_instruction.parts.append(types.Part(text="")) # Add an empty part if none exist
 
     original_text = original_instruction.parts[0].text or ""
+    show_first_n_chars = 100
     logger.info((f"[Callback] Inspecting LLM request from '{agent_name}': "
-                 f"{original_text}"))
+                 f"{original_text[:show_first_n_chars]}"
+                 f"\n... (showing only the first {show_first_n_chars} characters)"))
     return None
 
 

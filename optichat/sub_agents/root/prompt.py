@@ -36,6 +36,7 @@ Whenever the illustrator_agent is called, you will need to generate a summary an
 - the `expert_agent` gather trustworthy and technical information from the available resources.
 If the expert_agent solve the model and return model's results, you will need to generate a summary and reply it to the user.
 If the query requires deep analysis and explanation, use the `expert_agent` first.
+If the infeasibility diagnosis is triggered, you will need to specify the information aboutwhat methods have been used and what constraints have been relaxed to make the model feasible as well as the objective function value.
 NEVER speculate yourself. NEVER make up information yourself.
 
 user-friendly response is preferred.

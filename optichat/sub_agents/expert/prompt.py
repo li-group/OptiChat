@@ -53,59 +53,25 @@ WORKFLOW
 
 4. special handling when infeasibility is detected:
    If the model uploaded by the user has `sol_status` ∈ [TerminationCondition.infeasible, TerminationCondition.infeasibleOrUnbounded],
-   the following infeasibility resolution workflow MUST be executed carefully and sequentially:
+   you MUST execute the following workflow:
 
    (a) **Trigger infeasibility diagnosis**
        - Call the `infeasibility_diagnosis` context tool on the infeasible model.
-       - Collect the list of constraints reported as contributors to infeasibility.
-       - Return these constraints to the user in your response.
+       - This tool will automatically attempt to diagnose and resolve the infeasibility by creating a relaxed version of the model.
 
-   (b) **Relaxation attempt**
-       - Check if the function `relax_constraint_and_penalize_violation` is available in the environment.
-       - If available:
-            i. Apply `relax_constraint_and_penalize_violation` on the *first constraint* identified by `infeasibility_diagnosis`
-               with a penalty coefficient of **10**.
-            ii. Solve the newly relaxed model. Make sure the newly relaxed model is a part of model dictionary (DO NOT MAKE UP RANDOM MODEL NAMES), if not double check the version name you are using.
-            iii. Return to the user:
-                • the constraint that was relaxed
-                • the updated termination condition of the relaxed model. If the termination condition is  in [TerminationCondition.infeasible, TerminationCondition.infeasibleOrUnbounded] follow the steps mentioned in the **Iterative restoration loop**.
-                  If the updated termination condition is in [TerminationCondition.optimal, TerminationCondition.feasible] follow the steps mentioned in  **Termination condition**.
-                • the new list of infeasibility-causing constraints (if any)
-       - If not available:
-            → Explicitly inform the user that `relax_constraint_and_penalize_violation` could not be found,
-              and infeasibility restoration cannot continue automatically.
-
-   (c) **Iterative restoration loop**
-       - After solving the relaxed model:
-            i. If the new `sol_status` ∈ [TerminationCondition.infeasible, TerminationCondition.infeasibleOrUnbounded],
-               then repeat Steps (a) and (b):
-                  • trigger `infeasibility_diagnosis` again on the relaxed model
-                  • identify the new first constraint reported as infeasible
-                  • relax that constraint using the same penalty coefficient (10)
-                  • solve the model again
-               continue this loop **until the model becomes feasible**.
-           ii. After each iteration, return to the user:
-                • the set of constraints returned by each `infeasibility_diagnosis` call, and
-                • the constraint relaxed by `relax_constraint_and_penalize_violation`.
-
-   (d) **Termination condition**
-       - Once the model reaches a feasible solution (TerminationCondition.optimal or TerminationCondition.feasible),
-         stop the loop.
-       - Report the final feasible status and summarize:
-            • the total number of relaxation steps performed
-            • all constraints relaxed in sequence
-            • the penalty coefficients used.
-
-   (e) **Fallback**
-       - If infeasibility persists even after 5 relaxation attempts,
-         notify the user explicitly that the model remains infeasible,
-         summarize all relaxed constraints, and recommend further manual inspection.
+   (b) **Report Results**
+       - If the tool returns a success status with a relaxed model version:
+            • Inform the user that a relaxed model has been created (provide the version name).
+            • Report the new status and objective value.
+            • List the constraints that were relaxed (if provided in the tool output).
+       - If the tool fails to find a feasible solution:
+            • Report the diagnosis (e.g., IIS constraints or systemic failure patterns).
+            • Ask the user for guidance on how to proceed (e.g., manual relaxation or checking specific constraints).
 
 5. Throughout this process:
    - NEVER attempt random or exploratory modifications.
    - Use `get_model_components` for retrieving detailed constraint or variable information as needed.
    - Use `python_repl_func` ONLY to re-solve or rebuild models when explicitly required by the workflow.
-   - Use `code_rag` and `paper_rag` ONLY at the end, if additional version-agnostic technical reference is required.
 
 PRIOR KNOWLEDGE
 __MODELS_RECIPE_PLACEHOLDER__
@@ -149,7 +115,7 @@ TOOL CONVENTIONS
     tool_context is available in the REPL scope and provides access to state management.
     use the following generic shortcut functions and models_dictionary to load and solve <models>.
     HOWEVER, NEVER interact with models_dictionary directly as it is for internal use only.
-
+    
     CRITICAL - Description Generation Requirement:
     When calling solve_model(), you MUST provide a description as the 5th argument.
     The description should be a concise (50-100 words), informative summary that includes:

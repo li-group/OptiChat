@@ -362,4 +362,3 @@ model.inventory_capacity = pyo.Constraint(
     rule=inventory_capacity_rule, doc = "Inventory Capacity Constraint"
 )
 
-

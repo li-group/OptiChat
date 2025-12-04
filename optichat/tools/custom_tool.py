@@ -8,7 +8,7 @@ from pyomo.contrib.iis import write_iis
 from pyomo.opt import SolverFactory, SolverStatus, TerminationCondition
 
 from google.adk.tools.tool_context import ToolContext
-from optichat.tools.shortcut_functions import load_model, solve_model, parse_uncertainty_from_state
+from optichat.tools.shortcut_functions import load_model, solve_model, parse_uncertainty_from_state, relax_constraint_and_penalize_violation
 from optichat.tools.extract_tool import unique_component_name
 from optichat.config.constants import MODELS_DICTIONARY, MODEL_VERSIONS 
 
@@ -19,6 +19,7 @@ from optichat.tools.ldr_explain import extractor as ldr_extractor
 #Robust Analysis
 from optichat.tools.robust_analysis import scenario_generator as robust_scenarios
 from optichat.tools.robust_analysis import robustness_analysis as robust_core
+
 
 
 
@@ -186,102 +187,270 @@ def infeasibility_diagnosis(
     version: str,
     tool_context: ToolContext
 ) -> str:
-    """
-    infeasibility_diagnosis is a tool that performs infeasibility diagnosis on a specified model version
-
-    Args:
-        version (str): Model version to perform infeasibility diagnosis on. 
-    Returns:
-        Dict[str, str]: a dictionary with two keys: "status" and "result"
-        "status": "success" or "error"
-        "result": a report about the Irreducible Infeasible Subsystem (IIS) that represent the minimal set of constraints causing infeasibility, 
-        and corresponding recommendations for feasibility restoration.
-    """
-    # TODO: add these keys to constants when more options are considered
-
-    # Checking if the mdoel verison exists
-    if version not in tool_context.state.get(MODEL_VERSIONS, []):
-        return {"status": "error", "result": f"Model version '{version}' not found in tool_context.state. Specify the right version"}
+    # --- MULTI-STAGE INFEASIBILITY DIAGNOSIS ---
+    logger.info(f"Starting Multi-Stage Infeasibility Diagnosis for version: {version}")
     
+    # Read config
     solver_name = tool_context.state.get("SOLVER_NAME", "gurobi")
     solver_options = tool_context.state.get("SOLVER_OPTIONS", None)
     tee = bool(tool_context.state.get("SOLVE_TEE", False))
     save_iis_dir = tool_context.state.get("IIS_SAVE_DIR", os.path.join("tmp", "iis", version))
     os.makedirs(save_iis_dir, exist_ok=True)
 
-    # solve if not solved yet
+    # Load model
     models_dictionary = tool_context.state[MODELS_DICTIONARY].copy()
-    if models_dictionary.get(version, {}).get("obj", {}).get("sol_status", "unknown") == "unknown":
-        model = load_model(version, models_dictionary)
-        description = f"Solving model {version} for infeasibility diagnosis"
-        models_dictionary = solve_model(model, version, models_dictionary, tool_context, description)
-        tool_context.state[MODELS_DICTIONARY] = models_dictionary
-    
-    models_dictionary = tool_context.state[MODELS_DICTIONARY].copy()
-    model = load_model(version, models_dictionary)
-    info = models_dictionary.get(version, {}).get("obj", {})
-    status = info.get("sol_status", "unknown")
-    objval = info.get("value", "unknown")
-    # stop if NOT infeasible
-    if status not in [TerminationCondition.infeasible, TerminationCondition.infeasibleOrUnbounded]:
-        return {"status": "success", "result": "Model is NOT infeasible; infeasibility diagnosis terminated directly."}
-    # Produce IIS (robust path, then fallback)
-    with tempfile.TemporaryDirectory() as td:
-        lp_path = os.path.join(td, "model.lp")
-        write_lp_with_symbolic_names(model, lp_path)
+    model = load_model(version, models_dictionary)   
 
+    # --- ROUND 1: Initial IIS ---
+    logger.info("--- Round 1: Initial IIS ---")
+    
+    with tempfile.TemporaryDirectory() as td:
+        lp_path = os.path.join(td, "model_r1.lp")
+        write_lp_with_symbolic_names(model, lp_path)
         iis_path = run_gurobi_cli_iis(lp_path, workdir=td)
-        if iis_path is None or not os.path.exists(iis_path):
-            iis_path = os.path.join(td, "fallback.iis.ilp")
-            try:
-                write_iis(model, iis_path, solver=solver_name)
-            except Exception as e:
-                append_iis_history(
-                    version,
-                    models_dictionary,
-                    {
-                        "supported": False,
-                        "summary": f"IIS could not be generated: {e}",
-                        "constraints": [],
-                        "artifact_path": None,
-                        "solve": {"status": status, "objective_value": objval},
-                    },
-                )
-                tool_context.state[MODELS_DICTIONARY] = models_dictionary
-                logger.error(f"write_iis failed: {e}")
-                return {"status": "error", 
-                        "result": f"Model is infeasible, but write_iis (internal function) failed: {e}"}
+        
+        if not iis_path:
+             try:
+                 iis_path = os.path.join(td, "fallback.iis.ilp")
+                 write_iis(model, iis_path, solver=solver_name)
+             except Exception as e:
+                 logger.error(f"Failed to generate IIS: {e}")
+                 # Record failure
+                 append_iis_history(version, models_dictionary, {
+                     "supported": False, "summary": f"Round 1 IIS failed: {e}", "constraints": [], "artifact_path": None, "solve": {"status": "infeasible"}
+                 })
+                 tool_context.state[MODELS_DICTIONARY] = models_dictionary
+                 return {"status": "error", "result": f"Failed to generate IIS: {e}"}
 
         parsed = iis2json(iis_path)
-        constraints = parsed.get("constraints", [])
-
+        r1_constraints = parsed.get("constraints", [])
+        
+        # Save Artifact
         final_artifact = None
         if save_iis_dir:
             try:
-                final_artifact = os.path.join(save_iis_dir, "iis.ilp")
+                final_artifact = os.path.join(save_iis_dir, "iis_round1.ilp")
                 shutil.copyfile(iis_path, final_artifact)
             except Exception:
                 final_artifact = None
+        
+        # Record History
+        append_iis_history(version, models_dictionary, {
+            "supported": True,
+            "summary": f"Round 1 IIS: {len(r1_constraints)} constraints.",
+            "constraints": r1_constraints,
+            "artifact_path": final_artifact,
+            "solve": {"status": "infeasible"},
+            "round": 1
+        })
+        tool_context.state[MODELS_DICTIONARY] = models_dictionary
+    
+    if not r1_constraints:
+        return {"status": "error", "result": "IIS generation returned no constraints."}
+        
+    logger.info(f"Round 1 IIS found {len(r1_constraints)} constraints.")
+    
+    # --- 3-Round Iterative Relaxation Workflow ---
+    logger.info("--- Starting 3-Round Iterative Relaxation ---")
+    
+    # Helper to find all indices of a constraint component
+    def get_all_constraint_indices(model, base_name):
+        c = model.find_component(base_name)
+        if c is None: return []
+        if c.is_indexed():
+            return [c[idx].name for idx in c]
+        else:
+            return [c.name]
 
-    iis_record = {
-        "supported": True,
-        "summary": f"IIS includes {len(constraints)} constraint(s).",
-        "constraints": constraints,
-        "artifact_path": final_artifact,
-        "solve": {"status": status, "objective_value": objval},
-    }
-    append_iis_history(version, models_dictionary, iis_record)
+    # Helper to get base name
+    def get_base_name(c_name):
+        return c_name.split("[")[0]
 
-    tool_context.state[MODELS_DICTIONARY] = models_dictionary
+    # Helper to build a map of "normalized" name -> actual Pyomo name
+    def build_constraint_map(model):
+        c_map = {}
+        for c in model.component_data_objects(pyo.Constraint, active=True):
+            raw_name = c.name
+            norm_name = raw_name.replace("[", "").replace("]", "").replace("(", "").replace(")", "").replace("'", "").replace('"', "").replace(",", "_").replace(" ", "")
+            c_map[norm_name] = raw_name
+            c_map[raw_name] = raw_name
+        return c_map
 
-    if constraints:
-        lines = [
-            f"IIS includes {len(constraints)} constraint(s): ", 
-        ] + constraints
-        return {"status": "success", "result": "\n".join(lines)}
+    def find_real_name(c_map, iis_name):
+        # Normalize the IIS name
+        norm_iis = iis_name.replace("[", "").replace("]", "").replace("(", "").replace(")", "").replace("'", "").replace('"', "").replace(",", "_").replace(" ", "")
+        return c_map.get(norm_iis)
+
+    # --- ROUND 1: Relax Initial IIS ---
+    logger.info("--- Round 1: Relaxing Initial IIS ---")
+    
+    version_r1 = f"{version}_relaxed_r1"
+    model_r1 = model.clone()
+    c_map_r1 = build_constraint_map(model_r1)
+    
+    for c_name_iis in r1_constraints:
+        real_name = find_real_name(c_map_r1, c_name_iis)
+        if real_name:
+            try:
+                relax_constraint_and_penalize_violation(real_name, 10.0, model_r1)
+            except Exception as e:
+                logger.warning(f"Round 1: Failed to relax {real_name}: {e}")
+        else:
+            logger.warning(f"Round 1: Could not find model constraint for IIS entry '{c_name_iis}'")
+            
+    # Solve Round 1
+    models_dictionary = solve_model(model_r1, version_r1, models_dictionary, tool_context, description="Round 1 Relaxation (IIS)")
+    status_r1 = models_dictionary[version_r1].get("obj", {}).get("sol_status", "unknown")
+    logger.info(f"Round 1 Status: {status_r1}")
+    
+    if status_r1 in [TerminationCondition.optimal, TerminationCondition.feasible, "optimal", "feasible"]:
+        obj_val = models_dictionary[version_r1].get("obj", {}).get("value", "N/A")
+        return {
+            "status": "success",
+            "result": f"Infeasibility resolved in Round 1.\n"
+                      f"Relaxed Model Version: '{version_r1}'\n"
+                      f"Status: {status_r1}\n"
+                      f"Objective Value: {obj_val}\n"
+                      f"Relaxed Constraints: {r1_constraints}",
+            "relaxed_version": version_r1,
+            "final_status": str(status_r1)
+        }
+
+    # --- ROUND 2: Pattern Matching / New IIS ---
+    logger.info("--- Round 2: Analysis & Relaxation ---")
+    
+    # Generate IIS for Round 1 model
+    r2_constraints = []
+    with tempfile.TemporaryDirectory() as td_r2:
+        lp_path_r2 = os.path.join(td_r2, "model_r2.lp")
+        write_lp_with_symbolic_names(model_r1, lp_path_r2)
+        iis_path_r2 = run_gurobi_cli_iis(lp_path_r2, workdir=td_r2)
+        
+        if not iis_path_r2:
+             try:
+                 iis_path_r2 = os.path.join(td_r2, "fallback_r2.iis.ilp")
+                 write_iis(model_r1, iis_path_r2, solver=solver_name)
+             except Exception:
+                 iis_path_r2 = None
+        
+        if iis_path_r2:
+            parsed_r2 = iis2json(iis_path_r2)
+            r2_constraints = parsed_r2.get("constraints", [])
+            
+            # Save Round 2 Artifact
+            if save_iis_dir:
+                try:
+                    final_artifact_r2 = os.path.join(save_iis_dir, "iis_round2.ilp")
+                    shutil.copyfile(iis_path_r2, final_artifact_r2)
+                except Exception:
+                    pass
+            
+    logger.info(f"Round 2 IIS found {len(r2_constraints)} constraints.")
+    
+    if not r2_constraints:
+        logger.warning("Round 2 IIS generation failed or empty. Proceeding to Round 3.")
     else:
-        logger.warning("No constraints parsed from IIS artifact.")
-        return {"status": "error", "result": "\nNo constraints parsed from IIS artifact. iis2json might be problematic."}
+        def get_real_base(c_name, c_map):
+            real = find_real_name(c_map, c_name)
+            if real:
+                return get_base_name(real)
+            return None
+
+        r1_bases = set()
+        for c in r1_constraints:
+            b = get_real_base(c, c_map_r1)
+            if b: r1_bases.add(b)
+            
+        r2_bases = set()
+        for c in r2_constraints:
+            # r2_constraints come from model_r1's IIS, so c_map_r1 is valid
+            b = get_real_base(c, c_map_r1) 
+            if b: r2_bases.add(b)
+            
+        common_bases = r1_bases.intersection(r2_bases)
+        
+        version_r2 = f"{version}_relaxed_r2"
+        model_r2 = model_r1.clone() # Start from Round 1 model
+        c_map_r2 = build_constraint_map(model_r2)
+        
+        constraints_to_relax_r2 = []
+        
+        if common_bases:
+            logger.info(f"Round 2: Similarity detected in {common_bases}. Relaxing ALL instances of these types.")
+            for base in common_bases:
+                indices = get_all_constraint_indices(model_r2, base)
+                constraints_to_relax_r2.extend(indices)
+        
+        for c_iis in r2_constraints:
+            real_name = find_real_name(c_map_r2, c_iis)
+            if real_name:
+                base = get_base_name(real_name)
+                if base not in common_bases:
+                    constraints_to_relax_r2.append(real_name)
+            
+        # Relax constraints
+        for c_name in constraints_to_relax_r2:
+             try:
+                relax_constraint_and_penalize_violation(c_name, 10.0, model_r2)
+             except Exception as e:
+                logger.warning(f"Round 2: Failed to relax {c_name}: {e}")
+                
+        # Solve Round 2
+        models_dictionary = solve_model(model_r2, version_r2, models_dictionary, tool_context, description="Round 2 Relaxation")
+        status_r2 = models_dictionary[version_r2].get("obj", {}).get("sol_status", "unknown")
+        logger.info(f"Round 2 Status: {status_r2}")
+        
+        if status_r2 in [TerminationCondition.optimal, TerminationCondition.feasible, "optimal", "feasible"]:
+            obj_val = models_dictionary[version_r2].get("obj", {}).get("value", "N/A")
+            return {
+                "status": "success",
+                "result": f"Infeasibility resolved in Round 2.\n"
+                          f"Relaxed Model Version: '{version_r2}'\n"
+                          f"Status: {status_r2}\n"
+                          f"Objective Value: {obj_val}\n"
+                          f"Relaxed Constraints: {constraints_to_relax_r2}",
+                "relaxed_version": version_r2,
+                "final_status": str(status_r2)
+            }
+
+    # --- ROUND 3: Elastic Heuristic ---
+    logger.info("--- Round 3: Elastic Heuristic (Final Attempt) ---")
+    
+    from optichat.tools.elastic_diagnoser import ElasticInfeasibilityDiagnoser
+        
+    model_elastic = load_model(version, tool_context.state[MODELS_DICTIONARY]) 
+    diagnoser = ElasticInfeasibilityDiagnoser(model_elastic)
+    
+    diagnoser.elasticize_model()
+    diagnoser.solve_phase_1()
+    safety_set = diagnoser.run_heuristic_2()
+    
+    version_r3 = f"{version}_relaxed_elastic"
+    is_feasible, obj_val_r3 = diagnoser.verify_feasibility(safety_set)
+    model_r3 = diagnoser.model
+    
+    models_dictionary[version_r3] = {
+        "local_path_to_object": None,
+        "obj": {
+            "sol_status": TerminationCondition.optimal if is_feasible else TerminationCondition.infeasible,
+            "value": obj_val_r3
+        }
+    }
+            
+    # Solve Round 3 (Just to persist and format correctly)
+    models_dictionary = solve_model(model_r3, version_r3, models_dictionary, tool_context, description="Round 3 Relaxation (Elastic)")
+    status_r3 = models_dictionary[version_r3].get("obj", {}).get("sol_status", "unknown")
+    
+    return {
+        "status": "success",
+        "result": f"Infeasibility resolved in Round 3 (Elastic Heuristic).\n"
+                  f"Relaxed Model Version: '{version_r3}'\n"
+                  f"Status: {status_r3}\n"
+                  f"Objective Value: {obj_val_r3}\n"
+                  f"Relaxed Constraints: {list(safety_set)}",
+        "relaxed_version": version_r3,
+        "final_status": str(status_r3)
+    }
     
 
 # Linear Decision Rule Functions
