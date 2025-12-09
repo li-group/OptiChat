@@ -271,14 +271,15 @@ def infeasibility_diagnosis(
         c_map = {}
         for c in model.component_data_objects(pyo.Constraint, active=True):
             raw_name = c.name
-            norm_name = raw_name.replace("[", "").replace("]", "").replace("(", "").replace(")", "").replace("'", "").replace('"', "").replace(",", "_").replace(" ", "")
+            # UNIFY hyphens and underscores: treat them as the same character
+            norm_name = raw_name.replace("[", "").replace("]", "").replace("(", "").replace(")", "").replace("'", "").replace('"', "").replace(" ", "").replace("-", "_").replace(",", "_")
             c_map[norm_name] = raw_name
             c_map[raw_name] = raw_name
         return c_map
 
     def find_real_name(c_map, iis_name):
         # Normalize the IIS name
-        norm_iis = iis_name.replace("[", "").replace("]", "").replace("(", "").replace(")", "").replace("'", "").replace('"', "").replace(",", "_").replace(" ", "")
+        norm_iis = iis_name.replace("[", "").replace("]", "").replace("(", "").replace(")", "").replace("'", "").replace('"', "").replace(" ", "").replace("-", "_").replace(",", "_")
         return c_map.get(norm_iis)
 
     # --- ROUND 1: Relax Initial IIS ---
@@ -429,26 +430,30 @@ def infeasibility_diagnosis(
     is_feasible, obj_val_r3 = diagnoser.verify_feasibility(safety_set)
     model_r3 = diagnoser.model
     
-    models_dictionary[version_r3] = {
-        "local_path_to_object": None,
-        "obj": {
-            "sol_status": TerminationCondition.optimal if is_feasible else TerminationCondition.infeasible,
-            "value": obj_val_r3
-        }
-    }
-            
-    # Solve Round 3 (Just to persist and format correctly)
+    # Save the model - solve_model will extract all component info including elastic_slacks
+    # Note: Don't pre-populate models_dictionary to avoid version renaming issues
     models_dictionary = solve_model(model_r3, version_r3, models_dictionary, tool_context, description="Round 3 Relaxation (Elastic)")
-    status_r3 = models_dictionary[version_r3].get("obj", {}).get("sol_status", "unknown")
+    
+    # Get the actual version name (may have been renamed if duplicate existed)
+    # solve_model adds the version to models_dictionary, so we need to find it
+    actual_version = version_r3
+    if version_r3 not in models_dictionary:
+        # Find the renamed version (e.g., version_r3_2, version_r3_3, etc.)
+        for key in models_dictionary.keys():
+            if key.startswith(version_r3):
+                actual_version = key
+                break
+    
+    status_r3 = models_dictionary.get(actual_version, {}).get("obj", {}).get("sol_status", "unknown")
     
     return {
         "status": "success",
         "result": f"Infeasibility resolved in Round 3 (Elastic Heuristic).\n"
-                  f"Relaxed Model Version: '{version_r3}'\n"
+                  f"Relaxed Model Version: '{actual_version}'\n"
                   f"Status: {status_r3}\n"
                   f"Objective Value: {obj_val_r3}\n"
                   f"Relaxed Constraints: {list(safety_set)}",
-        "relaxed_version": version_r3,
+        "relaxed_version": actual_version,
         "final_status": str(status_r3)
     }
     

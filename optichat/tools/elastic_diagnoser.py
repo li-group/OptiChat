@@ -96,8 +96,9 @@ class ElasticInfeasibilityDiagnoser:
         """
         Solves the elastic model to minimize the sum of infeasibilities.
         """
-        if hasattr(self.model, 'obj'):
-            self.model.obj.deactivate()
+        # Deactivate ALL existing objectives to prevent "multiple active objectives" error
+        for obj in self.model.component_objects(pyo.Objective, active=True):
+            obj.deactivate()
         
         if not self.elastic_slacks:
             logger.warning("No elastic slacks found! Phase 1 will be trivial (SINF=0).")
@@ -205,11 +206,19 @@ class ElasticInfeasibilityDiagnoser:
         if hasattr(self.model, 'elastic_obj'):
             self.model.elastic_obj.deactivate()
             
-        if hasattr(self.model, 'obj'):
-            self.model.obj.activate()
-            logger.info("Original Cost Objective Activated.")
-        else:
-            logger.warning("No original 'obj' found! Model might solve with 0 cost.")
+        original_obj_activated = False
+        for obj in self.model.component_objects(pyo.Objective, active=False):
+            if obj.name != 'elastic_obj':
+                obj.activate()
+                original_obj_activated = True
+                logger.info(f"Original Objective '{obj.name}' Activated.")
+        
+        if not original_obj_activated:
+            logger.warning("No original objective found/activated! Model might solve with 0 cost.")
+            # Create dummy 0-cost objective if strictly needed by solver/writer, though Gurobi usually handles 0 cost.
+            # But Pyomo's LP writer crashes if NO objective exists.
+            if not any(self.model.component_objects(pyo.Objective, active=True)):
+                 self.model.dummy_zero_obj = pyo.Objective(expr=0.0)
 
         for idx, s_var in self.elastic_slacks.items():
             
@@ -226,7 +235,13 @@ class ElasticInfeasibilityDiagnoser:
         logger.info(f"Solver Status: {status}")
         
         if status == pyo.TerminationCondition.optimal:
-            obj_val = pyo.value(self.model.obj)
+            # Find the active objective to get the value
+            active_objs = [o for o in self.model.component_objects(pyo.Objective, active=True)]
+            if active_objs:
+                obj_val = pyo.value(active_objs[0])
+            else:
+                obj_val = 0.0
+
             logger.info(f" -> RESULT: FEASIBLE!")
             logger.info(f" -> Optimal Original Cost (with relaxations): {obj_val}")
             return True, obj_val

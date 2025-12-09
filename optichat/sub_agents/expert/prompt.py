@@ -64,6 +64,9 @@ WORKFLOW
             • Inform the user that a relaxed model has been created (provide the version name).
             • Report the new status and objective value.
             • List the constraints that were relaxed (if provided in the tool output).
+            • Explicitly report the slack values added to which constraints for the relaxation by calling:
+               get_model_components([relaxed_version], "variable", "elastic_slacks*", tool_context)
+               to retrieve all slack variable values, then summarize the non-zero slacks for the user.
        - If the tool fails to find a feasible solution:
             • Report the diagnosis (e.g., IIS constraints or systemic failure patterns).
             • Ask the user for guidance on how to proceed (e.g., manual relaxation or checking specific constraints).

@@ -140,10 +140,14 @@ def extract_model_constraint(model, termination_condition):
                 raise ValueError(f"Error accessing expression of constraint {pe.name(constraint)} with index {idx}: {e}")
 
             if str(termination_condition) == 'optimal':
-                if abs(constraint[idx].lslack()) < eps or abs(constraint[idx].uslack()) < eps:
-                    is_binding = True
-                else:
-                    is_binding = False
+                try:
+                    if abs(constraint[idx].lslack()) < eps or abs(constraint[idx].uslack()) < eps:
+                        is_binding = True
+                    else:
+                        is_binding = False
+                except (ValueError, TypeError):
+                    # This happens if variables in the constraint expression have no value
+                    is_binding = "unknown"
             else:
                 is_binding = "unknown"
             
