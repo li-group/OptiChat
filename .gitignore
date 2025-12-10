@@ -68,6 +68,6 @@ tmp/
 chroma_langchain_db/
 
 # Ignore tool function
-regenerate_pickle.py
+generate_pickle.py
 /.claude
 CLAUDE.md
