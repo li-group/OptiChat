@@ -68,18 +68,23 @@ def init_paper_rag(paths: List[str], model_name: str):
 
 
 def init_chroma_collection(collection_name, docs, empty_existing):
-    embeddings = OpenAIEmbeddings(model=EMBEDDING_MODEL)
-    persist_directory = PERSIST_DIRECTORY
-    if empty_existing:
-        # TODO: for development only, delete the collection first and then add documents to re-build the collection again
+    try:
+        embeddings = OpenAIEmbeddings(model=EMBEDDING_MODEL)
+        persist_directory = PERSIST_DIRECTORY
+        if empty_existing:
+            # TODO: for development only, delete the collection first and then add documents to re-build the collection again
+            vector_store = get_chroma_vs(collection_name, embeddings, persist_directory)
+            logger.debug(f"Deleting collection {[col.name for col in vector_store._client.list_collections()]} first for re-building.")
+            vector_store._client.delete_collection(name=collection_name)
+            logger.debug(f"After deletion, existing collections are {[col.name for col in vector_store._client.list_collections()]}")
         vector_store = get_chroma_vs(collection_name, embeddings, persist_directory)
-        logger.debug(f"Deleting collection {[col.name for col in vector_store._client.list_collections()]} first for re-building.")
-        vector_store._client.delete_collection(name=collection_name)
-        logger.debug(f"After deletion, existing collections are {[col.name for col in vector_store._client.list_collections()]}")
-    vector_store = get_chroma_vs(collection_name, embeddings, persist_directory)
-    logger.debug(f"Building collection {collection_name} by adding documents...")
-    vector_store.add_documents(documents=docs)
-    logger.debug(f"After adding documents, existing collections are {[col.name for col in vector_store._client.list_collections()]}")
+        logger.debug(f"Building collection {collection_name} by adding documents...")
+        vector_store.add_documents(documents=docs)
+        logger.debug(f"After adding documents, existing collections are {[col.name for col in vector_store._client.list_collections()]}")
+    except Exception as e:
+        logger.error(f"Failed to initialize embedding/vector store (Likely OpenAI Quota issue): {e}")
+        logger.warning("Continuing without RAG capabilities.")
+
 
 
 def get_chroma_vs(collection_name, embeddings, persist_directory):

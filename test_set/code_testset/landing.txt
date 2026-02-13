@@ -1,0 +1,27 @@
+Data Type: dict
+================================================================================
+
+{
+  "external_tools": [
+    {
+      "type": "WHY_NOT",
+      "Q": "Why not imposing a maximum number of aircraft that are allowed to land on runway 1. Indeed in the initial scenario, 3 aircraft landed in runway 1, but we can imagine a scenario in which runway 1 is old and need maintenance, therefore can only support 1 landing per day. By reducing the availability of runway 1 we expect the cost to increase because this will generate longer waiting times for the aircraft.",
+      "A": "Imposing this constraint increased the optimal cost by $150 (originally 350). This confirms our hypothesis, and therefore we probably want to have the best availability for the runways to reduce the cost of operation. Moreover the number of aircraft assigned to runway 1 stick to the upper bound (i.e. 1) which shows that the optimality needs full availability of the second runway."
+    },
+    {
+      "type": "WHY_IF",
+      "Q": "What if we automatically assign the two aircraft that have the higher waiting costs, i.e. aircraft 4 and 5. This is based on the hypothesis that if they are assigned to a runway autmatically, they will have a smaller waiting time and therefore reduce the total cost. Let assign these two to runway 2.",
+      "A": "The final results show that the waiting time for aircraft 4 and 5 are indeed smaller as we assumed. However, this automatic assignement results in a longer waiting time for aircraft 3 than in the original case. The total cost increases by $50 (originally 350) as a consequence. This unvalid the hypothesis."
+    },
+    {
+      "type": "WHY_NOT",
+      "Q": "We can assume a scenario in which aircraft must land in the order they arrive, i.e aircraft 1 lands before aircraft 2 which lands before aircraft 3 and so on. This way we might expect to reduce the waiting time and therefore the total cost of operations",
+      "A": "By imposing such constraint we observe that the total cost is increased to $850 compared to the original case ($350). After all we can understand this result because the aircraft that cost the most in terms of waiting time are aircraft 4 and 5. By assigning the aircraft in that order we therefore increases the waiting time of aircraft 5 that is the most expensive. "
+    },
+    {
+      "type": "WHY_IF",
+      "Q": "What if aircraft one is out of fuel and therefore need to land in priority. In such a scenario aircraft must land as it arrives. Since it has the smallest waiting cost, we can imagine that this will yield longer waiting times for the aircraft that are the most expensive and therefore increase the total cost",
+      "A": "We observe that the overall cost is increased by $200 (originally 350). Moreover, aircraft 5 that is the one with the higher waiting time still lands in first position (runway 1 while aircraft 1 goes to runway 2). This is because the optimizer try to minimiz the waiting time for aircraft 5 since it has the highest waiting time"
+    }
+  ]
+}

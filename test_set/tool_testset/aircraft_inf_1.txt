@@ -1,0 +1,51 @@
+Data Type: dict
+================================================================================
+
+{
+  "feasibility_restoration": [
+    {
+      "type": "FEASIBILITY_RESTORATION",
+      "Q": "can you help me fix the infeasibility by changing the demand distribution on route 2",
+      "queried_components": [
+        {
+          "component_name": "dd",
+          "component_indexes": [
+            "route-2",
+            "slice(None, None, None)"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FEASIBILITY_RESTORATION",
+      "Q": "if I can increase the aircraft availability of any aircraft except for aircraft a, will the model become feasible?",
+      "queried_components": [
+        {
+          "component_name": "aa",
+          "component_indexes": "b"
+        },
+        {
+          "component_name": "aa",
+          "component_indexes": "c"
+        },
+        {
+          "component_name": "aa",
+          "component_indexes": "d"
+        }
+      ]
+    },
+    {
+      "type": "FEASIBILITY_RESTORATION",
+      "Q": "by how much need I change the passenger capacity to make the model feasible?",
+      "queried_components": [
+        {
+          "component_name": "p",
+          "component_indexes": [
+            "slice(None, None, None)",
+            "slice(None, None, None)"
+          ]
+        }
+      ]
+    }
+  ]
+}

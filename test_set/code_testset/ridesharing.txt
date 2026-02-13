@@ -1,0 +1,32 @@
+Data Type: dict
+================================================================================
+
+{
+  "external_tools": [
+    {
+      "type": "WHY_NOT",
+      "Q": "The optimal solution suggests assigning vehicle 1 to request 5 and taking path C. Why doesn't the vehicle 1 for request 5 take path A?",
+      "A": "Forcing vehicle 1 for request 5 to choose path A will increase the objective to 60"
+    },
+    {
+      "type": "WHY_NOT",
+      "Q": "The optimal solution suggests assigning vehicle 1 to request 17 and taking path C. Why doesn't the vehicle 1 for request 17 take path B?",
+      "A": "Forcing vehicle 1 for request 17 to choose path B will increase the objective to 66"
+    },
+    {
+      "type": "WHY_NOT",
+      "Q": "Why don't you choose vehicle 2 to serve request 1 along path C?",
+      "A": "The objective will increase from 48 to 70."
+    },
+    {
+      "type": "WHY_NOT",
+      "Q": "Why don't you choose vehicle 2 to serve request 19 along path A?",
+      "A": "The objective will increase from 48 to 55."
+    },
+    {
+      "type": "WHY_NOT",
+      "Q": "Why don't you choose vehicle 1 to serve request 1 along path C?",
+      "A": "The objective will increase from 48 to 64."
+    }
+  ]
+}

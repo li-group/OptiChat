@@ -1,0 +1,43 @@
+Data Type: dict
+================================================================================
+
+{
+  "feasibility_restoration": [
+    {
+      "type": "FEASIBILITY_RESTORATION",
+      "Q": "It is possible to negotiate with my business partners to adjust the total quantity of goods that they require. Let me know how much adjustment is needed to make the model feasible.",
+      "queried_components": [
+        {
+          "component_name": "req",
+          "component_indexes": null
+        }
+      ]
+    },
+    {
+      "type": "FEASIBILITY_RESTORATION",
+      "Q": "if I increase the maximum quantity of goods that can be purchased in segment 1 to some extent, will the model become feasible?",
+      "queried_components": [
+        {
+          "component_name": "qmax",
+          "component_indexes": [
+            "slice(None, None, None)",
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FEASIBILITY_RESTORATION",
+      "Q": "by how much need I adjust the minimum number of goods to make the model feasible?",
+      "queried_components": [
+        {
+          "component_name": "qmin",
+          "component_indexes": [
+            "slice(None, None, None)",
+            "slice(None, None, None)"
+          ]
+        }
+      ]
+    }
+  ]
+}

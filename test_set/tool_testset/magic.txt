@@ -1,0 +1,78 @@
+Data Type: dict
+================================================================================
+
+{
+  "components_retrival": [
+    {
+      "type": "RETRIEVAL",
+      "Q": "What is the maximum power output that the type-2 generator can reach?",
+      "queried_components": [
+        {
+          "component_name": "maxpow",
+          "component_indexes": "type-2"
+        }
+      ]
+    },
+    {
+      "type": "RETRIEVAL",
+      "Q": "What is the maximum power output that the type 2 generator can reach?",
+      "queried_components": [
+        {
+          "component_name": "maxpow",
+          "component_indexes": "type-2"
+        }
+      ]
+    },
+    {
+      "type": "RETRIEVAL",
+      "Q": "how much cost should I pay optimally based on the current model",
+      "queried_components": [
+        {
+          "component_name": "cost",
+          "component_indexes": null
+        }
+      ]
+    }
+  ],
+  "evaluate_modification": [
+    {
+      "type": "WHAT_IF",
+      "Q": "We recently upgraded our generators, all generators now have 1.3x maximum power limit. Help me evaluate the effect of this upgrade.",
+      "queried_components": [
+        {
+          "component_name": "maxpow",
+          "component_indexes": "slice(None, None, None)",
+          "operation": "*",
+          "delta": 1.3
+        }
+      ]
+    },
+    {
+      "type": "WHAT_IF",
+      "Q": "What if there is a new policy such that no type-2 generator is allowed to be in use at 12pm-6am, what will the optimal cost be after this modification?",
+      "queried_components": [
+        {
+          "component_name": "n",
+          "component_indexes": [
+            "type-2",
+            "12pm-6am"
+          ],
+          "operation": "=",
+          "delta": 0
+        }
+      ]
+    },
+    {
+      "type": "WHAT_IF",
+      "Q": "We recently bought 2 more type-1 generators, What will happen to our optimal cost if not taking into account the cost of buying them?",
+      "queried_components": [
+        {
+          "component_name": "number",
+          "component_indexes": "type-1",
+          "operation": "+",
+          "delta": 2
+        }
+      ]
+    }
+  ]
+}

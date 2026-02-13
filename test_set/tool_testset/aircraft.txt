@@ -1,0 +1,128 @@
+Data Type: dict
+================================================================================
+
+{
+  "components_retrival": [
+    {
+      "type": "RETRIEVAL",
+      "Q": "what is current objective value",
+      "queried_components": [
+        {
+          "component_name": "obj",
+          "component_indexes": null
+        }
+      ]
+    },
+    {
+      "type": "RETRIEVAL",
+      "Q": "what is the cost of aircraft b",
+      "queried_components": [
+        {
+          "component_name": "c",
+          "component_indexes": [
+            "b",
+            "slice(None, None, None)"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "RETRIEVAL",
+      "Q": "let me know the number of aircraft type b assigned to route-2",
+      "queried_components": [
+        {
+          "component_name": "x",
+          "component_indexes": [
+            "b",
+            "route-2"
+          ]
+        }
+      ]
+    }
+  ],
+  "sensitivity_analysis": [
+    {
+      "type": "SENSITIVITY",
+      "Q": "what will the optimal cost change if i change the passenger capacity of aircraft a on route 1",
+      "queried_components": [
+        {
+          "component_name": "p",
+          "component_indexes": [
+            "a",
+            "route-1"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "SENSITIVITY",
+      "Q": "Will the optimal cost fluctuate very much if i change the availability of aircraft d?",
+      "queried_components": [
+        {
+          "component_name": "aa",
+          "component_indexes": "d"
+        }
+      ]
+    },
+    {
+      "type": "SENSITIVITY",
+      "Q": "How stable will the optimal cost be if the demand distribution on route-1 fluctuates",
+      "queried_components": [
+        {
+          "component_name": "dd",
+          "component_indexes": [
+            "route-1",
+            "slice(None, None, None)"
+          ]
+        }
+      ]
+    }
+  ],
+  "evaluate_modification": [
+    {
+      "type": "WHAT_IF",
+      "Q": "how will the optimal cost change if i change the passenger capacity of aircraft a on route 1 to 20",
+      "queried_components": [
+        {
+          "component_name": "p",
+          "component_indexes": [
+            "a",
+            "route-1"
+          ],
+          "operation": "=",
+          "delta": 20
+        }
+      ]
+    },
+    {
+      "type": "WHAT_IF",
+      "Q": "what if I increase the demand distribution on route-1 by 5? will the optimal cost increase?",
+      "queried_components": [
+        {
+          "component_name": "dd",
+          "component_indexes": [
+            "route-1",
+            "slice(None, None, None)"
+          ],
+          "operation": "+",
+          "delta": 5
+        }
+      ]
+    },
+    {
+      "type": "WHAT_IF",
+      "Q": "what if I fix the passengers carried on route 3 for all possible demand states, to 100? what will happen?",
+      "queried_components": [
+        {
+          "component_name": "y",
+          "component_indexes": [
+            "route-3",
+            "slice(None, None, None)"
+          ],
+          "operation": "=",
+          "delta": 100
+        }
+      ]
+    }
+  ]
+}

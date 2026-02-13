@@ -1,0 +1,37 @@
+Data Type: dict
+================================================================================
+
+{
+  "feasibility_restoration": [
+    {
+      "type": "FEASIBILITY_RESTORATION",
+      "Q": "What is the necessary change in demand to recover feasibility?",
+      "queried_components": [
+        {
+          "component_name": "d",
+          "component_indexes": "slice(None, None, None)"
+        }
+      ]
+    },
+    {
+      "type": "FEASIBILITY_RESTORATION",
+      "Q": "Can you determine if adjusting the max inventory can fix the infeasibility in the current model?",
+      "queried_components": [
+        {
+          "component_name": "invmax",
+          "component_indexes": null
+        }
+      ]
+    },
+    {
+      "type": "FEASIBILITY_RESTORATION",
+      "Q": "How should the demand be shifted to get the model feasible?",
+      "queried_components": [
+        {
+          "component_name": "d",
+          "component_indexes": "slice(None, None, None)"
+        }
+      ]
+    }
+  ]
+}

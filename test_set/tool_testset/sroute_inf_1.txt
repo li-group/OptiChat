@@ -1,0 +1,46 @@
+Data Type: dict
+================================================================================
+
+{
+  "feasibility_restoration": [
+    {
+      "type": "FEASIBILITY_RESTORATION",
+      "Q": "If the government can build roads that make the undirected arcs shorter, what is the minimum change needed to make the model feasible?",
+      "queried_components": [
+        {
+          "component_name": "uarc",
+          "component_indexes": [
+            "slice(None, None, None)",
+            "slice(None, None, None)"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FEASIBILITY_RESTORATION",
+      "Q": "If the government can build roads that make the undirected route shorter. What is the minimum change needed to make the model feasible? I am pretty sure that we can only find a new route between boston and chicago.",
+      "queried_components": [
+        {
+          "component_name": "uarc",
+          "component_indexes": [
+            "boston",
+            "chicago"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FEASIBILITY_RESTORATION",
+      "Q": "If the government can build roads that make the undirected route shorter. What is the minimum change needed to make the model feasible? I am pretty sure that we can only find a new route between boston and wash-dc.",
+      "queried_components": [
+        {
+          "component_name": "uarc",
+          "component_indexes": [
+            "boston",
+            "wash-dc"
+          ]
+        }
+      ]
+    }
+  ]
+}

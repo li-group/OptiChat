@@ -181,12 +181,73 @@ def append_repairs_applied(version: str, models_dictionary: Dict[str, Any], reco
     models_dictionary[version] = entry
 
 
+def extract_slack_values_from_model(model: pyo.ConcreteModel, relaxed_constraints: List[str]) -> Dict:
+    """
+    Extract slack variable values from a model relaxed with relax_constraint_and_penalize_violation.
+    
+    Args:
+        model: The relaxed Pyomo model
+        relaxed_constraints: List of original constraint names that were relaxed
+    
+    Returns:
+        Dict mapping (constraint_name, 'ub'/'lb') tuples to slack values
+    """
+    slack_values = {}
+    
+    # Debug: Log all variable names in the model
+    all_var_names = [var.name for var in model.component_objects(pyo.Var, active=True)]
+    logger.debug(f"All variables in model: {all_var_names[:20]}...")  # First 20 for brevity
+    slack_var_names = [v for v in all_var_names if 'slack' in v.lower()]
+    logger.info(f"Found {len(slack_var_names)} variables with 'slack' in name: {slack_var_names[:10]}")
+    
+    # Iterate through all variables in the model to find slack variables
+    # This approach handles the fact that unique_component_name() may add suffixes
+    for var_container in model.component_objects(pyo.Var, active=True):
+        var_name = var_container.name.strip("'\"")  # Strip quotes from name
+        
+        # Check if this is a slack variable (starts with uslack_ or lslack_)
+        if var_name.startswith("uslack_") or var_name.startswith("lslack_"):
+            slack_type = 'ub' if var_name.startswith("uslack_") else 'lb'
+            
+            # Extract the constraint name (remove prefix and any unique suffix added by unique_component_name)
+            # The constraint name is between the prefix and any potential numeric suffix
+            prefix = f"{'uslack_' if slack_type == 'ub' else 'lslack_'}"
+            constraint_name_candidate = var_name[len(prefix):]
+            
+            # Check if this matches any of the relaxed constraints
+            # Handle cases where unique_component_name added _2, _3, etc.
+            matched_constraint = None
+            for relax_constraint in relaxed_constraints:
+                if constraint_name_candidate == relax_constraint or \
+                   constraint_name_candidate.startswith(relax_constraint + "_"):
+                    matched_constraint = relax_constraint
+                    break
+            
+            if matched_constraint:
+                try:
+                    slack_val = pyo.value(var_container)
+                    if slack_val is not None and slack_val > 1e-10:
+                        slack_values[(matched_constraint, slack_type)] = slack_val
+                        logger.info(f"Extracted slack: {matched_constraint} ({slack_type}) = {slack_val:.4f}")
+                except:
+                    pass
+    
+    return slack_values
+
+
 # Infeasibility Diagnosis
 
 def infeasibility_diagnosis(
     version: str,
     tool_context: ToolContext
-) -> str:
+) -> Dict[str, Any]:
+    """
+    Perform multi-stage infeasibility diagnosis.
+    
+    Returns a dictionary with diagnosis results including any relaxed constraints.
+    """
+    from optichat.tools.shortcut_functions import load_model  # Import at function start to avoid scoping issues
+    
     # --- MULTI-STAGE INFEASIBILITY DIAGNOSIS ---
     logger.info(f"Starting Multi-Stage Infeasibility Diagnosis for version: {version}")
     
@@ -199,7 +260,11 @@ def infeasibility_diagnosis(
 
     # Load model
     models_dictionary = tool_context.state[MODELS_DICTIONARY].copy()
-    model = load_model(version, models_dictionary)   
+    try:
+        model = load_model(version, models_dictionary)
+    except KeyError:
+        logger.warning(f"Infeasibility Diagnosis failed: Model version '{version}' not found.")
+        return f"Error: Model version '{version}' not found. Please verify the version name."   
 
     # --- ROUND 1: Initial IIS ---
     logger.info("--- Round 1: Initial IIS ---")
@@ -306,16 +371,37 @@ def infeasibility_diagnosis(
     
     if status_r1 in [TerminationCondition.optimal, TerminationCondition.feasible, "optimal", "feasible"]:
         obj_val = models_dictionary[version_r1].get("obj", {}).get("value", "N/A")
-        return {
+        
+        # Reload the solved model to access slack values
+        model_r1_solved = load_model(version_r1, models_dictionary)
+        
+        # Extract slack values from the relaxed model
+        slack_values = extract_slack_values_from_model(model_r1_solved, r1_constraints)
+        logger.info(f"Round 1: Extracted {len(slack_values)} slack values")
+        
+        # Extract unique constraint names that were actually violated (non-zero slacks)
+        violated_constraints = sorted(set(key[0] for key in slack_values.keys()))
+        
+        # Prepare return dictionary
+        diagnosis_result = {
             "status": "success",
             "result": f"Infeasibility resolved in Round 1.\n"
                       f"Relaxed Model Version: '{version_r1}'\n"
                       f"Status: {status_r1}\n"
                       f"Objective Value: {obj_val}\n"
-                      f"Relaxed Constraints: {r1_constraints}",
+                      f"Violated Constraints: {violated_constraints}",
             "relaxed_version": version_r1,
-            "final_status": str(status_r1)
+            "final_status": str(status_r1),
+            "slack_values": slack_values,
+            "violated_constraints": violated_constraints
         }
+        
+        # Save diagnosis report to file
+        report_path = save_diagnosis_report(version, diagnosis_result, round_num=1)
+        if report_path:
+            diagnosis_result["diagnosis_report_file"] = report_path
+        
+        return diagnosis_result
 
     # --- ROUND 2: Pattern Matching / New IIS ---
     logger.info("--- Round 2: Analysis & Relaxation ---")
@@ -403,16 +489,37 @@ def infeasibility_diagnosis(
         
         if status_r2 in [TerminationCondition.optimal, TerminationCondition.feasible, "optimal", "feasible"]:
             obj_val = models_dictionary[version_r2].get("obj", {}).get("value", "N/A")
-            return {
+            
+            # Reload the solved model to access slack values
+            model_r2_solved = load_model(version_r2, models_dictionary)
+            
+            # Extract slack values from the relaxed model
+            slack_values = extract_slack_values_from_model(model_r2_solved, constraints_to_relax_r2)
+            logger.info(f"Round 2: Extracted {len(slack_values)} slack values")
+            
+            # Extract unique constraint names that were actually violated (non-zero slacks)
+            violated_constraints = sorted(set(key[0] for key in slack_values.keys()))
+            
+            # Prepare return dictionary
+            diagnosis_result = {
                 "status": "success",
                 "result": f"Infeasibility resolved in Round 2.\n"
                           f"Relaxed Model Version: '{version_r2}'\n"
                           f"Status: {status_r2}\n"
                           f"Objective Value: {obj_val}\n"
-                          f"Relaxed Constraints: {constraints_to_relax_r2}",
+                          f"Violated Constraints: {violated_constraints}",
                 "relaxed_version": version_r2,
-                "final_status": str(status_r2)
+                "final_status": str(status_r2),
+                "slack_values": slack_values,
+                "violated_constraints": violated_constraints
             }
+            
+            # Save diagnosis report to file
+            report_path = save_diagnosis_report(version, diagnosis_result, round_num=2)
+            if report_path:
+                diagnosis_result["diagnosis_report_file"] = report_path
+            
+            return diagnosis_result
 
     # --- ROUND 3: Elastic Heuristic ---
     logger.info("--- Round 3: Elastic Heuristic (Final Attempt) ---")
@@ -427,13 +534,13 @@ def infeasibility_diagnosis(
     safety_set = diagnoser.run_heuristic_2()
     
     version_r3 = f"{version}_relaxed_elastic"
-    is_feasible, obj_val_r3 = diagnoser.verify_feasibility(safety_set)
+    is_feasible, obj_val_r3, slack_values = diagnoser.verify_feasibility(safety_set)
     model_r3 = diagnoser.model
-    
+
     # Save the model - solve_model will extract all component info including elastic_slacks
     # Note: Don't pre-populate models_dictionary to avoid version renaming issues
     models_dictionary = solve_model(model_r3, version_r3, models_dictionary, tool_context, description="Round 3 Relaxation (Elastic)")
-    
+
     # Get the actual version name (may have been renamed if duplicate existed)
     # solve_model adds the version to models_dictionary, so we need to find it
     actual_version = version_r3
@@ -443,20 +550,140 @@ def infeasibility_diagnosis(
             if key.startswith(version_r3):
                 actual_version = key
                 break
-    
+
     status_r3 = models_dictionary.get(actual_version, {}).get("obj", {}).get("sol_status", "unknown")
+
+    # slack_values already obtained from verify_feasibility on line 521
+    # Format the slack values for display
+    slack_display_lines = []
+    for idx, slack_val in slack_values.items():
+        if slack_val > 1e-10:  # Only show non-zero slacks
+            slack_display_lines.append(f"  {idx}: {slack_val:.6f}")
+    slack_display = "\n".join(slack_display_lines) if slack_display_lines else "  No significant violations"
     
-    return {
+    # Extract unique constraint names that were actually violated (non-zero slacks)
+    # Handle both tuple keys (constraint_name, index, type) and simple keys
+    violated_constraints = set()
+    for key, slack_val in slack_values.items():
+        if slack_val > 1e-10:
+            # Extract constraint name from the key tuple
+            if isinstance(key, tuple) and len(key) >= 1:
+                violated_constraints.add(key[0])
+            else:
+                violated_constraints.add(str(key))
+    violated_constraints = sorted(violated_constraints)
+    
+    # Prepare return dictionary
+    diagnosis_result = {
         "status": "success",
         "result": f"Infeasibility resolved in Round 3 (Elastic Heuristic).\n"
                   f"Relaxed Model Version: '{actual_version}'\n"
                   f"Status: {status_r3}\n"
                   f"Objective Value: {obj_val_r3}\n"
-                  f"Relaxed Constraints: {list(safety_set)}",
+                  f"Violated Constraints: {violated_constraints}\n\n"
+                  f"Slack Values (Violation Magnitudes):\n{slack_display}",
         "relaxed_version": actual_version,
-        "final_status": str(status_r3)
+        "final_status": str(status_r3),
+        "slack_values": slack_values,
+        "violated_constraints": violated_constraints
     }
     
+    # Save diagnosis report to file
+    report_path = save_diagnosis_report(version, diagnosis_result, round_num=3)
+    if report_path:
+        diagnosis_result["diagnosis_report_file"] = report_path
+    
+    return diagnosis_result
+    
+
+def save_diagnosis_report(version: str, diagnosis_result: Dict[str, Any], round_num: int = 3) -> str:
+    """
+    Save infeasibility diagnosis results to a JSON file.
+    
+    Args:
+        version: Original model name (source model)
+        diagnosis_result: Diagnosis dictionary from infeasibility_diagnosis()
+        round_num: Which round resolved the issue (1, 2, or 3)
+    
+    Returns:
+        Path to the saved report file
+    """
+    import os
+    import json
+    
+    # Create output directory
+    save_dir = os.path.join(os.getcwd(), "tmp", "inf_detail")
+    os.makedirs(save_dir, exist_ok=True)
+    
+    # Create filename (JSON format)
+    filename = f"{version}_inf_detail.json"
+    filepath = os.path.join(save_dir, filename)
+    
+    # Extract information from diagnosis result
+    status = diagnosis_result.get("status", "unknown")
+    relaxed_version = diagnosis_result.get("relaxed_version", "N/A")
+    final_status = diagnosis_result.get("final_status", "unknown")
+    slack_values = diagnosis_result.get("slack_values", {})
+    violated_constraints = diagnosis_result.get("violated_constraints", [])
+    result_text = diagnosis_result.get("result", "")
+    
+    # Determine round description
+    round_descriptions = {
+        1: "Round 1 (IIS Relaxation)",
+        2: "Round 2 (Pattern Matching)",
+        3: "Round 3 (Elastic Heuristic)"
+    }
+    round_desc = round_descriptions.get(round_num, f"Round {round_num}")
+    
+    # Get objective value from result text if available
+    obj_val = "N/A"
+    if "Objective Value:" in result_text:
+        try:
+            obj_val_str = result_text.split("Objective Value:")[1].split("\n")[0].strip()
+            # Try to convert to float if possible
+            try:
+                obj_val = float(obj_val_str)
+            except:
+                obj_val = obj_val_str
+        except:
+            pass
+    
+    # Convert slack_values to JSON-serializable format
+    # Tuples need to be converted to strings as JSON keys must be strings
+    slack_values_json = {}
+    for key, value in slack_values.items():
+        if isinstance(key, tuple):
+            # Convert tuple to string representation
+            key_str = str(key)
+        else:
+            key_str = str(key)
+        slack_values_json[key_str] = float(value) if value > 1e-10 else 0.0
+    
+    # Build the JSON structure
+    report_data = {
+        "source_model_name": version,
+        "relaxed_model_name": relaxed_version,
+        "diagnosis_status": status,
+        "resolution_round": round_desc,
+        "round_number": round_num,
+        "solution_status": final_status,
+        "objective_value": obj_val,
+        "violated_constraints": violated_constraints,
+        "slack_values": slack_values_json,
+        "full_diagnosis_text": result_text
+    }
+    
+    # Write to JSON file
+    try:
+        with open(filepath, 'w', encoding='utf-8') as f:
+            json.dump(report_data, f, indent=2, ensure_ascii=False)
+        logger.info(f"Saved infeasibility diagnosis report to: {filepath}")
+        return filepath
+    except Exception as e:
+        logger.error(f"Failed to save diagnosis report: {e}")
+        return None
+
+
 
 # Linear Decision Rule Functions
     

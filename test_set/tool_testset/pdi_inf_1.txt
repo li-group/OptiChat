@@ -1,0 +1,46 @@
+Data Type: dict
+================================================================================
+
+{
+  "feasibility_restoration": [
+    {
+      "type": "FEASIBILITY_RESTORATION",
+      "Q": "By how much do I need to change the maximum normal production capacities in order to recover the feasibility?",
+      "queried_components": [
+        {
+          "component_name": "pfd",
+          "component_indexes": [
+            "slice(None, None, None)",
+            "max-prod"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FEASIBILITY_RESTORATION",
+      "Q": "We can negotiate customer demand with our clients. Can you determine if adjusting their max demand can fix the infeasibility in the current model?",
+      "queried_components": [
+        {
+          "component_name": "czd",
+          "component_indexes": [
+            "slice(None, None, None)",
+            "max-demand"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FEASIBILITY_RESTORATION",
+      "Q": "We can actually increase the overtime production limits slightly, although it will affect the reputation of our company. Please tell me the minimum change required to make the model feasible",
+      "queried_components": [
+        {
+          "component_name": "pfd",
+          "component_indexes": [
+            "slice(None, None, None)",
+            "over-prod"
+          ]
+        }
+      ]
+    }
+  ]
+}

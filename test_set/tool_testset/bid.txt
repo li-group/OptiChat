@@ -1,0 +1,100 @@
+Data Type: dict
+================================================================================
+
+{
+  "components_retrival": [
+    {
+      "type": "RETRIEVAL",
+      "Q": "what is the minimum number of items that you must purchase from vendor c in segment 1",
+      "queried_components": [
+        {
+          "component_name": "qmin",
+          "component_indexes": [
+            "c",
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "type": "RETRIEVAL",
+      "Q": "what is the price of goods provided by vendor b",
+      "queried_components": [
+        {
+          "component_name": "price",
+          "component_indexes": [
+            "b",
+            "slice(None, None, None)"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "RETRIEVAL",
+      "Q": "show me the optimal purchase decision given by the model",
+      "queried_components": [
+        {
+          "component_name": "pl",
+          "component_indexes": [
+            "slice(None, None, None)",
+            "slice(None, None, None)"
+          ]
+        },
+        {
+          "component_name": "plb",
+          "component_indexes": [
+            "slice(None, None, None)",
+            "slice(None, None, None)"
+          ]
+        }
+      ]
+    }
+  ],
+  "evaluate_modification": [
+    {
+      "type": "WHAT_IF",
+      "Q": "how will the total cost change if I am able to ask vendor d to reduce their price of all the goods by 7",
+      "queried_components": [
+        {
+          "component_name": "price",
+          "component_indexes": [
+            "d",
+            "slice(None, None, None)"
+          ],
+          "operation": "-",
+          "delta": 7
+        }
+      ]
+    },
+    {
+      "type": "WHAT_IF",
+      "Q": "what will happen to the optimal objective value, if all vendors in segment 1 choose to double their goods price?",
+      "queried_components": [
+        {
+          "component_name": "price",
+          "component_indexes": [
+            "slice(None, None, None)",
+            1
+          ],
+          "operation": "*",
+          "delta": 2
+        }
+      ]
+    },
+    {
+      "type": "WHAT_IF",
+      "Q": "If I must purchase 130000 goods from vendor b in segment 3 because of a potential contract, what will the total cost be?",
+      "queried_components": [
+        {
+          "component_name": "pl",
+          "component_indexes": [
+            "b",
+            3
+          ],
+          "operation": "=",
+          "delta": 130000
+        }
+      ]
+    }
+  ]
+}

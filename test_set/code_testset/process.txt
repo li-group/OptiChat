@@ -1,0 +1,17 @@
+Data Type: dict
+================================================================================
+
+{
+  "external_tools": [
+    {
+      "type": "WHY_NOT",
+      "Q": "Why wasn't the 4th column selected in the optimal solution?",
+      "A": "Temperature wise selecting column 4 doesn't make sense, column 4 is at higher temperature and so the delta T will be lower and hence higher heat exchanger cost. Even if we forcefully select the column 4, we end up with $107324 total cost, which is higher than the original cost $107124."
+    },
+    {
+      "type": "WHY_NOT",
+      "Q": "Why aren't both column 1 and 6 selected",
+      "A": "If we forcefully select the column 1 and column 6, we end up with $119772 total cost, which is higher than the original cost $107124."
+    }
+  ]
+}

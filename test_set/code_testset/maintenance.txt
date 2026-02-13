@@ -1,0 +1,27 @@
+Data Type: dict
+================================================================================
+
+{
+  "external_tools": [
+    {
+      "type": "WHY_NOT",
+      "Q": "Why doesn't the model shut down every other month from months 8 to 14 (i.e. shut down at 8, 10, 12, 14)?",
+      "A": "By forcing the model to shut down every other month from months 8-14, the model has to perform more repairs and replacements than necessary due to the poor alignment between the shutdown schedule and the maintenance requirements. Additionally, the model has to shut down more than the optimal schedule even outside of the period where modifications were made. The total cost for the modified schedule was 38,220 INR, 6.7% greater than the total cost of the original schedule."
+    },
+    {
+      "type": "WHY_NOT",
+      "Q": "Why doesn't the model have a shutdown at month 2?",
+      "A": "When the model is forced to shut down on month 2, it performs fewer maintenance operations on that month as compared to previous shutdown plan. This reduction in maintenance operations in month 4 results in an increase in the number of maintenance operations that need to be performed, resulting in a total cost of 36,620 INR, 2.233% greater than the total cost of the original schedule."
+    },
+    {
+      "type": "WHY_NOT",
+      "Q": "Why doesn't the model shut down during any of the last three months of the study period?",
+      "A": "Shutting down in Month 23 is the best choice, but it still leads to a total cost of 36,320 INR, greater than the total cost of the original schedule."
+    },
+    {
+      "type": "WHY_NOT",
+      "Q": "Why is there always a gap of about three or four months between shutdowns? Can't the model start shutting down every four months after the first shutdown in Month 4 to minimize the number of shutdowns?",
+      "A": "When the model cannot shut down more frequently than every 4 months, it is forced to perform additional maintenance operations due to poor alignment with maintenance requirements. These additional maintenance operations result in additional costs, leading to a total cost of 36,620 INR, 2.233% greater than the total cost of the original schedule."
+    }
+  ]
+}

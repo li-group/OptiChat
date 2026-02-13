@@ -1,0 +1,81 @@
+Data Type: dict
+================================================================================
+
+{
+  "components_retrival": [
+    {
+      "type": "RETRIEVAL",
+      "Q": "How much does it take to fire a worker",
+      "queried_components": [
+        {
+          "component_name": "fc",
+          "component_indexes": null
+        }
+      ]
+    },
+    {
+      "type": "RETRIEVAL",
+      "Q": "What is the optimal shift decision in summer",
+      "queried_components": [
+        {
+          "component_name": "shift",
+          "component_indexes": [
+            "summer",
+            "slice(None, None, None)"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "RETRIEVAL",
+      "Q": "how many workers need I to hire in summer if I wanna keep the total cost at the minimum",
+      "queried_components": [
+        {
+          "component_name": "h",
+          "component_indexes": "summer"
+        }
+      ]
+    }
+  ],
+  "evaluate_modification": [
+    {
+      "type": "WHAT_IF",
+      "Q": "Now we have a 10% discount on leasing cost, Will this affect the optimal cost?",
+      "queried_components": [
+        {
+          "component_name": "lc",
+          "component_indexes": "slice(None, None, None)",
+          "operation": "*",
+          "delta": 0.9
+        }
+      ]
+    },
+    {
+      "type": "WHAT_IF",
+      "Q": "There is a new policy that changes the shift cost: the second shifts now require an additional $500 security fee. What will the optimal cost be after this modification?",
+      "queried_components": [
+        {
+          "component_name": "sc",
+          "component_indexes": [
+            "fixed",
+            "second"
+          ],
+          "operation": "+",
+          "delta": 500
+        }
+      ]
+    },
+    {
+      "type": "WHAT_IF",
+      "Q": "The material cost is greatly affected by market inflation, making it 1.2 times higher than before. What will happen to our optimal cost?",
+      "queried_components": [
+        {
+          "component_name": "mc",
+          "component_indexes": null,
+          "operation": "*",
+          "delta": 1.2
+        }
+      ]
+    }
+  ]
+}

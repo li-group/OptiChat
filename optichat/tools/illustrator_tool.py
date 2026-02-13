@@ -8,45 +8,387 @@ from optichat.config.constants import (
     TMP_MODEL_OBJECT_FOLDER,
     MODELS_DICTIONARY,
     MODEL_FOR_PAPER_GENERATION,
-    CFG
+    CFG,
+    HAS_INFEASIBILITY_DIAGNOSIS,
+    INFEASIBILITY_DIAGNOSIS
 )
 
 
-def format_models_dict_for_llm(models_dictionary: Dict) -> str:
+def extract_sets_from_components(components: Dict) -> Dict[str, set]:
     """
-    Format models_dictionary into readable markdown for LLM consumption.
+    Extract sets (index domains) from component names.
+    
+    Args:
+        components: Dictionary of model components (parameters, variables, or constraints)
+    
+    Returns:
+        Dictionary mapping set names to their values
+        
+    Example:
+        Input: {"X[A,1]": ..., "X[B,2]": ...}
+        Output: {"index_1": {"A", "B"}, "index_2": {1, 2}}
+    """
+    from collections import defaultdict
+    import re
+    
+    # Track indices by position
+    indices_by_position = defaultdict(set)
+    
+    for comp_name in components.keys():
+        # Extract indices from brackets
+        match = re.search(r'\[(.*?)\]', comp_name)
+        if match:
+            indices_str = match.group(1)
+            # Split by comma
+            indices = [idx.strip() for idx in indices_str.split(',')]
+            for pos, idx in enumerate(indices):
+                indices_by_position[pos].add(idx)
+    
+    return dict(indices_by_position)
 
-    Groups components by type and creates clear listings with values/expressions.
+
+def detect_constraint_pattern(constraint_name: str, expression: str, index_signature: str = "•") -> tuple:
+    """
+    Detect the pattern family and abstract pattern for a constraint.
+    
+    Args:
+        constraint_name: Name of the constraint (e.g., "ResourceLB[1]")
+        expression: Expression of the constraint
+        index_signature: Semantic index names to use (e.g., "resource, time")
+    
+    Returns:
+        Tuple of (family_name, pattern)
+        
+    Example:
+        Input: "ResourceLB[1]", "Xmin[A] <= X[A,1]", "resource, time"
+        Output: ("ResourceLB", "Xmin[resource] <= X[resource, time]")
+    """
+    import re
+    
+    # Extract family name (everything before the index)
+    match = re.match(r'^([^\[]+)', constraint_name)
+    family_name = match.group(1) if match else constraint_name
+    
+    # Create abstract pattern by replacing specific indices with semantic names
+    # Replace bracketed expressions with abstract form using index signature
+    pattern = re.sub(r'\[[^\]]+\]', f'[{index_signature}]', expression)
+    
+    return family_name, pattern
+
+
+def infer_index_names(components: Dict) -> list:
+    """
+    Infer semantic names for indices based on component naming patterns.
+    
+    Analyzes the types of values in each index position to guess meaningful names.
+    
+    Args:
+        components: Dictionary of components with indexed names
+    
+    Returns:
+        List of inferred index names (e.g., ["resource", "time"])
+    
+    Example:
+        If we see X[A, 1], X[B, 2], etc.:
+        - Position 0 has letters -> "resource" or "item"
+        - Position 1 has numbers -> "time" or "index"
+    """
+    import re
+    from collections import defaultdict
+    
+    # Collect sample values for each position
+    indices_by_position = defaultdict(list)
+    
+    for comp_name in list(components.keys())[:50]:  # Sample first 50
+        match = re.search(r'\[(.*?)\]', comp_name)
+        if match:
+            indices_str = match.group(1)
+            indices = [idx.strip() for idx in indices_str.split(',')]
+            for pos, idx in enumerate(indices):
+                if len(indices_by_position[pos]) < 10:  # Keep sample small
+                    indices_by_position[pos].append(idx)
+    
+    if not indices_by_position:
+        return []
+    
+    # Infer names based on patterns
+    inferred_names = []
+    for pos in sorted(indices_by_position.keys()):
+        samples = indices_by_position[pos]
+        
+        # Check if mostly numeric
+        numeric_count = sum(1 for s in samples if s.isdigit())
+        
+        if numeric_count > len(samples) * 0.7:
+            # Mostly numbers -> likely time or period
+            inferred_names.append("time")
+        else:
+            # Letters or mixed -> likely resource, location, item, etc.
+            # Try to infer from common patterns
+            if any(name.startswith(('Rx', 'R')) for name in samples):
+                inferred_names.append("reactor")
+            elif len(samples[0]) <= 2:  # Short codes
+                inferred_names.append("resource")
+            else:
+                inferred_names.append("item")
+    
+    return inferred_names
+
+
+# ============================================================================
+# Hierarchical Component Formatting (Lightweight Structure)
+# ============================================================================
+
+def _extract_components_by_type(model_data: dict, component_type: str) -> dict:
+    """
+    Extract components of given type from flat model_data dict.
 
     Args:
-        models_dictionary: Full model data from extract_model_info()
+        model_data: Flat dictionary with component names as keys
+        component_type: Type to filter for (plural: "sets", "parameters", "variables", "constraints", "objective")
 
     Returns:
-        Formatted markdown string
-
-    Example output:
-        ## Parameters
-        - demand[0]: 100
-        - demand[1]: 150
-        ...
-
-        ## Variables
-        - production[0]: Solution = 75.5
-        ...
+        Dictionary of components matching the type
     """
-    sections = []
+    # Map plural type names to singular component_type values
+    type_mapping = {
+        "sets": "set",
+        "parameters": "parameter",
+        "variables": "variable",
+        "constraints": "constraint",
+        "objective": "objective"  # Already singular
+    }
 
+    singular_type = type_mapping.get(component_type, component_type)
+
+    components = {}
+    for key, value in model_data.items():
+        if isinstance(value, dict) and value.get("component_type") == singular_type:
+            components[key] = value
+    return components
+
+
+def _generate_component_description(name: str, data: dict, comp_type: str) -> str:
+    """Generate a brief description for a component based on its name and type."""
+    # Check if description already exists in data (from Pyomo doc strings)
+    if "doc" in data and data["doc"]:
+        return data["doc"]
+
+    # Infer description from name and type
+    # This is a fallback - ideally descriptions come from Pyomo doc strings
+    type_descriptions = {
+        "sets": f"Set of indices for {name}",
+        "parameters": f"Parameter: {name}",
+        "variables": f"Decision variable: {name}",
+        "constraints": f"Constraint: {name}",
+        "objective": f"Objective function"
+    }
+    return type_descriptions.get(comp_type, name)
+
+
+def _extract_objective_sense(obj_data: dict) -> str:
+    """Extract MINIMIZE/MAXIMIZE from objective data."""
+    expression = obj_data.get("expression", "")
+    if expression.startswith("MINIMIZE"):
+        return "MINIMIZE"
+    elif expression.startswith("MAXIMIZE"):
+        return "MAXIMIZE"
+    return "UNKNOWN"
+
+
+def _infer_component_type(name: str, data: dict) -> str:
+    """Determine if component is scalar or indexed based on name pattern."""
+    # Simple heuristic: if name contains '[', it's indexed
+    return "indexed" if "[" in name else "scalar"
+
+
+def _infer_model_type(model_data: dict) -> str:
+    """Infer model type (LP, MILP, NLP) from variable types."""
+    # Check for integer/binary variables
+    has_integer = False
+    has_continuous = False
+
+    for key, value in model_data.items():
+        if isinstance(value, dict) and value.get("component_type") == "variable":
+            domain = value.get("domain", "").lower()
+            if "integer" in domain or "binary" in domain:
+                has_integer = True
+            else:
+                has_continuous = True
+
+    if has_integer:
+        return "MILP" if has_continuous else "MIP"
+    return "LP"  # Default assumption
+
+
+def format_hierarchical_components(models_dictionary: dict) -> dict:
+    """
+    Format model components into a lightweight hierarchical structure with pattern-based grouping.
+
+    Returns a dict structure matching the legacy model_representation format:
+    {
+        "model_name": str,
+        "model_type": str,
+        "model_status": str,
+        "components": {
+            "parameters": {
+                "demand": {"count": 24, "description": "...", "example": "demand[1] = 500"},
+                "fixed_cost": {"count": 1, "description": "...", "value": 1000}
+            },
+            "variables": { ... },
+            "constraints": { ... },
+            "objective": {"obj": {"description": "...", "sense": "MINIMIZE"}}
+        }
+    }
+
+    This minimal structure preserves Pyomo component hierarchy without verbose expressions.
+    Indexed components are grouped by family (base name) with count and examples.
+    """
+    from collections import defaultdict
+    import re
+
+    # Get first model (assuming single model in most cases)
+    if not models_dictionary:
+        return {}
+
+    model_name = list(models_dictionary.keys())[0]
+    model_data = models_dictionary[model_name]
+
+    # Build hierarchical structure
+    result = {
+        "model_name": model_name,
+        "model_type": _infer_model_type(model_data),
+        "model_status": "unknown",
+        "components": {}
+    }
+
+    # Extract and group components by type
+    component_groups = {
+        "sets": {},
+        "parameters": defaultdict(list),
+        "variables": defaultdict(list),
+        "constraints": defaultdict(list),
+        "objective": {}
+    }
+
+    # Populate component groups
+    for comp_name, comp_data in model_data.items():
+        if not isinstance(comp_data, dict):
+            continue
+
+        comp_type = comp_data.get("component_type", "unknown")
+
+        # Map singular to plural
+        type_map = {
+            "parameter": "parameters",
+            "variable": "variables",
+            "constraint": "constraints",
+            "objective": "objective"
+        }
+
+        plural_type = type_map.get(comp_type)
+        if not plural_type:
+            continue
+
+        if plural_type == "objective":
+            # Objectives are special - just store directly
+            component_groups["objective"][comp_name] = comp_data
+        else:
+            # Extract family name (part before brackets)
+            match = re.match(r'^([^\[]+)', comp_name)
+            family = match.group(1) if match else comp_name
+            component_groups[plural_type][family].append((comp_name, comp_data))
+
+    # Format each component type
+    for comp_type in ["parameters", "variables", "constraints"]:
+        result["components"][comp_type] = {}
+
+        for family, items in sorted(component_groups[comp_type].items()):
+            count = len(items)
+
+            if count == 1:
+                # Scalar component - show directly
+                name, data = items[0]
+                result["components"][comp_type][name] = {
+                    "description": _generate_component_description(name, data, comp_type),
+                    "type": "scalar"
+                }
+
+                # Add value/solution for context
+                if comp_type == "parameters" and "value" in data:
+                    result["components"][comp_type][name]["value"] = data["value"]
+                elif comp_type == "variables" and "solution" in data:
+                    result["components"][comp_type][name]["solution"] = data["solution"]
+
+            else:
+                # Indexed family - show grouped with count
+                first_name, first_data = items[0]
+
+                # Use family name with index pattern
+                display_name = f"{family}[...]"
+
+                result["components"][comp_type][display_name] = {
+                    "description": _generate_component_description(family, first_data, comp_type),
+                    "type": "indexed",
+                    "count": count
+                }
+
+                # Add example
+                if comp_type == "parameters" and "value" in first_data:
+                    result["components"][comp_type][display_name]["example"] = f"{first_name} = {first_data['value']}"
+                elif comp_type == "variables" and "solution" in first_data:
+                    result["components"][comp_type][display_name]["example"] = f"{first_name} = {first_data['solution']}"
+
+    # Format objectives
+    result["components"]["objective"] = {}
+    for obj_name, obj_data in component_groups["objective"].items():
+        result["components"]["objective"][obj_name] = {
+            "description": _generate_component_description(obj_name, obj_data, "objective"),
+            "sense": _extract_objective_sense(obj_data)
+        }
+
+        # Add objective value for context
+        if "value" in obj_data:
+            result["components"]["objective"][obj_name]["value"] = obj_data["value"]
+
+    # Sets are not extracted by extract_model_info, so leave empty
+    result["components"]["sets"] = {}
+
+    return result
+
+
+# ============================================================================
+# Pattern-Based Summary (Legacy/Verbose Format)
+# ============================================================================
+
+def format_pattern_based_summary(models_dictionary: Dict) -> str:
+    """
+    Format models_dictionary into compact pattern-based markdown.
+    
+    Groups indexed components by pattern and shows generalized forms instead of
+    listing thousands of individual instances.
+    
+    Args:
+        models_dictionary: Full model data from extract_model_info()
+    
+    Returns:
+        Formatted markdown string with pattern-based representation
+    """
+    from collections import defaultdict
+    
+    sections = []
+    
     # Group components by type
     parameters = {}
     variables = {}
     constraints = {}
     objectives = {}
-
+    
     for comp_name, comp_data in models_dictionary.items():
         if not isinstance(comp_data, dict):
             continue
         comp_type = comp_data.get("component_type", "unknown")
-
+        
         if comp_type == "parameter":
             parameters[comp_name] = comp_data
         elif comp_type == "variable":
@@ -55,64 +397,126 @@ def format_models_dict_for_llm(models_dictionary: Dict) -> str:
             constraints[comp_name] = comp_data
         elif comp_type == "objective":
             objectives[comp_name] = comp_data
-
-    # Format Parameters
-    if parameters:
-        param_lines = ["## Parameters\n"]
-        for name, data in sorted(parameters.items())[:50]:  # Limit to first 50 for brevity
-            value = data.get("value", "unknown")
-            param_lines.append(f"- **{name}**: {value}")
-
-        if len(parameters) > 50:
-            param_lines.append(f"\n... and {len(parameters) - 50} more parameters")
-
-        sections.append("\n".join(param_lines))
-
-    # Format Variables
-    if variables:
-        var_lines = ["## Variables\n"]
-        for name, data in sorted(variables.items())[:50]:
-            solution = data.get("solution", "unknown")
-            if solution != "unknown":
-                var_lines.append(f"- **{name}**: Solution = {solution}")
+    
+    # Extract sets from all components
+    all_components = {**parameters, **variables, **constraints}
+    sets_by_position = extract_sets_from_components(all_components)
+    
+    # Infer semantic index names
+    index_names = infer_index_names(all_components)
+    index_signature = ", ".join(index_names) if index_names else "•"
+    
+    # Format Sets section
+    if sets_by_position:
+        set_lines = ["## Sets\n"]
+        for pos, values in sorted(sets_by_position.items()):
+            # Sample a few values for display
+            sample_values = sorted(list(values))[:10]
+            if len(values) > 10:
+                values_str = f"{{{', '.join(map(str, sample_values))}, ... ({len(values)} total)}}"
             else:
-                var_lines.append(f"- **{name}**: (not yet solved)")
-
-        if len(variables) > 50:
-            var_lines.append(f"\n... and {len(variables) - 50} more variables")
-
+                values_str = f"{{{', '.join(map(str, sample_values))}}}"
+            set_lines.append(f"- **Index position {pos}**: {values_str}")
+        sections.append("\n".join(set_lines))
+    
+    # Format Parameters with pattern grouping
+    if parameters:
+        param_families = defaultdict(list)
+        for name, data in parameters.items():
+            # Extract family name (before brackets)
+            import re
+            match = re.match(r'^([^\[]+)', name)
+            family = match.group(1) if match else name
+            param_families[family].append((name, data))
+        
+        param_lines = ["## Parameters\n"]
+        for family, items in sorted(param_families.items()):
+            count = len(items)
+            # Show first example
+            first_name, first_data = items[0]
+            first_value = first_data.get("value", "unknown")
+            
+            if count == 1:
+                param_lines.append(f"- **{first_name}**: {first_value}")
+            else:
+                param_lines.append(f"**{family}[{index_signature}]** ({count} instances):")
+                param_lines.append(f"  - Example: {first_name} = {first_value}")
+        
+        sections.append("\n".join(param_lines))
+    
+    # Format Variables with pattern grouping
+    if variables:
+        var_families = defaultdict(list)
+        for name, data in variables.items():
+            import re
+            match = re.match(r'^([^\[]+)', name)
+            family = match.group(1) if match else name
+            var_families[family].append((name, data))
+        
+        var_lines = ["## Variables\n"]
+        for family, items in sorted(var_families.items()):
+            count = len(items)
+            first_name, first_data = items[0]
+            first_sol = first_data.get("solution", "unknown")
+            
+            if count == 1:
+                if first_sol != "unknown":
+                    var_lines.append(f"- **{first_name}**: Solution = {first_sol}")
+                else:
+                    var_lines.append(f"- **{first_name}**: (not yet solved)")
+            else:
+                # Check if any are solved
+                solved_count = sum(1 for _, d in items if d.get("solution", "unknown") != "unknown")
+                if solved_count > 0:
+                    var_lines.append(f"**{family}[{index_signature}]** ({count} instances, {solved_count} solved):")
+                    # Find first solved example
+                    for name, data in items:
+                        if data.get("solution", "unknown") != "unknown":
+                            var_lines.append(f"  - Example: {name} = {data['solution']}")
+                            break
+                else:
+                    var_lines.append(f"**{family}[{index_signature}]** ({count} instances): All currently unsolved")
+        
         sections.append("\n".join(var_lines))
-
-    # Format Constraints
+    
+    # Format Constraints with pattern grouping
     if constraints:
+        constraint_families = defaultdict(list)
+        for name, data in constraints.items():
+            family, pattern = detect_constraint_pattern(name, data.get("expression", ""), index_signature)
+            constraint_families[family].append((name, data, pattern))
+        
         cons_lines = ["## Constraints\n"]
-        for name, data in sorted(constraints.items())[:30]:  # Fewer constraints shown
-            expression = data.get("expression", "")
-            is_binding = data.get("is_binding", "unknown")
-
-            cons_lines.append(f"- **{name}**: {expression}")
-            if is_binding is True:
-                cons_lines.append(f"  _(Binding)_")
-
-        if len(constraints) > 30:
-            cons_lines.append(f"\n... and {len(constraints) - 30} more constraints")
-
+        for family, items in sorted(constraint_families.items()):
+            count = len(items)
+            first_name, first_data, first_pattern = items[0]
+            first_expr = first_data.get("expression", "")
+            
+            if count == 1:
+                cons_lines.append(f"- **{first_name}**: {first_expr}")
+                if first_data.get("is_binding") is True:
+                    cons_lines.append(f"  _(Binding)_")
+            else:
+                cons_lines.append(f"\n**{family}** ({count} instances):")
+                cons_lines.append(f"  - Pattern: `{first_pattern}`")
+                cons_lines.append(f"  - Example: {first_name}: {first_expr}")
+        
         sections.append("\n".join(cons_lines))
-
-    # Format Objectives
+    
+    # Format Objectives (unchanged from original)
     if objectives:
         obj_lines = ["## Objective\n"]
         for name, data in objectives.items():
             expression = data.get("expression", "")
             value = data.get("value", "unknown")
             sol_status = data.get("sol_status", "unknown")
-
+            
             obj_lines.append(f"- **{name}**: {expression}")
             obj_lines.append(f"  - Objective value: {value}")
             obj_lines.append(f"  - Solution status: {sol_status}")
-
+        
         sections.append("\n".join(obj_lines))
-
+    
     # Summary
     summary = f"""## Model Summary
 
@@ -123,9 +527,8 @@ Total components:
 - Objectives: {len(objectives)}
 """
     sections.insert(0, summary)
-
+    
     return "\n\n".join(sections)
-
 
 def save_synthetic_paper(description: str, model_name: str) -> str:
     """
@@ -226,14 +629,18 @@ def get_model_info_for_description(request: str, tool_context: ToolContext) -> s
 
         logger.info(f"[ILLUSTRATOR_TOOL] Model has {len(model_components)} components")
 
-        # Format model components
-        formatted_components = format_models_dict_for_llm(model_components)
+        # Format model components using hierarchical structure
+        import json
+        hierarchical_structure = format_hierarchical_components({model_name: model_components})
+        formatted_components = json.dumps(hierarchical_structure, indent=2)
 
         # Build response with model info
         response_parts = [
             f"# Model Information for '{model_name}'\n",
-            "## Model Components\n",
-            formatted_components
+            "## Model Components (JSON Structure)\n",
+            "```json\n",
+            formatted_components,
+            "\n```"
         ]
 
         # Add source code if available
@@ -247,6 +654,63 @@ def get_model_info_for_description(request: str, tool_context: ToolContext) -> s
         else:
             logger.info("[ILLUSTRATOR_TOOL] No source code available")
             response_parts.append("\n\n## Source Code\n(Source code not provided)")
+
+        # Add infeasibility diagnosis if available
+        has_diagnosis = tool_context.state.get(HAS_INFEASIBILITY_DIAGNOSIS, False)
+        if has_diagnosis:
+            diagnosis = tool_context.state.get(INFEASIBILITY_DIAGNOSIS, {})
+            logger.info("[ILLUSTRATOR_TOOL] Including infeasibility diagnosis information")
+
+            response_parts.append("\n\n## Infeasibility Diagnosis Results\n")
+
+            # Extract diagnosis details
+            status = diagnosis.get("status", "unknown")
+            result_text = diagnosis.get("result", "No details available")
+            relaxed_version = diagnosis.get("relaxed_version", "N/A")
+            final_status = diagnosis.get("final_status", "unknown")
+            slack_values = diagnosis.get("slack_values", {})
+
+            response_parts.append(f"**Diagnosis Status**: {status}")
+            response_parts.append(f"\n**Relaxed Model Version**: {relaxed_version}")
+            response_parts.append(f"\n**Final Status**: {final_status}")
+            response_parts.append(f"\n\n**Diagnosis Details**:\n{result_text}")
+
+            # Display slack values (violation magnitudes) if available
+            if slack_values:
+                response_parts.append(f"\n\n**Constraint Violations (Slack Values)**:")
+                response_parts.append(f"\nThese values show HOW MUCH each constraint was violated:")
+
+                # Group slack values by constraint type for better readability
+                from collections import defaultdict
+                grouped_slacks = defaultdict(list)
+
+                for idx, val in slack_values.items():
+                    if val > 1e-6:  # Only show significant violations
+                        # Handle both Round 1/2 format: (constraint_name, 'ub'/'lb')
+                        # and Round 3 format: (constraint_name, index, type)
+                        if isinstance(idx, tuple) and len(idx) >= 2:
+                            constraint_name = idx[0]
+                            grouped_slacks[constraint_name].append((idx, val))
+
+                # Display grouped violations
+                for constraint_name, violations in sorted(grouped_slacks.items()):
+                    response_parts.append(f"\n\n- **{constraint_name}**:")
+                    for idx, val in sorted(violations, key=lambda x: x[1], reverse=True)[:10]:  # Top 10 per constraint
+                        response_parts.append(f"  - {idx}: {val:.4f}")
+                    if len(violations) > 10:
+                        response_parts.append(f"  - ... and {len(violations) - 10} more violations")
+
+            # If relaxed model exists in models_dictionary, show its info
+            if relaxed_version != "N/A" and relaxed_version in tool_context.state.get(MODELS_DICTIONARY, {}):
+                relaxed_model_info = tool_context.state[MODELS_DICTIONARY][relaxed_version]
+                obj_info = relaxed_model_info.get("obj", {})
+                obj_value = obj_info.get("value", "unknown")
+
+                response_parts.append(f"\n\n**Relaxed Model Solution**:")
+                response_parts.append(f"\n- Objective Value: {obj_value}")
+                response_parts.append(f"\n- Status: {final_status}")
+        else:
+            logger.info("[ILLUSTRATOR_TOOL] No infeasibility diagnosis needed (model is feasible)")
 
         result = "\n".join(response_parts)
         logger.info(f"[ILLUSTRATOR_TOOL] Generated model info ({len(result)} characters)")

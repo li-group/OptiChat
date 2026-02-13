@@ -1,0 +1,131 @@
+Data Type: dict
+================================================================================
+
+{
+  "components_retrival": [
+    {
+      "type": "RETRIEVAL",
+      "Q": "I want to know the production facility data of facility two.",
+      "queried_components": [
+        {
+          "component_name": "pfd",
+          "component_indexes": [
+            "two",
+            "slice(None, None, None)"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "RETRIEVAL",
+      "Q": "show me the distribution center data of the east distribution center",
+      "queried_components": [
+        {
+          "component_name": "dcd",
+          "component_indexes": [
+            "east",
+            "slice(None, None, None)"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "RETRIEVAL",
+      "Q": "Following the optimal decision, how much does the facility two produce in the normal mode in january",
+      "queried_components": [
+        {
+          "component_name": "pn",
+          "component_indexes": [
+            "two",
+            "january"
+          ]
+        }
+      ]
+    }
+  ],
+  "sensitivity_analysis": [
+    {
+      "type": "SENSITIVITY",
+      "Q": "How will the total profit fluctuate with the change in maximum production capacity (w.r.t. all the facilities)?",
+      "queried_components": [
+        {
+          "component_name": "pfd",
+          "component_indexes": [
+            "slice(None, None, None)",
+            "max-prod"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "SENSITIVITY",
+      "Q": "Will the total profit be greatly affected when overtime production cost in april changes a little bit?",
+      "queried_components": [
+        {
+          "component_name": "pco",
+          "component_indexes": [
+            "slice(None, None, None)",
+            "april"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "SENSITIVITY",
+      "Q": "The holding cost usually fluctuate from time to time. To what extent will the total profit remain stable if the holding cost in the east distribution center fluctuates",
+      "queried_components": [
+        {
+          "component_name": "dcd",
+          "component_indexes": [
+            "east",
+            "hold-cost"
+          ]
+        }
+      ]
+    }
+  ],
+  "evaluate_modification": [
+    {
+      "type": "WHAT_IF",
+      "Q": "What if I change the maximum production capacity at facility two significantly, say increase it by 20 units, what will the profit be?",
+      "queried_components": [
+        {
+          "component_name": "pfd",
+          "component_indexes": [
+            "two",
+            "max-prod"
+          ],
+          "operation": "+",
+          "delta": 20
+        }
+      ]
+    },
+    {
+      "type": "WHAT_IF",
+      "Q": "Actually, there will be a bonus program in february and the revenue factor will be raised to 1.2. In this case, what will the optimal profit be?",
+      "queried_components": [
+        {
+          "component_name": "revfac",
+          "component_indexes": "february",
+          "operation": "=",
+          "delta": 1.2
+        }
+      ]
+    },
+    {
+      "type": "WHAT_IF",
+      "Q": "There is a sudden change in maximum demand because of an unexpected market shift, decreasing the maximum demand by 100 units in all customer zones. What will happen to our optimal profit?",
+      "queried_components": [
+        {
+          "component_name": "czd",
+          "component_indexes": [
+            "slice(None, None, None)",
+            "max-demand"
+          ],
+          "operation": "-",
+          "delta": 100
+        }
+      ]
+    }
+  ]
+}

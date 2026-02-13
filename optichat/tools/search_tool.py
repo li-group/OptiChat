@@ -50,7 +50,7 @@ def get_model_components(version: List[str], component_type: str, pattern: str,
     Args:
         version (List[str]): Model version(s) to search. Must be provided. Maximum 2 versions allowed.
         component_type (str): **PRIMARY METHOD** Type of components to match against component.
-            Must be one of: ['objective', 'variable', 'constraint', or '' (empty string for all types)]
+            Must be one of: ['objective', 'variable', 'constraint', 'parameter', or '' (empty string for all types)]
         pattern (str): **BACKUP METHOD** Naming pattern to match against component.
             Use this for additional filtering when the output by component_type alone is truncated.
             Supports:
@@ -80,7 +80,7 @@ def get_model_components(version: List[str], component_type: str, pattern: str,
     if pattern == "" and component_type == "":
         is_valid = False
         result += "**ERROR** At least one of [pattern, component_type] must be non-empty"
-    valid_component_types = ['objective', 'variable', 'constraint', '']
+    valid_component_types = ['objective', 'variable', 'constraint', 'parameter', '']
     if component_type not in valid_component_types:
         is_valid = False
         result += (f"**ERROR** component_type must be one of {valid_component_types}, "

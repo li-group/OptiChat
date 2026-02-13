@@ -1,0 +1,15 @@
+{
+    "model_name": "mesc",
+    "models": {
+        "local_resources": [
+            "Feas/mesc.pkl"
+        ],
+        "is_solved": false,
+        "is_lp": false
+    },
+    "models_code": {
+        "local_resources": [
+            "Feas/mesc.py"
+        ]
+    }
+}

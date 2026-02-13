@@ -1,0 +1,132 @@
+Data Type: dict
+================================================================================
+
+{
+  "components_retrival": [
+    {
+      "type": "RETRIEVAL",
+      "Q": "What are the cities that we are considering to visit in this model",
+      "queried_components": [
+        {
+          "component_name": "i",
+          "component_indexes": null
+        }
+      ]
+    },
+    {
+      "type": "RETRIEVAL",
+      "Q": "How long is the undirected arc between boston and chicago",
+      "queried_components": [
+        {
+          "component_name": "uarc",
+          "component_indexes": [
+            "boston",
+            "chicago"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "RETRIEVAL",
+      "Q": "Show me the optimal arcs decided by the model",
+      "queried_components": [
+        {
+          "component_name": "x",
+          "component_indexes": [
+            "slice(None, None, None)",
+            "slice(None, None, None)",
+            "slice(None, None, None)"
+          ]
+        }
+      ]
+    }
+  ],
+  "sensitivity_analysis": [
+    {
+      "type": "SENSITIVITY",
+      "Q": "Will the optimal objective value change a lot if the undirected arc between boston and chicago slightly changes",
+      "queried_components": [
+        {
+          "component_name": "uarc",
+          "component_indexes": [
+            "boston",
+            "chicago"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "SENSITIVITY",
+      "Q": "Will the optimal value be greatly affected if the undirected arc between boston and wash-dc slightly changes",
+      "queried_components": [
+        {
+          "component_name": "uarc",
+          "component_indexes": [
+            "boston",
+            "wash-dc"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "SENSITIVITY",
+      "Q": "Let me know how the optimal objective value changes with the directed arcs of boston",
+      "queried_components": [
+        {
+          "component_name": "darc",
+          "component_indexes": [
+            "boston",
+            "slice(None, None, None)"
+          ]
+        }
+      ]
+    }
+  ],
+  "evaluate_modification": [
+    {
+      "type": "WHAT_IF",
+      "Q": "What will the optimal objective value change be if the undirected arc between boston and chicago becomes 50 (we found a new route!)",
+      "queried_components": [
+        {
+          "component_name": "uarc",
+          "component_indexes": [
+            "boston",
+            "chicago"
+          ],
+          "operation": "=",
+          "delta": 50
+        }
+      ]
+    },
+    {
+      "type": "WHAT_IF",
+      "Q": "What will the optimal objective value change be if the undirected arc between boston and wash-dc should be changed to 30 (our previous record is wrong!)",
+      "queried_components": [
+        {
+          "component_name": "uarc",
+          "component_indexes": [
+            "boston",
+            "wash-dc"
+          ],
+          "operation": "=",
+          "delta": 30
+        }
+      ]
+    },
+    {
+      "type": "WHAT_IF",
+      "Q": "What will the optimal objective value change be if all the undirected arcs of Boston need to account for 10 more miles (our previous record is wrong!)",
+      "queried_components": [
+        {
+          "component_name": "uarc",
+          "component_indexes": [
+            "boston",
+            "slice(None, None, None)"
+          ],
+          "operation": "+",
+          "delta": 10
+        }
+      ]
+    }
+  ]
+}

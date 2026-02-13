@@ -11,7 +11,7 @@ dist/
 build/
 *.egg
 *.so
-#*.pkl
+*.pkl
 
 # Jupyter Notebooks
 .ipynb_checkpoints/
@@ -71,3 +71,8 @@ chroma_langchain_db/
 generate_pickle.py
 /.claude
 CLAUDE.md
+
+/auto_test_agent.py
+/run_auto_tests.sh
+/hybrid_verifier.py
+*.ipynb

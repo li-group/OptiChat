@@ -1,0 +1,110 @@
+Data Type: dict
+================================================================================
+
+{
+  "components_retrival": [
+    {
+      "type": "RETRIEVAL",
+      "Q": "How many soldiers are enlisted in year 5, according to the model\u2019s suggestion?",
+      "queried_components": [
+        {
+          "component_name": "e",
+          "component_indexes": 5
+        }
+      ]
+    },
+    {
+      "type": "RETRIEVAL",
+      "Q": "I am a bit curious about the exact expression of the balance constraint",
+      "queried_components": [
+        {
+          "component_name": "bal",
+          "component_indexes": "slice(None, None, None)"
+        }
+      ]
+    },
+    {
+      "type": "RETRIEVAL",
+      "Q": "Following the optimal decision, how many men are recruited in year 6 with the length of service being 2 years",
+      "queried_components": [
+        {
+          "component_name": "x",
+          "component_indexes": [
+            6,
+            2
+          ]
+        }
+      ]
+    }
+  ],
+  "sensitivity_analysis": [
+    {
+      "type": "SENSITIVITY",
+      "Q": "Due to anticipated significant economic shift in year 3, we want to know how the total cost will fluctuate with the change of inflation index in year 3?",
+      "queried_components": [
+        {
+          "component_name": "infl",
+          "component_indexes": 3
+        }
+      ]
+    },
+    {
+      "type": "SENSITIVITY",
+      "Q": "Will the optimal cost value be greatly affected when troop requirement changes a little bit?",
+      "queried_components": [
+        {
+          "component_name": "req",
+          "component_indexes": "slice(None, None, None)"
+        }
+      ]
+    },
+    {
+      "type": "SENSITIVITY",
+      "Q": "Troop is considering a slight boost in the cost of service if a man is enlisted for 4 years. Let me know how the optimal cost value changes with this slight boost.",
+      "queried_components": [
+        {
+          "component_name": "clen",
+          "component_indexes": 4
+        }
+      ]
+    }
+  ],
+  "evaluate_modification": [
+    {
+      "type": "WHAT_IF",
+      "Q": "Due to anticipated significant economic shift in year 3, which makes inflation index in year 3 becomes 1.20, we want to know this impact on the total cost.",
+      "queried_components": [
+        {
+          "component_name": "infl",
+          "component_indexes": 3,
+          "operation": "=",
+          "delta": 1.2
+        }
+      ]
+    },
+    {
+      "type": "WHAT_IF",
+      "Q": "Will the optimal cost value be greatly affected if troop in all years requires 1 more soldier?",
+      "queried_components": [
+        {
+          "component_name": "req",
+          "component_indexes": "slice(None, None, None)",
+          "operation": "+",
+          "delta": 1
+        }
+      ]
+    },
+    {
+      "type": "WHAT_IF",
+      "Q": "The government plans to reduce the cost of service by 50 if a man is enlisted for 4 years. Let me know how the optimal cost value changes with this policy",
+      "queried_components": [
+        {
+          "component_name": "clen",
+          "component_indexes": 4,
+          "operation": "-",
+          "delta": 50
+        }
+      ]
+    }
+  ]
+}

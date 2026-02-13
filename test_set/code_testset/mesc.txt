@@ -1,0 +1,22 @@
+Data Type: dict
+================================================================================
+
+{
+  "external_tools": [
+    {
+      "type": "WHY_NOT",
+      "Q": "Why cannot the reorder quantities for each stage just be equal to each other at different time?",
+      "A": "By introducing a constraint that all reorder quantities for each stage must have the same value, the profit decreases by $149.28 from original optimal value $505.22."
+    },
+    {
+      "type": "WHY_NOT",
+      "Q": "Why cannot we set all the initial on-hand inventory levels at all stages to be unavailable?",
+      "A": "By considering that no initial inventory is available at all stages, the model is still feasible. This means that the model was able to satisfy the demand by backloging demand whenever needed, since we see the backlog variable holds non-zero values. However, having no initial inventory significantly affects the profit. Initially, the model calculated a profit of $505.22, After updating the unit sale price, the profit declined to $16.17, indicating an decrease of $489.04."
+    },
+    {
+      "type": "WHY_NOT",
+      "Q": "Why doesn't it recommend having non-negative profit at every time period? Doesn't it mean that we are losing money at some point?",
+      "A": "By considering that profit at every time period to be a nonnegative quantity, there is a decrease of $14.95 in the profit value. Initially, the model calculated a profit of $505.22, After setting profit at each time period to be nonnegative, the profit declined to $49.27."
+    }
+  ]
+}

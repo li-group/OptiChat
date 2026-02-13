@@ -12,14 +12,35 @@ def load_model(version: str, models_dictionary: dict):
     """
     ```model = load_model(version: str, models_dictionary: dict)```
     loads a model associated with a given version
+
+    This function supports lazy loading: if the model is not in the runtime dictionary
+    but exists in the metadata store, it will be loaded from disk automatically.
     """
+    # Check if model is in runtime dictionary
+    if version not in models_dictionary:
+        # Try lazy loading from metadata store
+        logger.info(f"Model '{version}' not found in runtime dictionary. Attempting lazy load from metadata store...")
+        try:
+            from optichat.tools.metadata_store import load_model_data
+            info = load_model_data(version)
+            # Add to runtime dictionary for future access
+            models_dictionary[version] = info
+            logger.info(f"Successfully lazy-loaded model '{version}' from disk")
+        except FileNotFoundError as e:
+            # Model doesn't exist anywhere
+            available_versions = list(models_dictionary.keys())
+            raise KeyError(
+                f"Model version '{version}' not found in runtime dictionary or metadata store. "
+                f"Available versions: {available_versions}"
+            ) from e
+
     info = models_dictionary[version]
     local_path_to_object = info["local_path_to_object"]
     sol_status = info["obj"].get('sol_status', 'unknown')
     objval = info["obj"].get('value', 'unknown')
 
     model, file_name = restore_model_object(local_path_to_object)
-    
+
     # remove dual suffix if exists so that it won't interfere with newly added constraints
     if hasattr(model, 'dual'):
         model.del_component(model.dual)
@@ -50,9 +71,9 @@ def add_dual_suffix(model: pe.ConcreteModel):
     return model 
 
 
-def solve_model(model: pe.ConcreteModel, version: str, models_dictionary: dict, tool_context=None, description=None):
+def solve_model(model: pe.ConcreteModel, version: str, models_dictionary: dict, tool_context=None, description=None, repl_code=None):
     """
-    ```new_models_dictionary = solve_model(model, version: str, models_dictionary: dict, tool_context=None, description=None)```
+    ```new_models_dictionary = solve_model(model, version: str, models_dictionary: dict, tool_context=None, description=None, repl_code=None)```
     solves the model and update it in the models_dictionary by labelling it with the given version.
 
     Args:
@@ -62,6 +83,8 @@ def solve_model(model: pe.ConcreteModel, version: str, models_dictionary: dict, 
         tool_context: Optional ToolContext for state management
         description: Optional human-readable description of this model variant (RECOMMENDED)
                     Example: "What-if analysis: increased demand[3,1] by 10 to test capacity constraints"
+        repl_code: Optional Python code snippet that created this model (for documentation)
+                   Example: "model = load_model('base', models_dictionary)\nmodel.demand[3,1] += 10"
 
     Example usage:
         ```python
@@ -132,7 +155,7 @@ def solve_model(model: pe.ConcreteModel, version: str, models_dictionary: dict, 
     except Exception as e:
         logger.error(f"Failed to save model data for {version}: {e}")
 
-    # Update metadata (with expert-provided description)
+    # Update metadata (with expert-provided description and code)
     try:
         metadata = load_metadata()
         metadata = add_model_to_metadata(
@@ -140,7 +163,8 @@ def solve_model(model: pe.ConcreteModel, version: str, models_dictionary: dict, 
             version_name=version,
             model_info=info,
             base_model=base_model,
-            description=description  # Expert-provided description
+            description=description,  # Expert-provided description
+            repl_code=repl_code  # Expert-provided REPL code
         )
         save_metadata(metadata)
         logger.info(f"Updated metadata for {version} with description: {description}")
@@ -203,6 +227,82 @@ def relax_constraint_and_penalize_violation(constraint_name: str,
     return model
 
 
+def relax_parameter_and_penalize_deviation(
+    param_name: str,
+    param_indexes: tuple | list,
+    penalty_coef: float | int,
+    model: pe.ConcreteModel
+):
+    """
+    ```relaxed_model = relax_parameter_and_penalize_deviation(param_name: str, param_indexes: tuple | list, penalty_coef: float | int, model)```
+    
+    Adds slack variables to a parameter at specific indices to allow deviation from its original value.
+    The deviation is penalized in the objective function.
+    """
+    # Get the parameter component
+    param = model.find_component(param_name)
+    if param is None:
+        print(f"Parameter {param_name} not found in the model. No changes made.")
+        return model
+    
+    # Validate that the parameter exists and indices are valid
+    try:
+        # Normalize param_indexes to tuple
+        if isinstance(param_indexes, list):
+            param_indexes = tuple(param_indexes) if len(param_indexes) > 1 else param_indexes[0]
+        
+        eval_param = param
+        if isinstance(param_indexes, tuple):
+            if len(eval_param[param_indexes].index()) <= 0:
+                raise IndexError(
+                    f"Error: Indexes {param_indexes} are not valid. "
+                    "This usually happens when the order of indexes in the tuple is incorrect."
+                )
+    except (KeyError, IndexError) as e:
+        print(f"Error: {e}. No changes made.")
+        return model
+    
+    # Get the objective
+    obj = next(model.component_data_objects(pe.Objective, active=True))
+    is_min = (obj.sense == pe.minimize)
+    penalty_sign = 1.0 if is_min else -1.0
+    
+    # Create unique slack variable names
+    slack_pos_name = unique_component_name(model, f"slack_pos_{param_name}")
+    slack_neg_name = unique_component_name(model, f"slack_neg_{param_name}")
+    
+    # Add slack variables over the entire parameter's index set
+    # First, create slacks for all indices
+    exec(f"model.{slack_pos_name} = pe.Var(model.{param_name}.index_set(), within=pe.NonNegativeReals)")
+    exec(f"model.{slack_neg_name} = pe.Var(model.{param_name}.index_set(), within=pe.NonNegativeReals)")
+    
+    # Get references to the slack variables
+    model_slack_pos = eval(f"model.{slack_pos_name}")
+    model_slack_neg = eval(f"model.{slack_neg_name}")
+    
+    # Fix all slack variables to 0 initially
+    model_slack_pos.fix(0)
+    model_slack_neg.fix(0)
+    
+    # Unfix only the slacks for the specific indices we want to relax
+    model_slack_pos[param_indexes].unfix()
+    model_slack_neg[param_indexes].unfix()
+    
+    # Add penalty to objective for the unfixed slacks
+    # Note: We only penalize the specific index that was unfixed
+    obj.set_value(
+        expr=obj.expr + penalty_sign * penalty_coef * (
+            model_slack_pos[param_indexes] + model_slack_neg[param_indexes]
+        )
+    )
+    
+    print(f"Parameter {param_name}[{param_indexes}] is relaxed with slack variables.")
+    print(f"Slack variables {slack_pos_name}[{param_indexes}] and {slack_neg_name}[{param_indexes}] added.")
+    print(f"Parameter deviation is penalized in the objective with coefficient {penalty_coef}.")
+    print(f"Note: The actual parameter value remains fixed. The slacks allow the model to 'virtually' deviate from it.")
+    
+    return model
+
 # Parse user query and return the uncertain parameters and it's bounds
 def parse_uncertainty_from_state(state: Dict[str, Any]) -> Tuple[List[str], Dict[str, Tuple[float, float]]]:
     """
@@ -249,6 +349,51 @@ def parse_uncertainty_from_state(state: Dict[str, Any]) -> Tuple[List[str], Dict
         bdict[name] = (float(lo), float(hi))
 
     return up, bdict
+
+def relax_multiple_parameters_and_penalize_deviation(
+    param_specs: list[dict],
+    penalty_coef: float | int,
+    model: pe.ConcreteModel
+):
+    """
+    ```relaxed_model = relax_multiple_parameters_and_penalize_deviation(param_specs: list[dict], penalty_coef: float | int, model)```
+    
+    Adds slack variables to multiple parameters at specific indices.
+    
+    Args:
+        param_specs: List of dictionaries, each with keys:
+            - 'param_name': str - name of the parameter
+            - 'param_indexes': tuple or list - indices to relax
+        penalty_coef: Penalty coefficient for deviations in the objective (applied to all)
+        model: Pyomo ConcreteModel to modify
+    
+    Returns:
+        Modified model with slack variables added to all specified parameters
+        
+    Example:
+        param_specs = [
+            {'param_name': 'demand', 'param_indexes': (3, 1)},
+            {'param_name': 'demand', 'param_indexes': (2, 3)},
+            {'param_name': 'capacity', 'param_indexes': [5]}
+        ]
+        model = relax_multiple_parameters_and_penalize_deviation(param_specs, 1000, model)
+    """
+    for spec in param_specs:
+        param_name = spec.get('param_name') or spec.get('component_name')
+        param_indexes = spec.get('param_indexes') or spec.get('component_indexes')
+        
+        if not param_name or param_indexes is None:
+            print(f"Warning: Invalid parameter specification {spec}. Skipping.")
+            continue
+            
+        model = relax_parameter_and_penalize_deviation(
+            param_name=param_name,
+            param_indexes=param_indexes,
+            penalty_coef=penalty_coef,
+            model=model
+        )
+    
+    return model
 
 
 

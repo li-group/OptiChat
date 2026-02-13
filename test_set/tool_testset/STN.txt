@@ -1,0 +1,85 @@
+Data Type: dict
+================================================================================
+
+{
+  "components_retrival": [
+    {
+      "type": "RETRIEVAL",
+      "Q": "Show me the optimal decision of starting the task, Reaction_1, to different unit and in different time points",
+      "queried_components": [
+        {
+          "component_name": "W",
+          "component_indexes": [
+            "Reaction_1",
+            "slice(None, None, None)",
+            "slice(None, None, None)"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "RETRIEVAL",
+      "Q": "May I know the inventory of Reactor_1 at different time points? I wanna double-check.",
+      "queried_components": [
+        {
+          "component_name": "Q",
+          "component_indexes": [
+            "Reactor_1",
+            "slice(None, None, None)"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "RETRIEVAL",
+      "Q": "May I know the inventory of reactor 1 at different time points? I wanna double-check.",
+      "queried_components": [
+        {
+          "component_name": "Q",
+          "component_indexes": [
+            "Reactor_1",
+            "slice(None, None, None)"
+          ]
+        }
+      ]
+    }
+  ],
+  "evaluate_modification": [
+    {
+      "type": "WHAT_IF",
+      "Q": "The storage capacity of Feed_A is now degraded into 490. What will the optimal cost be because of this degradation?",
+      "queried_components": [
+        {
+          "component_name": "C",
+          "component_indexes": "Feed_A",
+          "operation": "=",
+          "delta": 490
+        }
+      ]
+    },
+    {
+      "type": "WHAT_IF",
+      "Q": "The storage capacity of feed A is now degraded into 490. What will the optimal cost be because of this degradation?",
+      "queried_components": [
+        {
+          "component_name": "C",
+          "component_indexes": "Feed_A",
+          "operation": "=",
+          "delta": 490
+        }
+      ]
+    },
+    {
+      "type": "WHAT_IF",
+      "Q": "The storage capacity of Feed_A is now degraded by 10 units. What will the optimal cost be because of this degradation?",
+      "queried_components": [
+        {
+          "component_name": "C",
+          "component_indexes": "Feed_A",
+          "operation": "-",
+          "delta": 10
+        }
+      ]
+    }
+  ]
+}

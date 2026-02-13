@@ -1,0 +1,44 @@
+Data Type: dict
+================================================================================
+
+{
+  "feasibility_restoration": [
+    {
+      "type": "FEASIBILITY_RESTORATION",
+      "Q": "At time point 5, it is somewhat flexible to negotiate with my business partners to adjust the total quantity of goods that flow in or flow out. Please let me know the minimum amount of external flow-in or flow-out needed at that time to make the model feasible.",
+      "queried_components": [
+        {
+          "component_name": "Pi",
+          "component_indexes": [
+            "slice(None, None, None)",
+            5
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FEASIBILITY_RESTORATION",
+      "Q": "Our company has a plan to update our reactors to process more reactants in every batch. Can you check whether or not the infeasibility in current model can be fixed by changing the maximum batch size?",
+      "queried_components": [
+        {
+          "component_name": "Vmax",
+          "component_indexes": "slice(None, None, None)"
+        }
+      ]
+    },
+    {
+      "type": "FEASIBILITY_RESTORATION",
+      "Q": "We can actually ask for more initial resource inventory allocated to node E and F if necessary, let me know by how much I need to make the model feasible?",
+      "queried_components": [
+        {
+          "component_name": "X0",
+          "component_indexes": "E"
+        },
+        {
+          "component_name": "X0",
+          "component_indexes": "F"
+        }
+      ]
+    }
+  ]
+}

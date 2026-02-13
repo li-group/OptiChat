@@ -1,0 +1,40 @@
+Data Type: dict
+================================================================================
+
+{
+  "feasibility_restoration": [
+    {
+      "type": "FEASIBILITY_RESTORATION",
+      "Q": "Adjusting the initial capacity of reformer is somewhat flexible. Could you let me know the minimum change necessary for the model to be feasible?",
+      "queried_components": [
+        {
+          "component_name": "k",
+          "component_indexes": "reformer"
+        }
+      ]
+    },
+    {
+      "type": "FEASIBILITY_RESTORATION",
+      "Q": "We can negotiate customer demand with our clients. Can you determine if adjusting their demand can fix the infeasibility in the current model?",
+      "queried_components": [
+        {
+          "component_name": "d",
+          "component_indexes": "slice(None, None, None)"
+        }
+      ]
+    },
+    {
+      "type": "FEASIBILITY_RESTORATION",
+      "Q": "We can actually change the capacity utilization a little bit. Please tell me the minimum change required to make the model feasible.",
+      "queried_components": [
+        {
+          "component_name": "b",
+          "component_indexes": [
+            "slice(None, None, None)",
+            "slice(None, None, None)"
+          ]
+        }
+      ]
+    }
+  ]
+}

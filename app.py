@@ -207,10 +207,11 @@ if prompt := st.chat_input("Enter your query here..."):
         st.markdown(prompt)
 
     # Prepare context with selected models
-    context_message = prompt
     if "selected_models" in st.session_state and st.session_state.selected_models:
         model_list_str = ", ".join(st.session_state.selected_models)
-        context_message += f"\n\n[Context] User selected models: {model_list_str}"
+        context_message = f"[Using model: {model_list_str}] {prompt}"
+    else:
+        context_message = prompt
 
     try:
         url = f"{API_BASE_URL}/run"

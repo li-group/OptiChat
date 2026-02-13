@@ -1,0 +1,75 @@
+Data Type: dict
+================================================================================
+
+{
+  "components_retrival": [
+    {
+      "type": "RETRIEVAL",
+      "Q": "What is the earliest makespan that can be achieved?",
+      "queried_components": [
+        {
+          "component_name": "makespan",
+          "component_indexes": null
+        }
+      ]
+    },
+    {
+      "type": "RETRIEVAL",
+      "Q": "How many jobs are there in total in this model?",
+      "queried_components": [
+        {
+          "component_name": "J",
+          "component_indexes": null
+        }
+      ]
+    },
+    {
+      "type": "RETRIEVAL",
+      "Q": "how much time does the job D take to complete",
+      "queried_components": [
+        {
+          "component_name": "duration",
+          "component_indexes": "D"
+        }
+      ]
+    }
+  ],
+  "evaluate_modification": [
+    {
+      "type": "WHAT_IF",
+      "Q": "We recently upgraded our workflow, the duration of job B now only takes 3 hrs. Help me evaluate the effect of this upgrade.",
+      "queried_components": [
+        {
+          "component_name": "duration",
+          "component_indexes": "B",
+          "operation": "=",
+          "delta": 3
+        }
+      ]
+    },
+    {
+      "type": "WHAT_IF",
+      "Q": "We recently updated our schedule, the due time of job D is now delayed by 2 hrs. What will the optimal objective value be after this modification?",
+      "queried_components": [
+        {
+          "component_name": "due",
+          "component_indexes": "D",
+          "operation": "+",
+          "delta": 2
+        }
+      ]
+    },
+    {
+      "type": "WHAT_IF",
+      "Q": "We recently updated our schedule, the release time of job C is now expedited by 2 hrs. What will the optimal objective value be after this modification",
+      "queried_components": [
+        {
+          "component_name": "release",
+          "component_indexes": "C",
+          "operation": "-",
+          "delta": 2
+        }
+      ]
+    }
+  ]
+}

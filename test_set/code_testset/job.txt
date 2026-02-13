@@ -1,0 +1,32 @@
+Data Type: dict
+================================================================================
+
+{
+  "external_tools": [
+    {
+      "type": "WHY_NOT",
+      "Q": "The optimal solution involves doing Job 6 for the maximum amount of possible days. Why don't we instead opt to perform Job 6 in the minimum number of days (12 days as opposed to 16 days)?",
+      "A": "By setting the number of days to complete Job 6 to 16 days, we find that the optimal cost increases to $13700 from $13175, explaining why Job 6 isn't performed in the minimum amount of time."
+    },
+    {
+      "type": "WHY_NOT",
+      "Q": "Why don't we start Job 2 on the third day instead of the very first allowed day?",
+      "A": "Forcing Job 2 start on the third possible day causes the optimal cost to increase to $13825."
+    },
+    {
+      "type": "WHY_NOT",
+      "Q": "Why don't we take 16 days to complete Job 4 instead of 20 days?",
+      "A": "This results in an increase in cost of $200, raising the cost to $13375 even though it allows Job 7 to start sooner"
+    },
+    {
+      "type": "WHY_IF",
+      "Q": "What if Job 7 didn't end on the last possible day and was forced to end on or before Day 38?",
+      "A": "The total duration of Job 7 would be cut to just 5 days from the optimal 7 days, causing an increase to $13275 in cost"
+    },
+    {
+      "type": "WHY_NOT",
+      "Q": "In the optimal solution, Job 3 start immediately after Job 2 ends. Why don't we have a gap of at least 1 days between those 2 jobs?",
+      "A": "The reason that Job 3 starts right after Job 2 ends is the cost that would be added by delaying the project. In total it would result in a $13500 total cost."
+    }
+  ]
+}

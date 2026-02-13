@@ -129,7 +129,9 @@ def save_model_data(version: str, model_info: Dict[str, Any], data_folder: str =
 def extract_metadata_from_model_info(
     model_info: Dict[str, Any],
     version_name: str,
-    description: Optional[str] = None
+    description: Optional[str] = None,
+    source_file_path: Optional[str] = None,
+    repl_code: Optional[str] = None
 ) -> Dict[str, Any]:
     """
     Extract lightweight metadata from full model info.
@@ -160,6 +162,12 @@ def extract_metadata_from_model_info(
 
     if description:
         metadata["description"] = description
+    
+    if source_file_path:
+        metadata["source_file_path"] = source_file_path
+    
+    if repl_code:
+        metadata["repl_code"] = repl_code
 
     return metadata
 
@@ -169,7 +177,9 @@ def add_model_to_metadata(
     version_name: str,
     model_info: Dict[str, Any],
     base_model: Optional[str] = None,
-    description: Optional[str] = None
+    description: Optional[str] = None,
+    source_file_path: Optional[str] = None,
+    repl_code: Optional[str] = None
 ) -> Dict[str, Any]:
     """
     Add or update a model entry in metadata with tree structure.
@@ -194,7 +204,9 @@ def add_model_to_metadata(
     model_metadata = extract_metadata_from_model_info(
         model_info=model_info,
         version_name=version_name,
-        description=description
+        description=description,
+        source_file_path=source_file_path,
+        repl_code=repl_code
     )
 
     if base_model is None:

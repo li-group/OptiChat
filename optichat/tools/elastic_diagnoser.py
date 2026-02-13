@@ -10,6 +10,7 @@ class ElasticInfeasibilityDiagnoser:
         self.model = model
         self.original_constraints = {}
         self.elastic_slacks = {} # Map (constraint_name, index) -> slack_var
+        self.elastic_constraints = {} # Map (constraint_name, index, type) -> constraint_data
         self.solver = SolverFactory('gurobi')
 
     def elasticize_model(self):
@@ -70,7 +71,9 @@ class ElasticInfeasibilityDiagnoser:
                     self.elastic_slacks[s_pos_idx] = s_pos
                     self.elastic_slacks[s_neg_idx] = s_neg
                     
-                    new_constr_list.add(c_obj.body + s_pos - s_neg == c_obj.lower)
+                    new_con = new_constr_list.add(c_obj.body + s_pos - s_neg == c_obj.lower)
+                    self.elastic_constraints[s_pos_idx] = new_con
+                    self.elastic_constraints[s_neg_idx] = new_con
 
                 else:
                     if c_obj.lower is not None:
@@ -80,7 +83,8 @@ class ElasticInfeasibilityDiagnoser:
                         self.elastic_slacks[s_idx] = s_lb
                         
                         # "Body >= Lower" becomes "Body + Slack >= Lower"
-                        new_constr_list.add(c_obj.body + s_lb >= c_obj.lower)
+                        new_con = new_constr_list.add(c_obj.body + s_lb >= c_obj.lower)
+                        self.elastic_constraints[s_idx] = new_con
 
                     # Handle Upper Bound (LHS <= UB  -->  LHS - s <= UB)
                     if c_obj.upper is not None:
@@ -90,7 +94,8 @@ class ElasticInfeasibilityDiagnoser:
                         self.elastic_slacks[s_idx] = s_ub
                         
                         # "Body <= Upper" becomes "Body - Slack <= Upper"
-                        new_constr_list.add(c_obj.body - s_ub <= c_obj.upper)
+                        new_con = new_constr_list.add(c_obj.body - s_ub <= c_obj.upper)
+                        self.elastic_constraints[s_idx] = new_con
 
     def solve_phase_1(self):
         """
@@ -116,19 +121,33 @@ class ElasticInfeasibilityDiagnoser:
         safety_set = [idx for idx, s_var in self.elastic_slacks.items() if pyo.value(s_var) > 1e-5]
         return safety_set
 
-    def run_heuristic_2(self):
+    def run_heuristic_2(self, k=7):
+        """
+        Heuristic 2 with Top-K Sensitivity and NINF (Look-ahead) checking.
+        """
         logger.info("\n--- STARTING HEURISTIC 2 (Iterative Reduction) ---")
         
+        # Ensure we can access duals for sensitivity analysis
+        if not hasattr(self.model, 'dual'):
+            self.model.dual = pyo.Suffix(direction=pyo.Suffix.IMPORT)
+        if not hasattr(self.model, 'rc'):
+            self.model.rc = pyo.Suffix(direction=pyo.Suffix.IMPORT)
+
+        # Initialize Elastic Weights
         self.model.slack_weights = pyo.Param(pyo.Any, initialize=1.0, mutable=True)
-        
         for idx in self.elastic_slacks:
             self.model.slack_weights[idx] = 1.0
         
-        self.model.del_component(self.model.elastic_obj)
+        # Set Objective: Minimize sum of weighted slacks
+        if hasattr(self.model, 'elastic_obj'):
+            self.model.del_component(self.model.elastic_obj)
         self.model.elastic_obj = pyo.Objective(
             expr=sum(self.model.slack_weights[idx] * self.elastic_slacks[idx] for idx in self.elastic_slacks), 
             sense=pyo.minimize
         )
+        
+        # Initial Solve to get Baseline
+        self.solver.solve(self.model)
         
         safety_set = [idx for idx, s_var in self.elastic_slacks.items() if pyo.value(s_var) > 1e-5]
         safety_size = len(safety_set)
@@ -139,60 +158,110 @@ class ElasticInfeasibilityDiagnoser:
         logger.info(f"Baseline SafetySize: {safety_size}")
         logger.info(f"Baseline SINF: {current_sinf}")
 
+        # --- MAIN LOOP ---
         while current_sinf > 1e-5:
-            
             logger.info(f"\n--- Iteration Start (Current Cover Size: {len(cover_set)}) ---")
-            candidates = [idx for idx, s_var in self.elastic_slacks.items() 
-                          if pyo.value(s_var) > 1e-5 and idx not in cover_set]
             
-            logger.info(f"Analyzing {len(candidates)} candidates...")
+            # 1. Identify Valid Candidates (violated and not already in cover)
+            raw_candidates = [idx for idx, s_var in self.elastic_slacks.items() 
+                            if pyo.value(s_var) > 1e-5 and idx not in cover_set]
+
+            # 2. Top-K Sensitivity Selection
+            # We rank candidates by 'Sensitivity' (abs(Dual) * Slack_Value)
+            candidate_scores = []
+            for idx in raw_candidates:
+                slack_val = pyo.value(self.elastic_slacks[idx])
+                
+                dual_val = 1.0 
+                if hasattr(self, 'elastic_constraints') and idx in self.elastic_constraints:
+                    # Get dual of the constraint (or the bound on the slack)
+                    constr = self.elastic_constraints[idx]
+                    dual_val = abs(self.model.dual.get(constr, 1.0))
+
+                score = slack_val * dual_val
+                candidate_scores.append((idx, score))
             
-            best_sinf_reduction = float('inf')
+            # Sort by score descending and take top K
+            candidate_scores.sort(key=lambda x: x[1], reverse=True)
+            top_k_candidates = [x[0] for x in candidate_scores[:k]]
+            
+            logger.info(f"Selected Top-{len(top_k_candidates)} candidates based on sensitivity.")
+
             winner = None
             winner_sinf = float('inf')
+            next_winner = None # The 'NINF=1' look-ahead constraint
 
-            for cand in candidates:
+            # 3. Trial Deletion Loop
+            for cand in top_k_candidates:
+                # 'Remove' constraint by setting weight to 0 (free to violate)
                 self.model.slack_weights[cand] = 0.0
                 
                 self.solver.solve(self.model)
                 trial_sinf = pyo.value(self.model.elastic_obj)
                 
-                if trial_sinf < current_sinf:
-                    if trial_sinf < winner_sinf:
-                        winner = cand
-                        winner_sinf = trial_sinf
-        
-                self.model.slack_weights[cand] = 1.0 
-                
+                # Check for Magic Bullet (SINF=0)
                 if trial_sinf <= 1e-5:
                     logger.info(f"  -> Magic Bullet found: {cand} makes SINF=0!")
                     winner = cand
                     winner_sinf = 0.0
+                    next_winner = None
+                    self.model.slack_weights[cand] = 1.0 # Reset before break
                     break
-
-            # Step C: Process the Winner
-            if winner:
-                logger.info(f"Winner found: {winner}")
-                logger.info(f"  -> Reduced SINF from {current_sinf} to {winner_sinf}")
                 
+                # Check if this is a better winner
+                if trial_sinf < current_sinf:
+                    if trial_sinf < winner_sinf:
+                        winner = cand
+                        winner_sinf = trial_sinf
+                                                    
+                        # 1. Identify all currently violated constraints (slacks > 0)
+                        remaining_violations = [idx for idx, s_var in self.elastic_slacks.items() 
+                                                if pyo.value(s_var) > 1e-5]
+                        
+                        # 2. Filter: Only count violations that are NOT currently removed (weight == 1.0)
+                        active_violations = [
+                            idx for idx in remaining_violations 
+                            if pyo.value(self.model.slack_weights[idx]) > 1e-5
+                        ]
+                        
+                        ninf = len(active_violations)
+                        
+                        if ninf == 1:
+                            # We found a 'Next Winner'!
+                            next_winner = active_violations[0]
+                            # logger.info(f"    -> Look-ahead: Removal leaves only {next_winner} (NINF=1)")
+                        else:
+                            next_winner = None
+
+                # Reset weight for next trial
+                self.model.slack_weights[cand] = 1.0 
+
+            # 4. Process Results (Commitment Phase)
+            if winner:
+                logger.info(f"Winner: {winner} (New SINF: {winner_sinf})")
+                
+                # Add Winner
                 cover_set.append(winner)
-                self.model.slack_weights[winner] = 0.0               
+                self.model.slack_weights[winner] = 0.0 # Permanently remove
                 current_sinf = winner_sinf
                 
+                # --- CHECK NEXT WINNER (Double Play) ---
+                if next_winner:
+                    logger.info(f"NextWinner identified: {next_winner}. Adding both and EXITING.")
+                    cover_set.append(next_winner)
+                    # We can stop immediately because we know these two fix the problem
+                    return cover_set
+
+                # Check Bailout
                 if len(cover_set) >= (safety_size - 1):
-                    logger.warning("Bailout Triggered: Heuristic approach is not beating the SafetySet.")
-                    logger.warning("Returning original SafetySet.")
+                    logger.warning("Bailout Triggered: Heuristic not efficient.")
                     return safety_set
                 
             else:
-                logger.error("No winner found, but SINF > 0. Solver might be stuck.")
+                logger.error("No winner found to reduce SINF. Solver stuck.")
                 break
                 
         logger.info("\n--- FINAL RESULTS ---")
-        logger.info(f"Final Cover Set ({len(cover_set)} items):")
-        for item in cover_set:
-            logger.info(f"  {item}")
-            
         return cover_set
 
     def verify_feasibility(self, constraints_to_remove):
@@ -242,9 +311,18 @@ class ElasticInfeasibilityDiagnoser:
             else:
                 obj_val = 0.0
 
+            # Extract slack values for the relaxed constraints
+            slack_values = {}
+            for idx in constraints_to_remove:
+                if idx in self.elastic_slacks:
+                    slack_val = pyo.value(self.elastic_slacks[idx])
+                    slack_values[idx] = slack_val
+                    if slack_val > 1e-6:  # Only log significant violations
+                        logger.info(f"  Slack for {idx}: {slack_val:.4f}")
+
             logger.info(f" -> RESULT: FEASIBLE!")
             logger.info(f" -> Optimal Original Cost (with relaxations): {obj_val}")
-            return True, obj_val
+            return True, obj_val, slack_values
         else:
             logger.info(" -> RESULT: STILL INFEASIBLE (or Unbounded).")
-            return False, None
+            return False, None, {}

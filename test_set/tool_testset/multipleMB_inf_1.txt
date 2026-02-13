@@ -1,0 +1,37 @@
+Data Type: dict
+================================================================================
+
+{
+  "feasibility_restoration": [
+    {
+      "type": "FEASIBILITY_RESTORATION",
+      "Q": "Adjusting the processing time of jobs is somewhat difficult, but not impossible. Could you let me know the minimum change required to make the model feasible?",
+      "queried_components": [
+        {
+          "component_name": "duration",
+          "component_indexes": "slice(None, None, None)"
+        }
+      ]
+    },
+    {
+      "type": "FEASIBILITY_RESTORATION",
+      "Q": "We can negotiate the due time with our clients. Can you determine the minimum change to the due time that will fix the infeasibility in the current model?",
+      "queried_components": [
+        {
+          "component_name": "due",
+          "component_indexes": "slice(None, None, None)"
+        }
+      ]
+    },
+    {
+      "type": "FEASIBILITY_RESTORATION",
+      "Q": "We can actually change the release time of jobs to some extent, although it will take some money to improve our workflow. Please tell me the minimum change required to make the model feasible",
+      "queried_components": [
+        {
+          "component_name": "release",
+          "component_indexes": "slice(None, None, None)"
+        }
+      ]
+    }
+  ]
+}

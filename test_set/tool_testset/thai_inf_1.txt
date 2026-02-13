@@ -1,0 +1,41 @@
+Data Type: dict
+================================================================================
+
+{
+  "feasibility_restoration": [
+    {
+      "type": "FEASIBILITY_RESTORATION",
+      "Q": "We can negotiate with our clients to lower the number of men transported from the ports. Please let us know how many men need to be reduced to make the model feasible.",
+      "queried_components": [
+        {
+          "component_name": "d",
+          "component_indexes": "slice(None, None, None)"
+        }
+      ]
+    },
+    {
+      "type": "FEASIBILITY_RESTORATION",
+      "Q": "We are investing in buying new ships to make this model feasible. Please specify how many ships we need to buy (we cannot buy large ships because they are too expensive).",
+      "queried_components": [
+        {
+          "component_name": "n",
+          "component_indexes": "small"
+        },
+        {
+          "component_name": "n",
+          "component_indexes": "medium"
+        }
+      ]
+    },
+    {
+      "type": "FEASIBILITY_RESTORATION",
+      "Q": "We are considering a new policy that allows more men to be taken on ships without seats, which can slightly expand the ship capacity. Of course, this increase should be kept as low as possible. Please let me know the minimum number needed to make the model feasible.",
+      "queried_components": [
+        {
+          "component_name": "shipcap",
+          "component_indexes": "slice(None, None, None)"
+        }
+      ]
+    }
+  ]
+}

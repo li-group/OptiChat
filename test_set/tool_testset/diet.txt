@@ -1,0 +1,119 @@
+Data Type: dict
+================================================================================
+
+{
+  "components_retrival": [
+    {
+      "type": "RETRIEVAL",
+      "Q": "how much nutritive value does cabbage have?",
+      "queried_components": [
+        {
+          "component_name": "a",
+          "component_indexes": [
+            "cabbage",
+            "slice(None, None, None)"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "RETRIEVAL",
+      "Q": "what are the recommended daily allowances of nutrients",
+      "queried_components": [
+        {
+          "component_name": "b",
+          "component_indexes": "slice(None, None, None)"
+        }
+      ]
+    },
+    {
+      "type": "RETRIEVAL",
+      "Q": "how much bill should I pay ideally to satisfy all the daily nutrient requirements",
+      "queried_components": [
+        {
+          "component_name": "cost",
+          "component_indexes": null
+        }
+      ]
+    }
+  ],
+  "sensitivity_analysis": [
+    {
+      "type": "SENSITIVITY",
+      "Q": "Theoretically, the required daily allowances of nutrients differ from person to person. How will the optimal cost change if the required daily allowances of protein slightly change?",
+      "queried_components": [
+        {
+          "component_name": "b",
+          "component_indexes": "protein"
+        }
+      ]
+    },
+    {
+      "type": "SENSITIVITY",
+      "Q": "Practically, the nutritive value of foods is calculated relative to their current cost. Will the total cost fluctuate very much if the price of cheese vary from time to time?",
+      "queried_components": [
+        {
+          "component_name": "a",
+          "component_indexes": [
+            "cheese",
+            "slice(None, None, None)"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "SENSITIVITY",
+      "Q": "Practically, the nutritive value of foods is calculated relative to their current cost. How stable will the optimal cost be if the nutritive value of salmon in terms of calcium fluctuates",
+      "queried_components": [
+        {
+          "component_name": "a",
+          "component_indexes": [
+            "salmon",
+            "calcium"
+          ]
+        }
+      ]
+    }
+  ],
+  "evaluate_modification": [
+    {
+      "type": "WHAT_IF",
+      "Q": "what will the optimal cost be if the calorie value of prunes increases to 18 dramatically",
+      "queried_components": [
+        {
+          "component_name": "a",
+          "component_indexes": [
+            "prunes",
+            "calorie"
+          ],
+          "operation": "=",
+          "delta": 18
+        }
+      ]
+    },
+    {
+      "type": "WHAT_IF",
+      "Q": "Theoretically, the required daily allowances of nutrients differ from person to person. What if I am an old man and the required daily allowances of calcium should be doubled? Will the optimal cost increase?",
+      "queried_components": [
+        {
+          "component_name": "b",
+          "component_indexes": "calcium",
+          "operation": "*",
+          "delta": 2
+        }
+      ]
+    },
+    {
+      "type": "WHAT_IF",
+      "Q": "Theoretically, the required daily allowances of nutrients differ from person to person. What if I am sick and the required daily allowances of vitamin-c should be 5 mg higher than the current standard value? Will the optimal cost increase?",
+      "queried_components": [
+        {
+          "component_name": "b",
+          "component_indexes": "vitamin-c",
+          "operation": "+",
+          "delta": 5
+        }
+      ]
+    }
+  ]
+}

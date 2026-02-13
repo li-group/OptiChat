@@ -1,0 +1,43 @@
+Data Type: dict
+================================================================================
+
+{
+  "feasibility_restoration": [
+    {
+      "type": "FEASIBILITY_RESTORATION",
+      "Q": "I am short of money recently, so I may prefer lowering my daily allowances of nutrients. By how much should I change the required daily allowances of nutrients to make the model feasible?",
+      "queried_components": [
+        {
+          "component_name": "b",
+          "component_indexes": "slice(None, None, None)"
+        }
+      ]
+    },
+    {
+      "type": "FEASIBILITY_RESTORATION",
+      "Q": "As a government official planning to adjust the nutritive value of foods to make the model feasible for ordinary people, by how much do I need to adjust the value of potatoes at a minimum",
+      "queried_components": [
+        {
+          "component_name": "a",
+          "component_indexes": [
+            "potatoes",
+            "slice(None, None, None)"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FEASIBILITY_RESTORATION",
+      "Q": "As a government official planning to adjust the nutritive value of foods to make the model feasible for ordinary people, by how much do I need to adjust the protein value of all the food in the market at a minimum",
+      "queried_components": [
+        {
+          "component_name": "a",
+          "component_indexes": [
+            "slice(None, None, None)",
+            "protein"
+          ]
+        }
+      ]
+    }
+  ]
+}

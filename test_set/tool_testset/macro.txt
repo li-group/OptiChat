@@ -1,0 +1,107 @@
+Data Type: dict
+================================================================================
+
+{
+  "components_retrival": [
+    {
+      "type": "RETRIEVAL",
+      "Q": "how much initial capacity does reformer have",
+      "queried_components": [
+        {
+          "component_name": "k",
+          "component_indexes": "reformer"
+        }
+      ]
+    },
+    {
+      "type": "RETRIEVAL",
+      "Q": "what are the prices of final products",
+      "queried_components": [
+        {
+          "component_name": "pf",
+          "component_indexes": "slice(None, None, None)"
+        }
+      ]
+    },
+    {
+      "type": "RETRIEVAL",
+      "Q": "how much cost should I pay for operating on the cc-gas-oil process",
+      "queried_components": [
+        {
+          "component_name": "op",
+          "component_indexes": "cc-gas-oil"
+        }
+      ]
+    }
+  ],
+  "sensitivity_analysis": [
+    {
+      "type": "SENSITIVITY",
+      "Q": "The prices of both raw materials and products in oil refinery usually fluctuate due to changes in global supply and demand. How will the optimal value change when the domestic products price vary?",
+      "queried_components": [
+        {
+          "component_name": "pd",
+          "component_indexes": "slice(None, None, None)"
+        }
+      ]
+    },
+    {
+      "type": "SENSITIVITY",
+      "Q": "The prices of both raw materials and products in oil refinery usually fluctuate due to changes in global supply and demand. Will the total profit be greatly affected when the price of one of the crude oils, mid-c, vary periodically?",
+      "queried_components": [
+        {
+          "component_name": "pr",
+          "component_indexes": "mid-c"
+        }
+      ]
+    },
+    {
+      "type": "SENSITIVITY",
+      "Q": "The prices of both raw materials and products in oil refinery usually fluctuate due to changes in global supply and demand. To what extent will the total profit remain stable if the price of final product, fuel-oil, is changing in the market",
+      "queried_components": [
+        {
+          "component_name": "pf",
+          "component_indexes": "fuel-oil"
+        }
+      ]
+    }
+  ],
+  "evaluate_modification": [
+    {
+      "type": "WHAT_IF",
+      "Q": "what will the optimal profit be if the domestic products price of butane is changed to 7",
+      "queried_components": [
+        {
+          "component_name": "pd",
+          "component_indexes": "butane",
+          "operation": "=",
+          "delta": 7
+        }
+      ]
+    },
+    {
+      "type": "WHAT_IF",
+      "Q": "What if there is a the crisis of crude oil and the price of mid-c is raised to 9, what will the optimal profit be?",
+      "queried_components": [
+        {
+          "component_name": "pr",
+          "component_indexes": "mid-c",
+          "operation": "=",
+          "delta": 9
+        }
+      ]
+    },
+    {
+      "type": "WHAT_IF",
+      "Q": "What if more and more electric cars are produced nowadays and the price of fuel-oil as a final product is decreased by 1? What will happen to our optimal profit?",
+      "queried_components": [
+        {
+          "component_name": "pf",
+          "component_indexes": "fuel-oil",
+          "operation": "-",
+          "delta": 1
+        }
+      ]
+    }
+  ]
+}

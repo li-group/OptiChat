@@ -19,11 +19,14 @@ from optichat.config.constants import (IS_SESSION_INITIALIZED, PERSISTENT_STATES
                                        IS_MODELS_DICTIONARY_AVAILABLE,
                                        IS_MODELS_CODE_AVAILABLE, IS_MODELS_PAPER_AVAILABLE,
                                        SYNTHETIC_PAPER_GENERATED, NEED_SYNTHETIC_PAPER,
-                                       MODEL_FOR_PAPER_GENERATION, USER_QUERY)
+                                       MODEL_FOR_PAPER_GENERATION, USER_QUERY,
+                                       HAS_INFEASIBILITY_DIAGNOSIS, INFEASIBILITY_DIAGNOSIS)
 from optichat.tools.extract_tool import restore_model_object, save_model_object, extract_model_info, _solve_model
 from optichat.tools.rag_tool import init_paper_rag, init_code_rag
 from optichat.tools.metadata_store import (load_metadata, save_metadata, save_model_data,
                                            add_model_to_metadata)
+from optichat.sub_agents.expert.prompt import get_expert_agent_prompt
+import re
 
 
 def format_models_metadata_for_prompt(historical_metadata: dict) -> str:
@@ -171,6 +174,69 @@ def initialize_session(callback_context: CallbackContext):
     return None
 
 
+def _find_and_copy_source_file(version_name: str, cfg: dict) -> Optional[str]:
+    """
+    Find the .py source file for this model and copy it to tmp folder.
+    
+    Strategy:
+    1. Check models_code paths in config for {version}.py
+    2. If found, copy to tmp/model_objects/{version}.py
+    3. Return the tmp path
+    
+    Args:
+        version_name: Model version name (e.g., 'RTN_inf_1')
+        cfg: Configuration dictionary
+    
+    Returns:
+        Path to copied .py file in tmp, or None if not found
+    """
+    import shutil
+    
+    if "models_code" not in cfg:
+        logger.debug(f"No models_code in config, skipping source file copy for {version_name}")
+        return None
+    
+    # Look for source file in config paths
+    code_paths = cfg["models_code"].get("local_resources", [])
+    source_file = None
+    
+    for path in code_paths:
+        if "*" in path:
+            # Handle wildcard paths (e.g., "Infeas/*.py")
+            matches = glob.glob(path.replace("*", f"{version_name}"))
+            if matches:
+                source_file = matches[0]
+                logger.debug(f"Found source file via wildcard: {source_file}")
+                break
+        elif version_name in path and path.endswith(".py"):
+            # Direct path match
+            source_file = path
+            logger.debug(f"Found source file via direct match: {source_file}")
+            break
+    
+    if not source_file or not os.path.exists(source_file):
+        logger.warning(f"No .py source file found for {version_name}")
+        return None
+    
+    # Copy to tmp/model_objects
+    tmp_dir = os.path.join(os.getcwd(), "tmp/model_objects")
+    os.makedirs(tmp_dir, exist_ok=True)
+    
+    # Create tmp/inf_detail directory for infeasibility diagnosis reports
+    inf_detail_dir = os.path.join(os.getcwd(), "tmp/inf_detail")
+    os.makedirs(inf_detail_dir, exist_ok=True)
+    
+    dest_path = os.path.join(tmp_dir, f"{version_name}.py")
+    
+    try:
+        shutil.copy2(source_file, dest_path)
+        logger.info(f"Copied source file: {source_file} -> {dest_path}")
+        return dest_path
+    except Exception as e:
+        logger.error(f"Failed to copy source file {source_file}: {e}")
+        return None
+
+
 def _init_models(cfg: dict):
     """
     Initialize models with new architecture:
@@ -211,6 +277,11 @@ def _init_models(cfg: dict):
             local_path_to_object = save_model_object(model, version)
             info.update({"local_path_to_object": local_path_to_object})
 
+            # NEW: Copy .py source file to tmp if it exists
+            source_py_path = _find_and_copy_source_file(version, cfg)
+            if source_py_path:
+                info.update({"source_file_path": source_py_path})
+
             # Save full model data to individual file
             save_model_data(version, info)
 
@@ -224,7 +295,8 @@ def _init_models(cfg: dict):
                 version_name=version,
                 model_info=info,
                 base_model=None,
-                description=None  # Will auto-generate "Base model: {version}"
+                description=None,  # Will auto-generate "Base model: {version}"
+                source_file_path=source_py_path  # NEW: track .py file path
             )
 
             # Update historical_metadata dict
@@ -376,6 +448,22 @@ def check_is_expert_agent_used(callback_context: CallbackContext):
         # Only set start time on first use
         if expert_agent_uses == 0:
             callback_context.state[EXPERT_AGENT_START_TIME] = time.time()
+            callback_context.state[EXPERT_AGENT_START_TIME] = time.time()
+        
+        # Parse Analysis Type from User Query (Agent Input)
+        user_query = ""
+        if callback_context.user_content and callback_context.user_content.parts:
+            user_query = callback_context.user_content.parts[0].text or ""
+
+        analysis_type = "GENERAL" # Default
+        
+        # Regex to find tags like [WHAT_IF], [RETRIEVAL] at start of query
+        match = re.search(r"^\[(FEASIBILITY_RESTORATION|DIAGNOSING|RETRIEVAL|SENSITIVITY|WHAT_IF|WHY_NOT)\]", user_query, re.IGNORECASE)
+        if match:
+            analysis_type = match.group(1).upper()
+            logger.info(f"Detected Analysis Type: {analysis_type}")
+        
+        callback_context.state["CURRENT_ANALYSIS_TYPE"] = analysis_type
         return None
 
 
@@ -405,7 +493,212 @@ def check_llm_request(callback_context: CallbackContext, llm_request: LlmRequest
     logger.info((f"[Callback] Inspecting LLM request from '{agent_name}': "
                  f"{original_text[:show_first_n_chars]}"
                  f"\n... (showing only the first {show_first_n_chars} characters)"))
+                   
+    # Dynamic Prompt Injection for Expert Agent
+    if agent_name == "expert_agent":
+        analysis_type = callback_context.state.get("CURRENT_ANALYSIS_TYPE", "DIAGNOSING")
+        logger.info(f"Injecting Dynamic Prompt for {agent_name} with strategy: {analysis_type}")
+
+        try:
+            # Inject source code for code-modification queries
+            model_source_code = None
+            if analysis_type in ["WHAT_IF", "WHY_NOT", "FEASIBILITY_RESTORATION"]:
+                model_source_code = _get_source_code_for_prompt(callback_context.state)
+
+            # Inject diagnosis report for feasibility restoration queries
+            diagnosis_report = None
+            cached_model_name = None  # Track the model name for diagnosis status
+            if analysis_type == "FEASIBILITY_RESTORATION":
+                user_query = callback_context.state.get(USER_QUERY, "")
+                models_dictionary = callback_context.state.get(MODELS_DICTIONARY, {})
+
+                # Identify which model the user is asking about
+                base_model_name = _extract_base_model_from_query(user_query, models_dictionary)
+
+                if base_model_name:
+                    logger.info(f"Identified base model for diagnosis report: {base_model_name}")
+                    diagnosis_data = _load_infeasibility_diagnosis_report(base_model_name)
+                    if diagnosis_data:
+                        diagnosis_report = _format_diagnosis_for_prompt(diagnosis_data)
+                        cached_model_name = base_model_name  # Store for prompt injection
+                        logger.info("✓ Diagnosis report formatted and ready for injection")
+                    else:
+                        logger.warning(f"No diagnosis report found for {base_model_name}")
+                else:
+                    logger.warning("Could not identify base model from query for diagnosis report")
+
+            new_prompt_text = get_expert_agent_prompt(
+                prompt_version=1,
+                analysis_type=analysis_type,
+                model_source_code=model_source_code,
+                diagnosis_report=diagnosis_report,
+                cached_model_name=cached_model_name
+            )
+            # Create new Content object
+            # new_instruction = types.Content(
+            #    role="system", 
+            #    parts=[types.Part(text=new_prompt_text)]
+            # )
+            # Overwrite the system instruction in the request config
+            # Litellm seems to expect string for system message content or fails to serialize types.Content
+            llm_request.config.system_instruction = new_prompt_text
+        except Exception as e:
+            logger.error(f"Failed to inject dynamic prompt: {e}")
+
     return None
+
+
+def _get_source_code_for_prompt(state: dict) -> Optional[str]:
+    """
+    Retrieve and format source code for the base model referenced in query.
+    
+    Returns formatted source code string or None if not available.
+    """
+    from optichat.tools.source_code_utils import (
+        get_source_code_for_model,
+        format_source_for_prompt
+    )
+    
+    # 1. Identify base model
+    user_query = state.get(USER_QUERY, "")
+    models_dict = state.get(MODELS_DICTIONARY, {})
+    historical_metadata = state.get(HISTORICAL_MODELS_METADATA, {})
+    
+    base_model = _extract_base_model_from_query(user_query, models_dict)
+    if not base_model:
+        logger.warning("Could not identify base model for source code injection")
+        return None
+    
+    # 2. Check cache
+    cache_key = f"SOURCE_CODE_{base_model}"
+    if cache_key in state:
+        logger.info(f"Using cached source code for {base_model}")
+        return state[cache_key]
+    
+    # 3. Retrieve source code
+    source_code = get_source_code_for_model(base_model, models_dict, historical_metadata)
+    if not source_code:
+        logger.warning(f"No source code found for {base_model}")
+        return None
+    
+    # 4. Get pkl path
+    model_info = models_dict.get(base_model, {})
+    pkl_path = model_info.get("local_path_to_object", "unknown")
+    
+    # 5. Format for prompt
+    formatted_source = format_source_for_prompt(source_code, base_model, pkl_path, historical_metadata)
+    
+    # 6. Cache it
+    state[cache_key] = formatted_source
+    
+    logger.info(f"Injecting {len(formatted_source)} chars of source code for {base_model}")
+    return formatted_source
+
+
+def _extract_base_model_from_query(user_query: str, models_dictionary: dict) -> Optional[str]:
+    """
+    Extract the base model name from user query.
+    Prefer base models (no __) over modified versions.
+    """
+    # Remove analysis tag
+    query_clean = re.sub(r'^\[(WHAT_IF|WHY_NOT|FEASIBILITY_RESTORATION)\]\s*', 
+                         '', user_query, flags=re.IGNORECASE)
+    
+    # Look for explicit model mentions (prefer longer matches to avoid partial matches)
+    for version in sorted(models_dictionary.keys(), key=lambda v: len(v), reverse=True):
+        if version in query_clean and "__" not in version:
+            return version
+    
+    # Default to first base model
+    for version in models_dictionary.keys():
+        if "__" not in version:
+            return version
+
+    return None
+
+
+def _load_infeasibility_diagnosis_report(model_name: str) -> Optional[dict]:
+    """
+    Load infeasibility diagnosis report from tmp/inf_detail/{model_name}_inf_detail.json.
+
+    Args:
+        model_name: Base model name (e.g., 'diet_inf_1', 'aircraft_inf_1')
+
+    Returns:
+        Dictionary with diagnosis data, or None if file doesn't exist
+    """
+    report_path = os.path.join(os.getcwd(), "tmp/inf_detail", f"{model_name}_inf_detail.json")
+
+    if not os.path.exists(report_path):
+        logger.warning(f"No diagnosis report found at: {report_path}")
+        return None
+
+    try:
+        with open(report_path, 'r') as f:
+            diagnosis_data = json.load(f)
+        logger.info(f"✓ Loaded diagnosis report for {model_name}")
+        return diagnosis_data
+    except Exception as e:
+        logger.error(f"Failed to load diagnosis report from {report_path}: {e}")
+        return None
+
+
+def _format_diagnosis_for_prompt(diagnosis_data: dict) -> str:
+    """
+    Format the diagnosis report JSON into a readable prompt section.
+    Only works with data from {model}_inf_detail.json.
+
+    Args:
+        diagnosis_data: Dictionary loaded from {model}_inf_detail.json
+
+    Returns:
+        Formatted string for prompt injection
+    """
+    if not diagnosis_data:
+        return "(No prior diagnosis report available)"
+
+    sections = []
+    sections.append("## PRIOR INFEASIBILITY DIAGNOSIS REPORT")
+    sections.append("")
+
+    # Add model name
+    if "model_name" in diagnosis_data:
+        sections.append(f"**Model:** {diagnosis_data['model_name']}")
+
+    # Add diagnosis summary
+    if "diagnosis_summary" in diagnosis_data:
+        sections.append(f"**Summary:** {diagnosis_data['diagnosis_summary']}")
+
+    # Add conflicting constraints
+    if "conflicting_constraints" in diagnosis_data:
+        sections.append("\n**Conflicting Constraints:**")
+        for constraint in diagnosis_data["conflicting_constraints"]:
+            sections.append(f"  - {constraint}")
+
+    # Add recommended relaxations
+    if "recommended_relaxations" in diagnosis_data:
+        sections.append("\n**Recommended Relaxations:**")
+        for relaxation in diagnosis_data["recommended_relaxations"]:
+            sections.append(f"  - {relaxation}")
+
+    # Add any elastic analysis results
+    if "elastic_analysis" in diagnosis_data:
+        sections.append("\n**Elastic Analysis Results:**")
+        elastic = diagnosis_data["elastic_analysis"]
+        if isinstance(elastic, dict):
+            for key, value in elastic.items():
+                sections.append(f"  - {key}: {value}")
+        else:
+            sections.append(f"  {elastic}")
+
+    sections.append("")
+    sections.append("**IMPORTANT:** Use this diagnosis to guide your feasibility restoration approach.")
+    sections.append("You should NOT call the infeasibility_diagnosis tool again unless the user explicitly requests a fresh diagnosis.")
+
+    return "\n".join(sections)
+
+
+
 
 
 def check_llm_response(callback_context: CallbackContext, llm_response: LlmResponse):
@@ -450,7 +743,7 @@ def check_tool_response(tool: BaseTool,
                         args: Dict[str, Any],
                         tool_context: ToolContext,
                         tool_response: Dict):
-    show_first_n_chars = 500
+    show_first_n_chars = None
     agent_name = tool_context.agent_name
     tool_name = tool.name
     # AgentTool may return str instead of Dict as tool_response
@@ -485,9 +778,93 @@ def check_tool_response(tool: BaseTool,
             raise RuntimeError(f"Token counting failed: {e}.")
     else:
         logger.debug(f"max tokens key '{max_tokens_key}' not found in the state. Skipping tool response check.")
-    logger.info(f"'{tool_name.upper()}' execution result: {result[:show_first_n_chars]}"
-                f"\n... (showing only the first {show_first_n_chars} characters)")
+    
+    # Log the result - only show truncation message if actually truncating
+    if show_first_n_chars is not None:
+        logger.info(f"'{tool_name.upper()}' execution result: {result[:show_first_n_chars]}"
+                    f"\n... (showing only the first {show_first_n_chars} characters)")
+    else:
+        logger.info(f"'{tool_name.upper()}' execution result: {result}")
+    
     return None  # Return None to indicate no modification to tool_response
+
+
+def diagnose_if_infeasible(callback_context: CallbackContext):
+    """
+    Run infeasibility diagnosis before illustrator generates description.
+
+    This callback is triggered when the illustrator agent starts processing.
+    If the model is infeasible, it automatically runs the infeasibility diagnosis
+    and stores the results in state for the illustrator to access.
+
+    Args:
+        callback_context: Callback context with state
+
+    Returns:
+        None (modifies state in-place)
+    """
+    from pyomo.opt import TerminationCondition
+
+    # Get model information
+    model_name = callback_context.state.get(MODEL_FOR_PAPER_GENERATION, "")
+    models_dict = callback_context.state.get(MODELS_DICTIONARY, {})
+
+    if not model_name or model_name not in models_dict:
+        logger.warning("[DIAGNOSE_IF_INFEASIBLE] No model to diagnose or model not found")
+        callback_context.state[HAS_INFEASIBILITY_DIAGNOSIS] = False
+        return None
+
+    # Check model status
+    model_info = models_dict.get(model_name, {})
+    status = model_info.get("obj", {}).get("sol_status", "unknown")
+
+    logger.info(f"[DIAGNOSE_IF_INFEASIBLE] Model '{model_name}' status: {status}")
+
+    # Check if infeasible
+    is_infeasible = (
+        status == TerminationCondition.infeasible or
+        status == TerminationCondition.infeasibleOrUnbounded or
+        str(status) == "infeasible" or
+        str(status) == "infeasibleOrUnbounded"
+    )
+
+    if is_infeasible:
+        logger.info(f"[DIAGNOSE_IF_INFEASIBLE] Model '{model_name}' is INFEASIBLE. Running diagnosis...")
+
+        try:
+            # Import diagnosis tool
+            from optichat.tools.custom_tool import infeasibility_diagnosis
+
+            # Pass callback_context directly - both CallbackContext and ToolContext have .state
+            # The diagnosis function only accesses .state, so this works via duck typing
+            diagnosis_result = infeasibility_diagnosis(model_name, callback_context)
+
+            # Update state with diagnosis results
+            callback_context.state[INFEASIBILITY_DIAGNOSIS] = diagnosis_result
+            callback_context.state[HAS_INFEASIBILITY_DIAGNOSIS] = True
+
+            # Note: callback_context.state is already modified in-place by infeasibility_diagnosis
+            # so MODELS_DICTIONARY already contains any new relaxed model versions
+
+            logger.info("[DIAGNOSE_IF_INFEASIBLE] ✓ Diagnosis completed successfully")
+            logger.info(f"[DIAGNOSE_IF_INFEASIBLE] Diagnosis status: {diagnosis_result.get('status', 'unknown')}")
+
+        except Exception as e:
+            logger.error(f"[DIAGNOSE_IF_INFEASIBLE] Failed to run diagnosis: {e}")
+            import traceback
+            logger.debug(traceback.format_exc())
+
+            # Store error information
+            callback_context.state[INFEASIBILITY_DIAGNOSIS] = {
+                "status": "error",
+                "result": f"Diagnosis failed: {str(e)}"
+            }
+            callback_context.state[HAS_INFEASIBILITY_DIAGNOSIS] = True
+    else:
+        logger.info(f"[DIAGNOSE_IF_INFEASIBLE] Model '{model_name}' is FEASIBLE. No diagnosis needed.")
+        callback_context.state[HAS_INFEASIBILITY_DIAGNOSIS] = False
+
+    return None
 
 
 def handle_illustrator_response(tool: BaseTool,

@@ -1,0 +1,37 @@
+Data Type: dict
+================================================================================
+
+{
+  "feasibility_restoration": [
+    {
+      "type": "FEASIBILITY_RESTORATION",
+      "Q": "It seems that the troop requires too many soldiers. By how many soldiers do I need to reduce to recover feasibility?",
+      "queried_components": [
+        {
+          "component_name": "req",
+          "component_indexes": "slice(None, None, None)"
+        }
+      ]
+    },
+    {
+      "type": "FEASIBILITY_RESTORATION",
+      "Q": "It seems that the troop requires too many soldiers. By how many soldiers do I need to reduce in the first year to recover feasibility?",
+      "queried_components": [
+        {
+          "component_name": "req",
+          "component_indexes": 1
+        }
+      ]
+    },
+    {
+      "type": "FEASIBILITY_RESTORATION",
+      "Q": "It seems that the troop requires too many soldiers. By how many soldiers do I need to reduce to recover feasibility? Please note that we can only lower the requirement in the 10th year.",
+      "queried_components": [
+        {
+          "component_name": "req",
+          "component_indexes": 10
+        }
+      ]
+    }
+  ]
+}

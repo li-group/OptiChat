@@ -1,0 +1,82 @@
+Data Type: dict
+================================================================================
+
+{
+  "components_retrival": [
+    {
+      "type": "RETRIEVAL",
+      "Q": "How many men need to be transported from chumphon",
+      "queried_components": [
+        {
+          "component_name": "d",
+          "component_indexes": "chumphon"
+        }
+      ]
+    },
+    {
+      "type": "RETRIEVAL",
+      "Q": "show me the optimal usage of ships in voyage 3",
+      "queried_components": [
+        {
+          "component_name": "z",
+          "component_indexes": [
+            "v-03",
+            "slice(None, None, None)"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "RETRIEVAL",
+      "Q": "in the optimal scenario, how many men will be transported in voyage 2 in the large ship from nakon",
+      "queried_components": [
+        {
+          "component_name": "y",
+          "component_indexes": [
+            "v-02",
+            "large",
+            "nakon"
+          ]
+        }
+      ]
+    }
+  ],
+  "evaluate_modification": [
+    {
+      "type": "WHAT_IF",
+      "Q": "We heard that the number of men at surat has decreased by 100 due to some incidents. Will this affect the optimal cost?",
+      "queried_components": [
+        {
+          "component_name": "d",
+          "component_indexes": "surat",
+          "operation": "-",
+          "delta": 100
+        }
+      ]
+    },
+    {
+      "type": "WHAT_IF",
+      "Q": "What will happen to the optimal objective value if some seats in all kinds of ships are under maintenance, resulting in all ship capacities being reduced by 10?",
+      "queried_components": [
+        {
+          "component_name": "shipcap",
+          "component_indexes": "slice(None, None, None)",
+          "operation": "-",
+          "delta": 10
+        }
+      ]
+    },
+    {
+      "type": "WHAT_IF",
+      "Q": "What will happen to the optimal objective value if there is 1 medium ship is under maintenance so that the number of ships available is reduced by 1?",
+      "queried_components": [
+        {
+          "component_name": "n",
+          "component_indexes": "medium",
+          "operation": "-",
+          "delta": 1
+        }
+      ]
+    }
+  ]
+}

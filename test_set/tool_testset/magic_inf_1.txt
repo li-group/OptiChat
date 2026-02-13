@@ -1,0 +1,41 @@
+Data Type: dict
+================================================================================
+
+{
+  "feasibility_restoration": [
+    {
+      "type": "FEASIBILITY_RESTORATION",
+      "Q": "Adjusting the number of generators is somewhat difficult, but not impossible. Could you let me know the minimum change required to make the model feasible? Please note that we cannot increase the number of type-3 generators, as we already have all the type-3 generators available nationwide.",
+      "queried_components": [
+        {
+          "component_name": "number",
+          "component_indexes": "type-1"
+        },
+        {
+          "component_name": "number",
+          "component_indexes": "type-2"
+        }
+      ]
+    },
+    {
+      "type": "FEASIBILITY_RESTORATION",
+      "Q": "We can negotiate customer demand with our clients. Can you determine if adjusting their demand can fix the infeasibility in the current model?",
+      "queried_components": [
+        {
+          "component_name": "dem",
+          "component_indexes": "slice(None, None, None)"
+        }
+      ]
+    },
+    {
+      "type": "FEASIBILITY_RESTORATION",
+      "Q": "We can actually increase the maximum power limit, although it will shorten the generators\u2019 working life. Please tell me the minimum change required to make the model feasible",
+      "queried_components": [
+        {
+          "component_name": "maxpow",
+          "component_indexes": "slice(None, None, None)"
+        }
+      ]
+    }
+  ]
+}

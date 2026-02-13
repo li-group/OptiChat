@@ -5,7 +5,8 @@ from optichat.llm import gpt_5_mini
 from optichat.sub_agents.illustrator.prompt import ILLUSTRATOR_PROMPT
 from optichat.tools.illustrator_tool import get_model_info_for_description
 from optichat.tools.callback_tool import (check_llm_request, check_llm_response,
-                                          check_tool_usage, check_tool_response)
+                                          check_tool_usage, check_tool_response,
+                                          diagnose_if_infeasible)
 
 
 def create_illustrator_agent():
@@ -30,6 +31,7 @@ def create_illustrator_agent():
         ),
         instruction=ILLUSTRATOR_PROMPT,
         output_key="MODEL_DESCRIPTION",
+        before_agent_callback=diagnose_if_infeasible,  # NEW: Run diagnosis if model is infeasible
         before_model_callback=check_llm_request,
         after_model_callback=check_llm_response,
         before_tool_callback=check_tool_usage,

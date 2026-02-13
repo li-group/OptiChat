@@ -1,0 +1,46 @@
+Data Type: dict
+================================================================================
+
+{
+  "feasibility_restoration": [
+    {
+      "type": "FEASIBILITY_RESTORATION",
+      "Q": "All of our contracts end at time point 7, so it should be okay to reset the external flows. Please specify how much should I adjust to recover model feasibility",
+      "queried_components": [
+        {
+          "component_name": "Pi",
+          "component_indexes": [
+            "slice(None, None, None)",
+            7
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FEASIBILITY_RESTORATION",
+      "Q": "It is somewhat flexible to negotiate with my clients to adjust the Product_2 that flow in or flow out. Please let me know the minimum amount of external flow-in or flow-out of Product_2 to make the model feasible.",
+      "queried_components": [
+        {
+          "component_name": "Pi",
+          "component_indexes": [
+            "Product_2",
+            "slice(None, None, None)"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FEASIBILITY_RESTORATION",
+      "Q": "It is somewhat flexible to negotiate with my clients to adjust the second product's external flow. Please let me know the minimum amount of additional flow-in or flow-out to make the model feasible.",
+      "queried_components": [
+        {
+          "component_name": "Pi",
+          "component_indexes": [
+            "Product_2",
+            "slice(None, None, None)"
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+Data Type: dict
+================================================================================
+
+{
+  "external_tools": [
+    {
+      "type": "WHY_IF",
+      "Q": "Suppose there is a new minimum generation constraint for fuel cell, which enforces fuel generation to be no less than 10 per hour, to prevent the generator from being idle. How does it change the decision and the cost?",
+      "A": "We need to add an additional constraint to the fuel cell to ensure the fuel generation is at least 10 for all time. The result shows that the total cost increased by 60, from 2063.5 to 2123.5. The load demand is satisfied using more fuel power and less of other resources. Fuel generation is increased by 120, PV is decreased by 50, and wind is decreased by 70."
+    }
+  ]
+}

@@ -1,0 +1,81 @@
+Data Type: dict
+================================================================================
+
+{
+  "components_retrival": [
+    {
+      "type": "RETRIEVAL",
+      "Q": "How much initial resource inventory do we have for resource D",
+      "queried_components": [
+        {
+          "component_name": "X0",
+          "component_indexes": "D"
+        }
+      ]
+    },
+    {
+      "type": "RETRIEVAL",
+      "Q": "what are the maximum resource inventories that we can have",
+      "queried_components": [
+        {
+          "component_name": "Xmax",
+          "component_indexes": "slice(None, None, None)"
+        }
+      ]
+    },
+    {
+      "type": "RETRIEVAL",
+      "Q": "show me the optimal task decision for every node at time point 3",
+      "queried_components": [
+        {
+          "component_name": "N",
+          "component_indexes": [
+            "slice(None, None, None)",
+            3
+          ]
+        }
+      ]
+    }
+  ],
+  "evaluate_modification": [
+    {
+      "type": "WHAT_IF",
+      "Q": "We have to have 3 more units of external flow-out from resource D at time point 5, will this affect the optimal cost?",
+      "queried_components": [
+        {
+          "component_name": "Pi",
+          "component_indexes": [
+            "D",
+            5
+          ],
+          "operation": "-",
+          "delta": 3
+        }
+      ]
+    },
+    {
+      "type": "WHAT_IF",
+      "Q": "what will happen to the optimal objective value, if it happens that all reactors are upgraded so that the maximum batch size is 10 units larger than the current size?",
+      "queried_components": [
+        {
+          "component_name": "Vmax",
+          "component_indexes": "slice(None, None, None)",
+          "operation": "+",
+          "delta": 10
+        }
+      ]
+    },
+    {
+      "type": "WHAT_IF",
+      "Q": "If we must force the minimum resource inventory at node C to be increased by 4 because of a proposed commercial policy, what will the optimal cost be?",
+      "queried_components": [
+        {
+          "component_name": "Xmin",
+          "component_indexes": "C",
+          "operation": "+",
+          "delta": 4
+        }
+      ]
+    }
+  ]
+}
