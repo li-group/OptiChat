@@ -1,15 +1,16 @@
 {
-    "model_name": "multipleMB",
-    "models": {
-        "local_resources": [
-            "Feas/multipleMB.pkl"
-        ],
-        "is_solved": false,
-        "is_lp": false
-    },
-    "models_code": {
-        "local_resources": [
-            "Feas/multipleMB.py"
-        ]
-    }
+  "model_name": "multipleMB",
+  "models": {
+    "local_resources": [
+      "Feas/multipleMB.py"
+    ],
+    "is_solved": false,
+    "is_lp": false,
+    "json_data_path": "Feas/multipleMB_data.json"
+  },
+  "models_code": {
+    "local_resources": [
+      "Feas/multipleMB.py"
+    ]
+  }
 }

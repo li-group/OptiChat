@@ -1,0 +1,155 @@
+{
+    "sets": {
+        "c": ["crude", "butane", "mid-c", "w-tex", "sr-gas", "sr-naphtha", "sr-dist", "sr-gas-oil", "sr-res", "rf-gas", "fuel-gas", "cc-gas", "cc-gas-oil", "hydro-res", "premium", "regular", "distillate", "fuel-oil"],
+        "cf": ["premium", "regular", "distillate", "fuel-oil", "fuel-gas"],
+        "cr": ["mid-c", "w-tex"],
+        "ci": ["butane", "sr-gas", "sr-naphtha", "sr-dist", "sr-gas-oil", "sr-res", "rf-gas", "fuel-gas", "cc-gas", "cc-gas-oil", "hydro-res"],
+        "cd": ["butane"],
+        "p": ["a-dist", "n-reform", "cc-dist", "cc-gas-oil", "hydro"],
+        "m": ["a-still", "reformer", "c-crack", "hydro"],
+        "q": ["octane", "vapor-pr", "density", "sulfur"],
+        "bp_tuples": [
+            ["premium", "butane"],
+            ["premium", "sr-gas"],
+            ["premium", "rf-gas"],
+            ["premium", "cc-gas"],
+            ["premium", "sr-naphtha"],
+            ["regular", "butane"],
+            ["regular", "sr-gas"],
+            ["regular", "rf-gas"],
+            ["regular", "cc-gas"],
+            ["regular", "sr-naphtha"],
+            ["distillate", "sr-dist"],
+            ["distillate", "sr-naphtha"],
+            ["distillate", "sr-gas-oil"],
+            ["distillate", "cc-gas-oil"],
+            ["fuel-oil", "sr-gas-oil"],
+            ["fuel-oil", "sr-res"],
+            ["fuel-oil", "cc-gas-oil"],
+            ["fuel-oil", "hydro-res"],
+            ["fuel-gas", "fuel-gas"]
+        ]
+    },
+    "parameters": {
+        "a_values": {
+            "mid-c,crude,a-dist": -1.0,
+            "mid-c,sr-gas,a-dist": 0.236,
+            "mid-c,sr-naphtha,a-dist": 0.223,
+            "mid-c,sr-naphtha,n-reform": -1.0,
+            "mid-c,sr-dist,a-dist": 0.087,
+            "mid-c,sr-dist,cc-dist": -1.0,
+            "mid-c,sr-gas-oil,a-dist": 0.111,
+            "mid-c,sr-gas-oil,cc-gas-oil": -1.0,
+            "mid-c,sr-res,a-dist": 0.315,
+            "mid-c,rf-gas,n-reform": 0.807,
+            "mid-c,fuel-gas,a-dist": 0.029,
+            "mid-c,fuel-gas,n-reform": 0.129,
+            "mid-c,fuel-gas,cc-dist": 0.3,
+            "mid-c,fuel-gas,cc-gas-oil": 0.31,
+            "mid-c,cc-gas,cc-dist": 0.59,
+            "mid-c,cc-gas,cc-gas-oil": 0.59,
+            "mid-c,cc-gas-oil,cc-dist": 0.21,
+            "mid-c,cc-gas-oil,cc-gas-oil": 0.22,
+            "w-tex,crude,a-dist": -1.0,
+            "w-tex,sr-gas,a-dist": 0.18,
+            "w-tex,sr-naphtha,a-dist": 0.196,
+            "w-tex,sr-naphtha,n-reform": -1.0,
+            "w-tex,sr-dist,a-dist": 0.073,
+            "w-tex,sr-dist,cc-dist": -1.0,
+            "w-tex,sr-gas-oil,a-dist": 0.091,
+            "w-tex,sr-gas-oil,cc-gas-oil": -1.0,
+            "w-tex,sr-res,hydro": -1.0,
+            "w-tex,rf-gas,n-reform": 0.836,
+            "w-tex,fuel-gas,a-dist": 0.017,
+            "w-tex,fuel-gas,n-reform": 0.099,
+            "w-tex,fuel-gas,cc-dist": 0.36,
+            "w-tex,fuel-gas,cc-gas-oil": 0.38,
+            "w-tex,cc-gas,cc-dist": 0.58,
+            "w-tex,cc-gas,cc-gas-oil": 0.6,
+            "w-tex,cc-gas-oil,cc-dist": 0.15,
+            "w-tex,cc-gas-oil,cc-gas-oil": 0.15,
+            "w-tex,hydro-res,hydro": 0.97
+        },
+        "b_values": {
+            "a-still,a-dist": 1.0,
+            "reformer,n-reform": 1.0,
+            "c-crack,cc-gas-oil": 1.0
+        },
+        "k_values": {
+            "a-still": 100,
+            "reformer": 20,
+            "c-crack": 30
+        },
+        "pd_values": {
+            "butane": 6.75
+        },
+        "pr_values": {
+            "mid-c": 7.5,
+            "w-tex": 6.5
+        },
+        "pf_values": {
+            "premium": 10.5,
+            "regular": 9.1,
+            "distillate": 7.7,
+            "fuel-gas": 1.5,
+            "fuel-oil": 6.65
+        },
+        "ur_values": {
+            "mid-c": 200,
+            "w-tex": 200
+        },
+        "op_values": {
+            "a-dist": 0.1,
+            "n-reform": 0.15,
+            "cc-dist": 0.8,
+            "cc-gas-oil": 0.08,
+            "hydro": 0.1
+        },
+        "qs_values": {
+            "lower,premium,octane": 90,
+            "lower,regular,octane": 86,
+            "upper,premium,vapor-pr": 12.7,
+            "upper,regular,vapor-pr": 12.7,
+            "upper,distillate,density": 306,
+            "upper,distillate,sulfur": 0.5,
+            "upper,fuel-oil,density": 352,
+            "upper,fuel-oil,sulfur": 3.5
+        },
+        "at_values": {
+            "sr-gas,octane": 78.5,
+            "sr-gas,vapor-pr": 18.4,
+            "sr-naphtha,octane": 65.0,
+            "sr-naphtha,vapor-pr": 6.54,
+            "rf-gas,octane": 104.0,
+            "rf-gas,vapor-pr": 2.57,
+            "cc-gas,octane": 93.7,
+            "cc-gas,vapor-pr": 6.9,
+            "butane,octane": 91.8,
+            "butane,vapor-pr": 199.2
+        },
+        "atc_values": {
+            "mid-c,sr-naphtha,density": 272.0,
+            "mid-c,sr-naphtha,sulfur": 0.283,
+            "mid-c,sr-dist,density": 292.0,
+            "mid-c,sr-dist,sulfur": 0.526,
+            "mid-c,sr-gas-oil,density": 295.0,
+            "mid-c,sr-gas-oil,sulfur": 0.98,
+            "mid-c,cc-gas-oil,density": 294.4,
+            "mid-c,cc-gas-oil,sulfur": 0.353,
+            "mid-c,sr-res,density": 343.0,
+            "mid-c,sr-res,sulfur": 4.7,
+            "w-tex,sr-naphtha,density": 272.0,
+            "w-tex,sr-naphtha,sulfur": 1.48,
+            "w-tex,sr-dist,density": 297.6,
+            "w-tex,sr-dist,sulfur": 2.83,
+            "w-tex,sr-gas-oil,density": 303.3,
+            "w-tex,sr-gas-oil,sulfur": 5.05,
+            "w-tex,sr-res,density": 365.0,
+            "w-tex,sr-res,sulfur": 11.0,
+            "w-tex,cc-gas-oil,density": 299.1,
+            "w-tex,cc-gas-oil,sulfur": 1.31,
+            "w-tex,hydro-res,density": 365.0,
+            "w-tex,hydro-res,sulfur": 6.0
+        }
+    }
+}

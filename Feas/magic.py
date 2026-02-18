@@ -1,35 +1,39 @@
 #adapted from magic.gms : Magic Power Scheduling Problem (GAMS Model Library)
 #https://www.gams.com/latest/gamslib_ml/libhtml/gamslib_magic.html
 from pyomo.environ import *
+import json
+
+data = globals().get("data", {})
+# with open('magic_data.json') as f:
+#     data = json.load(f)
 
 # Model
 model = ConcreteModel()
 
+
 # Sets
-model.t = Set(initialize=['12pm-6am', '6am-9am', '9am-3pm', '3pm-6pm', '6pm-12pm'])  # demand blocks
-model.g = Set(initialize=['type-1', 'type-2', 'type-3'])  # generators
-pre_t = {'6am-9am': '12pm-6am', '9am-3pm': '6am-9am', '3pm-6pm': '9am-3pm', '6pm-12pm': '3pm-6pm'}
+model.t = Set(initialize=data["sets"]["Demand_Block"])  # demand blocks
+model.g = Set(initialize=data["sets"]["Generators"])  # generators
+pre_t = data["sets"]["predecessors"]
+
+
 # Parameters
 # Demand (1000mw)
-dem_init = {'12pm-6am': 15, '6am-9am': 30, '9am-3pm': 25, '3pm-6pm': 40, '6pm-12pm': 27}
-model.dem = Param(model.t, mutable=True, initialize=dem_init)
+model.dem = Param(model.t, mutable=True, initialize=data["parameters"]["demand"])
 
 # Duration (hours)
-dur_init = {'12pm-6am': 6, '6am-9am': 3, '9am-3pm': 6, '3pm-6pm': 3, '6pm-12pm': 6}
-model.dur = Param(model.t, mutable=True, initialize=dur_init)
+model.dur = Param(model.t, mutable=True, initialize=data["parameters"]["duration"])
 
 # Generation data
-gen_data = {
-    'type-1': {'min-pow': 0.85, 'max-pow': 2.0, 'cost-min': 1000, 'cost-inc': 2.0, 'start': 2000, 'number': 12},
-    'type-2': {'min-pow': 1.25, 'max-pow': 1.75, 'cost-min': 2600, 'cost-inc': 1.3, 'start': 1000, 'number': 10},
-    'type-3': {'min-pow': 1.5, 'max-pow': 4.0, 'cost-min': 3000, 'cost-inc': 3.0, 'start': 500, 'number': 5}
-}
+gen_data = data["parameters"]["generation_data"]
+# for food in model.dur:
+#     print(food)
 
 # Split data parameter into individual parameters
-model.minpow = Param(model.g, mutable=True, initialize={g: gen_data[g]['min-pow'] for g in model.g})
-model.maxpow = Param(model.g, mutable=True,initialize={g: gen_data[g]['max-pow'] for g in model.g})
-model.costmin = Param(model.g, mutable=True,initialize={g: gen_data[g]['cost-min'] for g in model.g})
-model.costinc = Param(model.g, mutable=True,initialize={g: gen_data[g]['cost-inc'] for g in model.g})
+model.minpow = Param(model.g, mutable=True, initialize={g: gen_data[g]['min_pow'] for g in model.g})
+model.maxpow = Param(model.g, mutable=True,initialize={g: gen_data[g]['max_pow'] for g in model.g})
+model.costmin = Param(model.g, mutable=True,initialize={g: gen_data[g]['cost_min'] for g in model.g})
+model.costinc = Param(model.g, mutable=True,initialize={g: gen_data[g]['cost_inc'] for g in model.g})
 model.start = Param(model.g, mutable=True,initialize={g: gen_data[g]['start'] for g in model.g})
 model.number = Param(model.g, mutable=True, initialize={g: gen_data[g]['number'] for g in model.g})
 

@@ -1,86 +1,59 @@
 # Medium-Term Planning of Single-Stage Continuous Multiproduct Plants 2008
 
-# This model considers the optimal medium-term planning of a single-stage plant. 
+# This model considers the optimal medium-term planning of a single-stage plant.
 # The plant manufactures several types of products in one processing machine over a planning horizon.
 # The total available processing time is divided into multiple weeks.
 
 # Source: https://pubs.acs.org/doi/10.1021/ie800646q
+import json
 import pyomo.environ as pyo
+
+data = globals().get("data", {})
+# with open("pp_data.json", "r") as file:
+#     data = json.load(file)
 
 # Create the Pyomo model
 model = pyo.ConcreteModel()
 
 # Define sets
-model.C = pyo.Set(initialize=['C1', 'C2', 'C3', 'C4', 'C5', 'C6', 'C7', 'C8', 'C9', 'C10'], doc='Customers')
-model.I = pyo.Set(initialize=['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'], doc='Products')
-model.J = pyo.Set(initialize=['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'], doc='Products')
-model.W = pyo.Set(initialize=[1, 2, 3, 4, 5, 6, 7, 8], doc='Weeks')
+model.C = pyo.Set(initialize=data["sets"]["C"], doc='Customers')
+model.I = pyo.Set(initialize=data["sets"]["I"], doc='Products')
+model.J = pyo.Set(initialize=data["sets"]["I"], doc='Products')
+model.W = pyo.Set(initialize=data["sets"]["W"], doc='Weeks')
+
+# Extract parameters from data
+params = data["parameters"]
+prices_data = params["prices_data"]
+
+# Convert changeover_times_data from string keys to tuples
+changeover_times_data = {tuple(k.split(",")): v for k, v in params["changeover_times_data"].items()}
+
+# Convert demands_data from string keys to tuples and apply doubling
+demands_data = {}
+for key_str, value in params["demands_data"].items():
+    parts = key_str.split(",")
+    # Convert week (third element) to int
+    key_tuple = (parts[0], parts[1], int(parts[2]))
+    # Apply doubling
+    demands_data[key_tuple] = value * 2
+
+# Extract scalar parameters
+ri = params["ri"]
+t_l = params["t_l"]
+t_u = params["t_u"]
+bigm = params["bigm"]
 
 # Define parameters
-prices_data = {
-    'A': 10, 'B': 12, 'C': 13, 'D': 12, 'E': 15,
-    'F': 10, 'G': 8, 'H': 14, 'I': 7, 'J': 15
-}
-
-changeover_times_data = {
-    ('A', 'B'): 45, ('A', 'C'): 45, ('A', 'D'): 45, ('A', 'E'): 60, ('A', 'F'): 80, ('A', 'G'): 30, ('A', 'H'): 25, ('A', 'I'): 70, ('A', 'J'): 55,
-    ('B', 'A'): 55, ('B', 'C'): 55, ('B', 'D'): 40, ('B', 'E'): 60, ('B', 'F'): 80, ('B', 'G'): 80, ('B', 'H'): 30, ('B', 'I'): 30, ('B', 'J'): 55,
-    ('C', 'A'): 60, ('C', 'B'): 100,('C', 'D'): 100, ('C', 'E'): 75, ('C', 'F'): 60, ('C', 'G'): 80, ('C', 'H'): 80, ('C', 'I'): 75, ('C', 'J'): 75,
-    ('D', 'A'): 60, ('D', 'B'): 100,('D', 'C'): 30, ('D', 'E'): 45, ('D', 'F'): 45, ('D', 'G'): 45, ('D', 'H'): 60, ('D', 'I'): 80, ('D', 'J'): 100,
-    ('E', 'A'): 60, ('E', 'B'): 60,('E', 'C'): 55, ('E', 'D'): 30, ('E', 'F'): 35, ('E', 'G'): 30, ('E', 'H'): 35, ('E', 'I'): 60, ('E', 'J'): 90,
-    ('F', 'A'): 75, ('F', 'B'): 75, ('F', 'C'): 60, ('F', 'D'): 100, ('F', 'E'): 75, ('F', 'G'): 100, ('F', 'H'): 75, ('F', 'I'): 100, ('F', 'J'): 60,
-    ('G', 'A'): 80, ('G', 'B'): 100, ('G', 'C'): 30, ('G', 'D'): 60, ('G', 'E'): 100, ('G', 'F'): 85, ('G', 'H'): 60, ('G', 'I'): 100, ('G', 'J'): 65,
-    ('H', 'A'): 60, ('H', 'B'): 60, ('H', 'C'): 60, ('H', 'D'): 60, ('H', 'E'): 60, ('H', 'F'): 60, ('H', 'G'): 60, ('H', 'I'): 60, ('H', 'J'): 60,
-    ('I', 'A'): 80, ('I', 'B'): 80, ('I', 'C'): 30, ('I', 'D'): 30, ('I', 'E'): 60, ('I', 'F'): 70, ('I', 'G'): 55, ('I', 'H'): 85, ('I', 'J'): 100,
-    ('J', 'A'): 100, ('J', 'B'): 100, ('J', 'C'): 60, ('J', 'D'): 80, ('J', 'E'): 80, ('J', 'F'): 30, ('J', 'G'): 45, ('J', 'H'): 100, ('J', 'I'): 100, 
-}
-
-demands_data = {
-    ('C1', 'A', 1): 5, ('C1', 'A', 5): 5,
-    ('C5', 'A', 1): 5, ('C5', 'A', 5): 5,
-    ('C1', 'C', 1): 2, ('C1', 'C', 2): 2, ('C1', 'C', 3): 2, ('C1', 'C', 4): 2, ('C1', 'C', 5): 3, ('C1', 'C', 6): 3, ('C1', 'C', 7): 3, ('C1', 'C', 8): 3,
-    ('C5', 'C', 1): 2, ('C5', 'C', 2): 2, ('C5', 'C', 3): 2, ('C5', 'C', 4): 2, ('C5', 'C', 5): 3, ('C5', 'C', 6): 3, ('C5', 'C', 7): 3, ('C5', 'C', 8): 3,
-    ('C2', 'D', 1): 3, ('C2', 'D', 3): 3, ('C2', 'D', 5): 3, ('C2', 'D', 7): 3,
-    ('C6', 'D', 1): 3, ('C6', 'D', 3): 3, ('C6', 'D', 5): 3, ('C6', 'D', 7): 3,
-    ('C2', 'E', 1): 5, ('C2', 'E', 3): 5, ('C2', 'E', 5): 5, ('C2', 'E', 7): 5,
-    ('C6', 'E', 1): 5, ('C6', 'E', 3): 5, ('C6', 'E', 5): 5, ('C6', 'E', 7): 5,
-    ('C2', 'H', 2): 12, ('C2', 'H', 6): 12, ('C2', 'H', 8): 12,
-    ('C6', 'H', 2): 12, ('C6', 'H', 6): 12, ('C6', 'H', 8): 12,    
-    ('C3', 'B', 1): 4, ('C3', 'B', 5): 4,
-    ('C7', 'B', 1): 4, ('C7', 'B', 5): 4,
-    ('C9', 'B', 1): 4, ('C9', 'B', 5): 4,
-    ('C3', 'G', 3): 5, ('C7', 'G', 3): 5, ('C9', 'G', 3): 5, 
-    ('C3', 'J', 2): 6, ('C3', 'J', 4): 6, ('C3', 'J', 6): 6, ('C3', 'J', 8): 6,
-    ('C7', 'J', 2): 6, ('C7', 'J', 4): 6, ('C7', 'J', 6): 6, ('C7', 'J', 8): 6,
-    ('C9', 'J', 2): 6, ('C9', 'J', 4): 6, ('C9', 'J', 6): 6, ('C9', 'J', 8): 6,
-    ('C4', 'A', 1): 7, ('C4', 'A', 5): 7, ('C8', 'A', 1): 7, ('C8', 'A', 5): 7, ('C10', 'A', 1): 7, ('C10', 'A', 5): 7,     
-    ('C4', 'B', 2): 5, ('C4', 'B', 4): 5, ('C4', 'B', 7): 5, ('C8', 'B', 2): 5, ('C8', 'B', 4): 5, ('C8', 'B', 7): 5, ('C10', 'B', 2): 5, ('C10', 'B', 4): 5, ('C10', 'B', 7): 5, 
-    ('C4', 'C', 1): 5, ('C4', 'C', 4): 5, ('C4', 'C', 7): 5, ('C8', 'C', 1): 5, ('C8', 'C', 4): 5, ('C8', 'C', 7): 5, ('C10', 'C', 1): 5, ('C10', 'C', 4): 5, ('C10', 'C', 7): 5, 
-    ('C4', 'D', 1): 10, ('C4', 'D', 6): 10, ('C8', 'D', 1): 10, ('C8', 'D', 6): 10, ('C10', 'D', 1): 10, ('C10', 'D', 6): 10, 
-    ('C4', 'E', 1): 11, ('C4', 'E', 3): 11, ('C4', 'E', 5): 11, ('C4', 'E', 7): 11, ('C8', 'E', 1): 11, ('C8', 'E', 3): 11, ('C8', 'E', 5): 11, ('C8', 'E', 7): 11, ('C10', 'E', 1): 11, ('C10', 'E', 3): 11, ('C10', 'E', 5): 11, ('C10', 'E', 7): 11, 
-    ('C4', 'F', 1): 8, ('C4', 'F', 4): 8, ('C4', 'F', 7): 8, ('C8', 'F', 1): 8, ('C8', 'F', 4): 8, ('C8', 'F', 7): 8, ('C10', 'F', 1): 8, ('C10', 'F', 4): 8, ('C10', 'F', 7): 8, 
-    ('C4', 'G', 1): 4, ('C4', 'G', 3): 4, ('C4', 'G', 5): 4, ('C4', 'G', 7): 4, ('C8', 'G', 1): 4, ('C8', 'G', 3): 4, ('C8', 'G', 5): 4, ('C8', 'G', 7): 4, ('C10', 'G', 1): 4, ('C10', 'G', 3): 4, ('C10', 'G', 5): 4, ('C10', 'G', 7): 4, 
-    ('C4', 'H', 1): 1, ('C4', 'H', 2): 1, ('C4', 'H', 3): 1, ('C4', 'H', 4): 3, ('C4', 'H', 5): 3, ('C4', 'H', 6): 3, ('C4', 'H', 7): 1, ('C4', 'H', 8): 1,
-    ('C8', 'H', 1): 1, ('C8', 'H', 2): 1, ('C8', 'H', 3): 1, ('C8', 'H', 4): 3, ('C8', 'H', 5): 3, ('C8', 'H', 6): 3, ('C8', 'H', 7): 1, ('C8', 'H', 8): 1,
-    ('C10', 'H', 1): 1, ('C10', 'H', 2): 1, ('C10', 'H', 3): 1, ('C10', 'H', 4): 3, ('C10', 'H', 5): 3, ('C10', 'H', 6): 3, ('C10', 'H', 7): 1, ('C10', 'H', 8): 1,
-    ('C4', 'I', 1): 5, ('C4', 'I', 2): 5, ('C4', 'I', 3): 5, ('C4', 'I', 4): 5, ('C4', 'I', 5): 5, ('C4', 'I', 6): 5, ('C4', 'I', 7): 5, ('C4', 'I', 8): 5,
-    ('C8', 'I', 1): 5, ('C8', 'I', 2): 5, ('C8', 'I', 3): 5, ('C8', 'I', 4): 5, ('C8', 'I', 5): 5, ('C8', 'I', 6): 5, ('C8', 'I', 7): 5, ('C8', 'I', 8): 5,
-    ('C10', 'I', 1): 5, ('C10', 'I', 2): 5, ('C10', 'I', 3): 5, ('C10', 'I', 4): 5, ('C10', 'I', 5): 5, ('C10', 'I', 6): 5, ('C10', 'I', 7): 5, ('C10', 'I', 8): 5,
-    ('C4', 'J', 2): 3, ('C4', 'J', 4): 3, ('C4', 'J', 5): 3, ('C4', 'J', 7): 3, ('C8', 'J', 2): 3, ('C8', 'J', 4): 3, ('C8', 'J', 5): 3, ('C8', 'J', 7): 3, ('C10', 'J', 2): 3, ('C10', 'J', 4): 3, ('C10', 'J', 5): 3, ('C10', 'J', 7): 3, 
-    }
-
-demands_data = {key: value * 2 for key, value in demands_data.items()}
-
 model.ps = pyo.Param(model.I, model.C, initialize=lambda model, i, c: prices_data[i] if c != 'C10' else prices_data[i] * 1.5, doc='Unit selling price of product to customer', mutable = True)
 model.cb = pyo.Param(model.I, model.C, initialize=lambda model, i, c: (prices_data[i] * 0.2) if c != 'C10' else (prices_data[i] * 0.20 * 1.5), doc='Unit backlog penalty cost of product to customer', mutable = True)
 model.ci = pyo.Param(model.I, initialize=lambda model, i: prices_data[i] * 0.05, doc='Unit inventory cost of product', mutable = True)
 model.tau = pyo.Param(model.I, model.J, initialize=lambda model, i, j: changeover_times_data.get((i, j), 0) /60, default = 0, doc='Changeover time from product i to j in hours', mutable=True)
 model.cc = pyo.Param(model.I, model.J, initialize=lambda model, i, j: model.tau[i, j] * 10, doc='Changeover cost from product i to j', mutable=True)
 model.d = pyo.Param(model.C, model.I, model.W, initialize=demands_data, default=0, doc='Demand of customer c for product i in week w', mutable=True)
-model.ri = pyo.Param(model.I, initialize=110, doc='Processing rate of product i (ton/week)', mutable=True)
-model.t_l = pyo.Param(initialize=5, doc='Lower bound for processing time in a week (hours)', mutable = True)
-model.t_u = pyo.Param(initialize=168, doc='Upper bound for processing time in a week (hours)', mutable = True)
-model.bigm = pyo.Param(initialize=1e4, doc="big M value", mutable=True)
+model.ri = pyo.Param(model.I, initialize=ri, doc='Processing rate of product i (ton/week)', mutable=True)
+model.t_l = pyo.Param(initialize=t_l, doc='Lower bound for processing time in a week (hours)', mutable = True)
+model.t_u = pyo.Param(initialize=t_u, doc='Upper bound for processing time in a week (hours)', mutable = True)
+model.bigm = pyo.Param(initialize=bigm, doc="big M value", mutable=True)
 
 # Define variables
 model.e = pyo.Var(model.I, model.W, within=pyo.Binary, doc="1 if product i is processed during week w; 0 otherwise")
@@ -107,7 +80,7 @@ def objective_rule(model):
     backlog_costs = sum(model.cb[i, c] * model.delta[c, i, w] for c in model.C for i in model.I for w in model.W)
     # Inventory costs
     inventory_costs = sum(model.ci[i] * model.v[i, w] for i in model.I for w in model.W)
-    
+
     return revenue - (changeover_costs + changeover_weekly_costs + backlog_costs + inventory_costs)
 
 model.obj = pyo.Objective(rule=objective_rule, sense=pyo.maximize)

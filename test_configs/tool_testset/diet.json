@@ -1,15 +1,16 @@
 {
-    "model_name": "diet",
-    "models": {
-        "local_resources": [
-            "Feas/diet.pkl"
-        ],
-        "is_solved": false,
-        "is_lp": false
-    },
-    "models_code": {
-        "local_resources": [
-            "Feas/diet.py"
-        ]
-    }
+  "model_name": "diet",
+  "models": {
+    "local_resources": [
+      "Feas/diet.py"
+    ],
+    "json_data_path": "Feas/diet_data.json",
+    "is_solved": false,
+    "is_lp": false
+  },
+  "models_code": {
+    "local_resources": [
+      "Feas/diet.py"
+    ]
+  }
 }

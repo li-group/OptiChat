@@ -9,12 +9,12 @@ Data Type: dict
       "A": "To answer this question, we can perform a counterfactual analysis to see why this site was chosen to be opened as a collection center.  We require the model to not place a center at position 2, and see how the optimal solution changes.  We see that the overall cost increased from $13.7M to $14.2M.  Instead of opening at position 2, the optimal solution now opens at position 0 instead.  Position 0 has a construction cost of $1.62M while position 2 $1.09M."
     },
     {
-      "type": "WHY_IF",
+      "type": "WHAT_IF",
       "Q": "Suppose that the municipality in which this system resides is soon to embark on a large road project which will impact travel for the next several years (imagine a Big-Dig-esque project) and, accordingly, secondary customers #5-#7 (indexed by 5 to 7) will no longer be able to receive products from redistribution center indexed by 4.  Will this change whether a redistribution center should be built at index 4?",
       "A": "No.  The optimized solution still places a Redistridution center at #4.  This is because, in the original solution, #4 does not send any products to #5 or #6, and only 400 products to #7, which can easily be rerouted through other channels at a marginally higher price.  The cost is $13713404, slightly higher than the original $13711878 cost."
     },
     {
-      "type": "WHY_IF",
+      "type": "WHAT_IF",
       "Q": "Suppose that the municipal government wants to expand the road construction even further in the areas surrounding Redistribution center indexed by 4. This will prevent travel between Redistribution center at 4 to secondary customers #2-#9 (indexed by 2 to 9).  Will this more severe impedement impact optimal construction plans?",
       "A": "Yes it does impact construction plans and makes the cost become $13731405.  #4 is still scheduled to be built. However, the optimal solution now builds #2 instead of #3.  It is for a few reasons that #4 is still being built despite its drastically reduced operational potential.  First, #4 is the cheapest redistribution center to be built.  Second, the distribution shipping costs for all centers to customers are random enough and there is a larage enough number of customers that we can say shipping will be similar regardless of the route used.  So the primary goal for this is to maintain the capacity while keeping capital costs down.  Thirdly, #2 has a much higher capacity than #3 (1732 vs 1570).  Becuase the model can attain full capacity by replacing #3 with #2, this is more optimal than replacing #4 with #2 because of the lower capital cost of #4 compared with #3."
     },

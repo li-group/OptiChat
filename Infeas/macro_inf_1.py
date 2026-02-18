@@ -1,144 +1,54 @@
 #adapted from marco.gms : Mini Oil Refining Model (GAMS Model Library)
 #https://www.gams.com/latest/gamslib_ml/libhtml/gamslib_marco.html
 
+import json
 from pyomo.environ import *
-# Set
-c = ['crude', 'butane', 'mid-c', 'w-tex', 'sr-gas', 'sr-naphtha', 'sr-dist', 'sr-gas-oil', 'sr-res', 'rf-gas', 'fuel-gas', 'cc-gas', 'cc-gas-oil', 'hydro-res', 'premium', 'regular', 'distillate', 'fuel-oil']#'all commodities'
-cf = ['premium', 'regular', 'distillate', 'fuel-oil', 'fuel-gas']#final product
-cr = ['mid-c', 'w-tex']#crude oils
-ci = ['butane', 'sr-gas', 'sr-naphtha', 'sr-dist', 'sr-gas-oil', 'sr-res', 'rf-gas', 'fuel-gas', 'cc-gas', 'cc-gas-oil', 'hydro-res']#intermediates
-cd = ['butane']#domestic products
-p = ['a-dist', 'n-reform', 'cc-dist', 'cc-gas-oil', 'hydro']#processes
-m = ['a-still', 'reformer', 'c-crack', 'hydro']#productive units
-q = ['octane', 'vapor-pr', 'density', 'sulfur']   #'quality attributes'
-# tuples for blending possibility
-bp_tuples = [('premium', 'butane'), ('premium', 'sr-gas'), ('premium', 'rf-gas'), ('premium', 'cc-gas'), ('premium', 'sr-naphtha'),
-             ('regular', 'butane'), ('regular', 'sr-gas'), ('regular', 'rf-gas'), ('regular', 'cc-gas'), ('regular', 'sr-naphtha'),
-             ('distillate', 'sr-dist'), ('distillate', 'sr-naphtha'), ('distillate', 'sr-gas-oil'), ('distillate', 'cc-gas-oil'),
-             ('fuel-oil', 'sr-gas-oil'), ('fuel-oil', 'sr-res'), ('fuel-oil', 'cc-gas-oil'), ('fuel-oil', 'hydro-res'),
-             ('fuel-gas', 'fuel-gas')]
-# Table a
-#input output coefficients
-a_values = {}
-a_values[('mid-c', 'crude', 'a-dist')] = -1.0
-a_values[('mid-c', 'sr-gas', 'a-dist')] = .236
-a_values[('mid-c', 'sr-naphtha', 'a-dist')] = .223
-a_values[('mid-c', 'sr-naphtha', 'n-reform')] = -1.0
-a_values[('mid-c', 'sr-dist', 'a-dist')] = .087
-a_values[('mid-c', 'sr-dist', 'cc-dist')] = -1.0
-a_values[('mid-c', 'sr-gas-oil', 'a-dist')] = .111
-a_values[('mid-c', 'sr-gas-oil', 'cc-gas-oil')] = -1.0
-a_values[('mid-c', 'sr-res', 'a-dist')] = .315
-a_values[('mid-c', 'rf-gas', 'n-reform')] = .807
-a_values[('mid-c', 'fuel-gas', 'a-dist')] = .029
-a_values[('mid-c', 'fuel-gas', 'n-reform')] = .129
-a_values[('mid-c', 'fuel-gas', 'cc-dist')] = .30
-a_values[('mid-c', 'fuel-gas', 'cc-gas-oil')] = .31
-a_values[('mid-c', 'cc-gas', 'cc-dist')] = .59
-a_values[('mid-c', 'cc-gas', 'cc-gas-oil')] = .59
-a_values[('mid-c', 'cc-gas-oil', 'cc-dist')] = .21
-a_values[('mid-c', 'cc-gas-oil', 'cc-gas-oil')] = .22
-a_values[('w-tex', 'crude', 'a-dist')] = -1.0
-a_values[('w-tex', 'sr-gas', 'a-dist')] = .180
-a_values[('w-tex', 'sr-naphtha', 'a-dist')] = .196
-a_values[('w-tex', 'sr-naphtha', 'n-reform')] = -1.0
-a_values[('w-tex', 'sr-dist', 'a-dist')] = .073
-a_values[('w-tex', 'sr-dist', 'cc-dist')] = -1.0
-a_values[('w-tex', 'sr-gas-oil', 'a-dist')] = .091
-a_values[('w-tex', 'sr-gas-oil', 'cc-gas-oil')] = -1.0
-a_values[('w-tex', 'sr-res', 'hydro')] = -1.0
-a_values[('w-tex', 'rf-gas', 'n-reform')] = .836
-a_values[('w-tex', 'fuel-gas', 'a-dist')] = .017
-a_values[('w-tex', 'fuel-gas', 'n-reform')] = .099
-a_values[('w-tex', 'fuel-gas', 'cc-dist')] = .36
-a_values[('w-tex', 'fuel-gas', 'cc-gas-oil')] = .38
-a_values[('w-tex', 'cc-gas', 'cc-dist')] = .58
-a_values[('w-tex', 'cc-gas', 'cc-gas-oil')] = .60
-a_values[('w-tex', 'cc-gas-oil', 'cc-dist')] = .15
-a_values[('w-tex', 'cc-gas-oil', 'cc-gas-oil')] = .15
-a_values[('w-tex', 'hydro-res', 'hydro')] = .97
 
+# Load external data
+# data = json.load(open("macro_inf_1_data.json"))
+data = globals().get("data", {})
 
-# Table b capacity utilization
-b_values = {('a-still', 'a-dist'): 1.0,
-            ('reformer', 'n-reform'): 1.0,
-            ('c-crack', 'cc-gas-oil'): 1.0,
-            ('c-crack', 'cc-gas-oil'): 1.0}
+# Extract sets from data
+c = data["sets"]["c"]
+cf = data["sets"]["cf"]
+cr = data["sets"]["cr"]
+ci = data["sets"]["ci"]
+cd = data["sets"]["cd"]
+p = data["sets"]["p"]
+m = data["sets"]["m"]
+q = data["sets"]["q"]
 
-# Parameter k initial capacity 
-k_values = {'a-still': 100,
-            'reformer': 20,
-            'c-crack': 30}
+# Load bp_tuples and convert from list of lists to list of tuples
+bp_tuples = [tuple(item) for item in data["sets"]["bp_tuples"]]
 
-# Parameter pd: prices of domestic products ($ pb)
-pd_values = {'butane': 6.75}
+# Extract parameter data
+params = data["parameters"]
 
-# Parameter pr: prices of crude oils
-pr_values = {'mid-c': 7.50,
-             'w-tex': 6.50}
+# Load a_values and convert comma-separated keys to tuples
+a_values = {tuple(k.split(',')): v for k, v in params["a_values"].items()}
 
-# Parameter pf: prices of final products
-pf_values = {'premium': 10.5,
-             'regular': 9.1,
-             'distillate': 7.7,
-             'fuel-gas': 1.5,
-             'fuel-oil': 6.65}
+# Load b_values and convert comma-separated keys to tuples
+b_values = {tuple(k.split(',')): v for k, v in params["b_values"].items()}
 
-# Parameter ur: upper bnd on crude oil  (1000 bpd)
-ur_values = {'mid-c': 200, 'w-tex': 200}
+# Load simple parameters
+k_values = params["k_values"]
+pd_values = params["pd_values"]
+pr_values = params["pr_values"]
+pf_values = params["pf_values"]
+ur_values = params["ur_values"]
+op_values = params["op_values"]
 
-# Parameter op:  operating cost              ($ pb)
-op_values = {'a-dist': 0.1,
-             'n-reform': 0.15,
-             'cc-dist': 0.8,
-             'cc-gas-oil': 0.08,
-             'hydro': 0.1}
+# Load qs_values and convert comma-separated keys to tuples
+qs_values = {tuple(k.split(',')): v for k, v in params["qs_values"].items()}
 
-# Table qs: 'product quality specifications'
-qs_values = {('lower', 'premium', 'octane'): 90,
-             ('lower', 'regular', 'octane'): 86,
-             ('upper', 'premium', 'vapor-pr'): 12.7,
-             ('upper', 'regular', 'vapor-pr'): 12.7,
-             ('upper', 'distillate', 'density'): 306,
-             ('upper', 'distillate', 'sulfur'): 0.5,
-             ('upper', 'fuel-oil', 'density'): 352,
-             ('upper', 'fuel-oil', 'sulfur'): 3.5}
+# Load at_values and convert comma-separated keys to tuples
+at_values = {tuple(k.split(',')): v for k, v in params["at_values"].items()}
 
-# Table at: 'attributes for blending'
-at_values = {('sr-gas', 'octane'): 78.5,
-             ('sr-gas', 'vapor-pr'): 18.4,
-             ('sr-naphtha', 'octane'): 65.0,
-             ('sr-naphtha', 'vapor-pr'): 6.54,
-             ('rf-gas', 'octane'): 104.0,
-             ('rf-gas', 'vapor-pr'): 2.57,
-             ('cc-gas', 'octane'): 93.7,
-             ('cc-gas', 'vapor-pr'): 6.9,
-             ('butane', 'octane'): 91.8,
-             ('butane', 'vapor-pr'): 199.2}
+# Load atc_values and convert comma-separated keys to tuples
+atc_values = {tuple(k.split(',')): v for k, v in params["atc_values"].items()}
 
-# Table atc: 'attributes for blending by crude'
-atc_values = {('mid-c', 'sr-naphtha', 'density'): 272.0,
-              ('mid-c', 'sr-naphtha', 'sulfur'): 0.283,
-              ('mid-c', 'sr-dist', 'density'): 292.0,
-              ('mid-c', 'sr-dist', 'sulfur'): 0.526,
-              ('mid-c', 'sr-gas-oil', 'density'): 295.0,
-              ('mid-c', 'sr-gas-oil', 'sulfur'): 0.980,
-              ('mid-c', 'cc-gas-oil', 'density'): 294.4,
-              ('mid-c', 'cc-gas-oil', 'sulfur'): 0.353,
-              ('mid-c', 'sr-res', 'density'): 343.0,
-              ('mid-c', 'sr-res', 'sulfur'): 4.7,
-              ('w-tex', 'sr-naphtha', 'density'): 272.0,
-              ('w-tex', 'sr-naphtha', 'sulfur'): 1.48,
-              ('w-tex', 'sr-dist', 'density'): 297.6,
-              ('w-tex', 'sr-dist', 'sulfur'): 2.83,
-              ('w-tex', 'sr-gas-oil', 'density'): 303.3,
-              ('w-tex', 'sr-gas-oil', 'sulfur'): 5.05,
-              ('w-tex', 'sr-res', 'density'): 365.0,
-              ('w-tex', 'sr-res', 'sulfur'): 11.00,
-              ('w-tex', 'cc-gas-oil', 'density'): 299.1,
-              ('w-tex', 'cc-gas-oil', 'sulfur'): 1.31,
-              ('w-tex', 'hydro-res', 'density'): 365.0,
-              ('w-tex', 'hydro-res', 'sulfur'): 6.00}
+# Load demand parameter
+demand_values = params["demand"]
 
 # iterate over atc_values
 for ci_ in ci:
@@ -175,7 +85,7 @@ model.pf = Param(model.cf, default=0, mutable=True, initialize=pf_values)
 model.pr = Param(model.cr, default=0, mutable=True, initialize=pr_values)
 model.pd = Param(model.cd, default=0, mutable=True, initialize=pd_values)
 model.op = Param(model.p, default=0, mutable=True, initialize=op_values)
-model.d = Param(model.cf, mutable=True, initialize={'premium':43, 'regular':5, 'distillate':0, 'fuel-oil':37, 'fuel-gas':8}, doc='demand')
+model.d = Param(model.cf, mutable=True, initialize=demand_values, doc='demand')
 
 # Define the decision variables
 model.z = Var(model.cr, model.p, domain=NonNegativeReals) #process level'
@@ -254,6 +164,6 @@ def aoper_rule(model):
 model.aoper = Constraint(rule=aoper_rule)
 
 #satisfy demand
-def demand_rule(model, cf): 
+def demand_rule(model, cf):
     return model.x[cf] >= model.d[cf]
 model.demand = Constraint(model.cf, rule=demand_rule)

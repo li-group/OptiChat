@@ -1,15 +1,16 @@
 {
-    "model_name": "sparta_inf_1",
-    "models": {
-        "local_resources": [
-            "Infeas/sparta_inf_1.pkl"
-        ],
-        "is_solved": false,
-        "is_lp": false
-    },
-    "models_code": {
-        "local_resources": [
-            "Infeas/sparta_inf_1.py"
-        ]
-    }
+  "model_name": "sparta_inf_1",
+  "models": {
+    "local_resources": [
+      "Infeas/sparta_inf_1.py"
+    ],
+    "is_solved": false,
+    "is_lp": false,
+    "json_data_path": "Infeas/sparta_inf_1_data.json"
+  },
+  "models_code": {
+    "local_resources": [
+      "Infeas/sparta_inf_1.py"
+    ]
+  }
 }

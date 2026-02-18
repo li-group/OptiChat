@@ -1,61 +1,32 @@
 #adapted from thai.gms : Thai Navy Problem (GAMS Model Library)
 #https://www.gams.com/latest/gamslib_ml/libhtml/gamslib_thai.html
 from pyomo.environ import *
+import json
+
+data = globals().get("data", {})
+# with open("thai_data.json", "r") as file:
+#     data = json.load(file)
 
 # Sets
-ports = ['chumphon', 'surat', 'nakon', 'songkhla']
-voyages = ['v-{:02}'.format(i+1) for i in range(15)]
-ship_classes = ['small', 'medium', 'large']
-ship_capability = [
-    ('chumphon', 'small'), ('chumphon', 'medium'), ('chumphon', 'large'),
-    ('surat', 'medium'), ('surat', 'large'),
-    ('nakon', 'medium'), ('nakon', 'large'),
-    ('songkhla', 'large')
-]
+ports = data["sets"]["ports"]
+voyages = data["sets"]["voyages"]
+ship_classes = data["sets"]["ship_classes"]
+ship_capability = [tuple(x) for x in data["sets"]["ship_capability"]]
 
 # Parameters
-number_of_men = {
-    'chumphon': 475,
-    'surat': 659,
-    'nakon': 672,
-    'songkhla': 1123
-}
-ship_capacity = {
-    'small': 100,
-    'medium': 200,
-    'large': 600
-}
-number_of_ships = {
-    'small': 2,
-    'medium': 3,
-    'large': 4
-}
+number_of_men = data["parameters"]["number_of_men"]
+ship_capacity = data["parameters"]["ship_capacity"]
+number_of_ships = data["parameters"]["number_of_ships"]
+
 
 # Weights
-w1 = 1.00
-w2 = 0.01
-w3 = 0.0001
+w1=data["parameters"]["weights"]["w1"]
+w2 = data["parameters"]["weights"]["w2"]
+w3 = data["parameters"]["weights"]["w3"]
 
 # Voyage-port assignments and distances
-dist = {
-    'v-01': 370, 
-    'v-02': 460, 
-    'v-03': 600, 
-    'v-04': 750, 
-    'v-05': 515, 
-    'v-06': 640, 
-    'v-07': 810, 
-    'v-08': 665, 
-    'v-09': 665, 
-    'v-10': 800, 
-    'v-11': 720, 
-    'v-12': 860, 
-    'v-13': 840, 
-    'v-14': 865, 
-    'v-15': 920
-}
-
-assignment={('v-01','chumphon'),('v-02','surat'),('v-03','nakon'),('v-04','songkhla'),('v-05','chumphon'),('v-05','surat'),('v-06','chumphon'),('v-06','nakon'),('v-07','chumphon'),('v-07','songkhla'),('v-08','surat'),('v-08','nakon'),('v-09','surat'),('v-09','songkhla'),('v-10','nakon'),('v-10','songkhla'),('v-11','chumphon'),('v-11','surat'),('v-11','nakon'),('v-12','chumphon'),('v-12','surat'),('v-12','songkhla'),('v-13','chumphon'),('v-13','nakon'),('v-13','songkhla'),('v-14','surat'),('v-14','nakon'),('v-14','songkhla'),('v-15','chumphon'),('v-15','surat'),('v-15','nakon'),('v-15','songkhla')}
+dist = data["parameters"]["dist"]
+assignment = set(tuple(x) for x in data["sets"]["assignment"])
 
 def voyage_capability_filter(model, j, k):
     val = True
@@ -63,7 +34,7 @@ def voyage_capability_filter(model, j, k):
         if (j,i) in assignment and (i,k) not in ship_capability:
             val = False
             break
-    print(j,k,val)
+    #print(j,k,val)
     return val 
 
 # Model

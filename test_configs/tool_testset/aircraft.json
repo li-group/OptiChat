@@ -1,15 +1,16 @@
 {
-    "model_name": "aircraft",
-    "models": {
-        "local_resources": [
-            "Feas/aircraft.pkl"
-        ],
-        "is_solved": false,
-        "is_lp": false
-    },
-    "models_code": {
-        "local_resources": [
-            "Feas/aircraft.py"
-        ]
-    }
+  "model_name": "aircraft",
+  "models": {
+    "local_resources": [
+      "Feas/aircraft.py"
+    ],
+    "is_solved": false,
+    "is_lp": false,
+    "json_data_path": "Feas/aircraft_data.json"
+  },
+  "models_code": {
+    "local_resources": [
+      "Feas/aircraft.py"
+    ]
+  }
 }

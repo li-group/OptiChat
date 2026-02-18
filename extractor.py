@@ -262,12 +262,16 @@ def iis2json(ilp_path, model_dict):
     return model_dict
 
 
-def initial_loading(file, is_uploaded=True):
+def initial_loading(file, is_uploaded=True, json_data=None):
     if is_uploaded:
         code = file.getvalue().decode("utf-8")
         spec = importlib.util.spec_from_loader("uploaded_model", loader=None)
         uploaded_model = importlib.util.module_from_spec(spec)
         sys.modules["uploaded_model"] = uploaded_model
+        
+        # Inject the JSON data before executing the model code
+        if json_data is not None:
+            uploaded_model.__dict__["data"] = json_data
 
         # Execute the code in the context of the new module
         exec(code, uploaded_model.__dict__)
@@ -409,15 +413,14 @@ def insert_code(src_code: str, new_lines: str, code_type: str) -> str:
 
     insert a code patch into the source code.
     """
-    # # # for now, we have # OPTICHAT REVISION CODE GOES HERE and # OPTICHAT PRINT CODE GOES HERE
-    # # return replace(src_code, '# CODE GOES HERE', new_lines)
-    # if code_type == 'REVISION':
-    #     return replace(src_code, f"# OPTICHAT {code_type} CODE GOES HERE", new_lines)
-    # elif code_type == 'PRINT':
-    #     return replace(src_code, f"# OPTICHAT {code_type} CODE GOES HERE", new_lines)
-    # else:
-    #     raise ValueError(f"Invalid code type: {code_type}")
-    return replace(src_code, f"# YOUR CODE GOES HERE", new_lines)
+    # # for now, we have # OPTICHAT REVISION CODE GOES HERE and # OPTICHAT PRINT CODE GOES HERE
+    # return replace(src_code, '# CODE GOES HERE', new_lines)
+    if code_type == 'REVISION':
+        return replace(src_code, f"# OPTICHAT {code_type} CODE GOES HERE", new_lines)
+    elif code_type == 'PRINT':
+        return replace(src_code, f"# OPTICHAT {code_type} CODE GOES HERE", new_lines)
+    else:
+        raise ValueError(f"Invalid code type: {code_type}")
 
 
 def run_with_exec(src_code: str):

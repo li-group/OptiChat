@@ -175,7 +175,127 @@ def solve_model(model: pe.ConcreteModel, version: str, models_dictionary: dict, 
     return models_dictionary
 
 
-def relax_constraint_and_penalize_violation(constraint_name: str, 
+def modify_and_solve(
+    version: str,
+    modifications: List[Dict],
+    new_version: str,
+    models_dictionary: dict,
+    tool_context=None,
+    description: str = None
+) -> dict:
+    """
+    ```models_dictionary = modify_and_solve(version, modifications, new_version, models_dictionary, tool_context, description)```
+    Applies a list of parameter/variable modifications to a model and re-solves it in one step.
+    Use this instead of python_repl_func for straightforward what-if parameter changes — it is faster and less error-prone.
+
+    Args:
+        version (str): Base model version to modify (must exist in models_dictionary)
+        modifications (List[Dict]): List of modification specs. Each dict must have:
+            - "component_name" (str): Name of the parameter or variable to modify
+            - "component_indexes": Index for the component — use None for scalar (non-indexed)
+              components, int/str for 1-D indexed, tuple for multi-D (e.g., (1, 2)), or a
+              tuple containing slice(None) to apply across all matching elements (e.g., (slice(None), 2)).
+            - "operation" (str): "+", "-", "*", "/", or "=" (to set an absolute value)
+            - "delta" (float | int): Amount to apply (for +/-/*/÷) or the target value (for =)
+        new_version (str): Version name for the modified model. Follow the naming convention:
+                           <base_model>__<param_name>_<index>_<operation><value>
+        models_dictionary (dict): Runtime cache of model data (pass models_dictionary directly)
+        tool_context: Pass tool_context for state management
+        description (str): REQUIRED. Concise description (50-100 words) of what changed and why.
+
+    Returns:
+        Updated models_dictionary with the new model version added
+
+    Example:
+        ```python
+        # Increase demand at index (3, 1) by 10
+        modifications = [
+            {"component_name": "demand", "component_indexes": (3, 1), "operation": "+", "delta": 10}
+        ]
+        description = "What-if: increased demand at (3,1) by 10 to stress-test peak season capacity"
+        models_dictionary = modify_and_solve(
+            "supply_chain_model", modifications,
+            "supply_chain_model__demand_3_1_plus10",
+            models_dictionary, tool_context, description
+        )
+        ```
+    """
+    model = load_model(version, models_dictionary)
+    model_info = models_dictionary[version]
+    known_params = set(model_info["components"].get("parameters", {}).keys())
+    known_vars = set(model_info["components"].get("variables", {}).keys())
+
+    change_log = []
+
+    for mod in modifications:
+        component_name = mod["component_name"]
+        component_indexes = mod.get("component_indexes")
+        operation = mod["operation"]
+        delta = mod["delta"]
+
+        if operation == "!":
+            print(f"Skipping '{component_name}': operation '!' requires sensitivity analysis, not modify_and_solve.")
+            continue
+
+        is_param = component_name in known_params
+        is_var = component_name in known_vars
+
+        if not is_param and not is_var:
+            print(f"Warning: '{component_name}' not found as a parameter or variable in '{version}'. Skipping.")
+            continue
+
+        model_component = model.find_component(component_name)
+        if model_component is None:
+            print(f"Warning: '{component_name}' not found on the Pyomo model object. Skipping.")
+            continue
+
+        def _apply_at(idx, _comp=model_component, _is_param=is_param, _op=operation, _delta=delta):
+            current_val = _comp[idx].value
+            if current_val is None:
+                print(f"Warning: '{component_name}[{idx}]' has no current value. Skipping.")
+                return
+            new_val = float(_delta) if _op == "=" else eval(f"({current_val}){_op}({_delta})")
+            if _is_param:
+                _comp[idx].set_value(new_val)
+                verb = "changed to"
+            else:
+                _comp[idx].fix(new_val)
+                verb = "fixed to"
+            idx_str = "" if idx is None else f"[{idx}]"
+            change_log.append(f"  {component_name}{idx_str} {verb} {new_val} (was {current_val})")
+
+        # Dispatch based on index type
+        if isinstance(component_indexes, tuple) and any(isinstance(i, slice) for i in component_indexes):
+            elements = list(model_component[component_indexes])
+            if not elements:
+                print(f"Warning: index {component_indexes} for '{component_name}' matched no elements. "
+                      "This usually happens when the index order is incorrect. Skipping.")
+                continue
+            for elem in elements:
+                _apply_at(elem.index())
+        elif isinstance(component_indexes, slice):
+            for elem in model_component[component_indexes]:
+                _apply_at(elem.index())
+        else:
+            # Scalar (None), int, str, or plain tuple index
+            _apply_at(component_indexes)
+
+    if not change_log:
+        print("No modifications were applied. Returning original models_dictionary unchanged.")
+        return models_dictionary
+
+    print(f"Modifications applied to '{version}':")
+    for line in change_log:
+        print(line)
+
+    if description is None:
+        description = f"What-if analysis on {version}: " + "; ".join(l.strip() for l in change_log)
+
+    models_dictionary = solve_model(model, new_version, models_dictionary, tool_context, description)
+    return models_dictionary
+
+
+def relax_constraint_and_penalize_violation(constraint_name: str,
                                             penalty_coef: float | int, 
                                             model: pe.ConcreteModel):
     """

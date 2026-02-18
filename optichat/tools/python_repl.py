@@ -63,28 +63,28 @@ def python_repl_func(code_snippet: str, tool_context: ToolContext) -> Dict[str, 
     python_repl.globals['Expression'] = pyo.Expression
     python_repl.globals['minimize'] = pyo.minimize
     python_repl.globals['maximize'] = pyo.maximize
-    logger.info(f"Injected pyomo.environ module and common objects into REPL")
+    logger.debug(f"Injected pyomo.environ module and common objects into REPL")
 
     for name in dir(shortcut_functions):
         item = getattr(shortcut_functions, name)
         if callable(item) and not name.startswith("_"):
             python_repl.globals[name] = item
-            logger.info(f"Injected shortcut function: {name} into REPL")
+            logger.debug(f"Injected shortcut function: {name} into REPL")
     models_dictionary = tool_context.state[MODELS_DICTIONARY].copy()
     python_repl.globals[MODELS_DICTIONARY.lower()] = models_dictionary
-    logger.info(f"Injected models_dictionary into REPL")
+    logger.debug(f"Injected models_dictionary into REPL")
 
     model_versions = tool_context.state.get(MODEL_VERSIONS, [])
     python_repl.globals['MODEL_VERSIONS'] = model_versions
-    logger.info(f"Injected MODEL_VERSIONS into REPL: {model_versions}")
+    logger.debug(f"Injected MODEL_VERSIONS into REPL: {model_versions}")
 
     # Inject tool_context so solve_model() can access USER_QUERY
     python_repl.globals['tool_context'] = tool_context
-    logger.info(f"Injected tool_context into REPL")
+    logger.debug(f"Injected tool_context into REPL")
 
     # This ensures user-defined variables persist in the same namespace as injected functions, preventing NameError when accessing variables later
     python_repl.locals = python_repl.globals
-    logger.info(f"Unified REPL locals and globals namespaces")
+    logger.debug(f"Unified REPL locals and globals namespaces")
 
     # execute the code snippet
     logger.info(f"Python code to execute:\n{code_snippet}")

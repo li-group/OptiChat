@@ -1,0 +1,235 @@
+{
+    "nutrient_requirements": {
+      "calorie": 3,
+      "protein": 70,
+      "calcium": 0.8,
+      "iron": 12,
+      "vitamin-a": 5,
+      "vitamin-b1": 1.8,
+      "vitamin-b2": 2.7,
+      "niacin": 18,
+      "vitamin-c": 75
+    },
+    "nutritive_values": {
+      "wheat": {
+        "calorie": 44.7,
+        "protein": 1411,
+        "calcium": 2.0,
+        "iron": 365,
+        "vitamin-a": 0,
+        "vitamin-b1": 55.4,
+        "vitamin-b2": 33.3,
+        "niacin": 441,
+        "vitamin-c": 0
+      },
+      "cornmeal": {
+        "calorie": 36,
+        "protein": 897,
+        "calcium": 1.7,
+        "iron": 99,
+        "vitamin-a": 30.9,
+        "vitamin-b1": 17.4,
+        "vitamin-b2": 7.9,
+        "niacin": 106,
+        "vitamin-c": 0
+      },
+      "cannedmilk": {
+        "calorie": 8.4,
+        "protein": 422,
+        "calcium": 15.1,
+        "iron": 9,
+        "vitamin-a": 26,
+        "vitamin-b1": 3,
+        "vitamin-b2": 23.5,
+        "niacin": 11,
+        "vitamin-c": 60
+      },
+      "margarine": {
+        "calorie": 20.6,
+        "protein": 17,
+        "calcium": 0.6,
+        "iron": 6,
+        "vitamin-a": 55.8,
+        "vitamin-b1": 0.2,
+        "vitamin-b2": 0,
+        "niacin": 0,
+        "vitamin-c": 0
+      },
+      "cheese": {
+        "calorie": 7.4,
+        "protein": 448,
+        "calcium": 16.4,
+        "iron": 19,
+        "vitamin-a": 28.1,
+        "vitamin-b1": 0.8,
+        "vitamin-b2": 10.3,
+        "niacin": 4,
+        "vitamin-c": 0
+      },
+      "peanut-b": {
+        "calorie": 15.7,
+        "protein": 661,
+        "calcium": 1,
+        "iron": 48,
+        "vitamin-a": 0,
+        "vitamin-b1": 9.6,
+        "vitamin-b2": 8.1,
+        "niacin": 471,
+        "vitamin-c": 0
+      },
+      "lard": {
+        "calorie": 41.7,
+        "protein": 0,
+        "calcium": 0,
+        "iron": 0,
+        "vitamin-a": 0,
+        "vitamin-b1": 0,
+        "vitamin-b2": 0.5,
+        "niacin": 5,
+        "vitamin-c": 0
+      },
+      "liver": {
+        "calorie": 2.2,
+        "protein": 333,
+        "calcium": 0.2,
+        "iron": 139,
+        "vitamin-a": 169.2,
+        "vitamin-b1": 6.4,
+        "vitamin-b2": 50.8,
+        "niacin": 316,
+        "vitamin-c": 525
+      },
+      "porkroast": {
+        "calorie": 4.4,
+        "protein": 249,
+        "calcium": 0.3,
+        "iron": 37,
+        "vitamin-a": 0,
+        "vitamin-b1": 18.2,
+        "vitamin-b2": 3.6,
+        "niacin": 79,
+        "vitamin-c": 0
+      },
+      "salmon": {
+        "calorie": 5.8,
+        "protein": 705,
+        "calcium": 6.8,
+        "iron": 45,
+        "vitamin-a": 3.5,
+        "vitamin-b1": 1,
+        "vitamin-b2": 4.9,
+        "niacin": 209,
+        "vitamin-c": 0
+      },
+      "greenbeans": {
+        "calorie": 2.4,
+        "protein": 138,
+        "calcium": 3.7,
+        "iron": 80,
+        "vitamin-a": 69,
+        "vitamin-b1": 4.3,
+        "vitamin-b2": 5.8,
+        "niacin": 37,
+        "vitamin-c": 862
+      },
+      "cabbage": {
+        "calorie": 2.6,
+        "protein": 125,
+        "calcium": 4,
+        "iron": 36,
+        "vitamin-a": 7.2,
+        "vitamin-b1": 9,
+        "vitamin-b2": 4.5,
+        "niacin": 26,
+        "vitamin-c": 5369
+      },
+      "onions": {
+        "calorie": 5.8,
+        "protein": 166,
+        "calcium": 3.8,
+        "iron": 59,
+        "vitamin-a": 16.6,
+        "vitamin-b1": 4.7,
+        "vitamin-b2": 5.9,
+        "niacin": 21,
+        "vitamin-c": 1184
+      },
+      "potatoes": {
+        "calorie": 14.3,
+        "protein": 336,
+        "calcium": 1.8,
+        "iron": 118,
+        "vitamin-a": 6.7,
+        "vitamin-b1": 29.4,
+        "vitamin-b2": 7.1,
+        "niacin": 198,
+        "vitamin-c": 2522
+      },
+      "spinach": {
+        "calorie": 1.1,
+        "protein": 106,
+        "calcium": 0,
+        "iron": 138,
+        "vitamin-a": 918.4,
+        "vitamin-b1": 5.7,
+        "vitamin-b2": 13.8,
+        "niacin": 33,
+        "vitamin-c": 2755
+      },
+      "sweet-pot": {
+        "calorie": 9.6,
+        "protein": 138,
+        "calcium": 2.7,
+        "iron": 54,
+        "vitamin-a": 290.7,
+        "vitamin-b1": 8.4,
+        "vitamin-b2": 5.4,
+        "niacin": 83,
+        "vitamin-c": 1912
+      },
+      "peaches": {
+        "calorie": 8.5,
+        "protein": 87,
+        "calcium": 1.7,
+        "iron": 173,
+        "vitamin-a": 86.8,
+        "vitamin-b1": 1.2,
+        "vitamin-b2": 4.3,
+        "niacin": 55,
+        "vitamin-c": 57
+      },
+      "prunes": {
+        "calorie": 12.8,
+        "protein": 99,
+        "calcium": 2.5,
+        "iron": 154,
+        "vitamin-a": 85.7,
+        "vitamin-b1": 3.9,
+        "vitamin-b2": 4.3,
+        "niacin": 65,
+        "vitamin-c": 257
+      },
+      "limabeans": {
+        "calorie": 17.4,
+        "protein": 1055,
+        "calcium": 3.7,
+        "iron": 459,
+        "vitamin-a": 5.1,
+        "vitamin-b1": 26.9,
+        "vitamin-b2": 38.2,
+        "niacin": 93,
+        "vitamin-c": 0
+      },
+      "navybeans": {
+        "calorie": 26.9,
+        "protein": 1691,
+        "calcium": 11.4,
+        "iron": 792,
+        "vitamin-a": 0,
+        "vitamin-b1": 38.4,
+        "vitamin-b2": 24.6,
+        "niacin": 217,
+        "vitamin-c": 0
+      }
+    }
+  }

@@ -1,15 +1,16 @@
 {
-    "model_name": "pg",
-    "models": {
-        "local_resources": [
-            "Feas/pg.pkl"
-        ],
-        "is_solved": false,
-        "is_lp": false
-    },
-    "models_code": {
-        "local_resources": [
-            "Feas/pg.py"
-        ]
-    }
+  "model_name": "pg",
+  "models": {
+    "local_resources": [
+      "Feas/pg.py"
+    ],
+    "is_solved": false,
+    "is_lp": false,
+    "json_data_path": "Feas/pg_data.json"
+  },
+  "models_code": {
+    "local_resources": [
+      "Feas/pg.py"
+    ]
+  }
 }

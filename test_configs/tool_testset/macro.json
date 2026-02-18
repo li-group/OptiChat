@@ -1,15 +1,16 @@
 {
-    "model_name": "macro",
-    "models": {
-        "local_resources": [
-            "Feas/macro.pkl"
-        ],
-        "is_solved": false,
-        "is_lp": false
-    },
-    "models_code": {
-        "local_resources": [
-            "Feas/macro.py"
-        ]
-    }
+  "model_name": "macro",
+  "models": {
+    "local_resources": [
+      "Feas/macro.py"
+    ],
+    "is_solved": false,
+    "is_lp": false,
+    "json_data_path": "Feas/macro_data.json"
+  },
+  "models_code": {
+    "local_resources": [
+      "Feas/macro.py"
+    ]
+  }
 }

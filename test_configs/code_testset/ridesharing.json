@@ -1,15 +1,16 @@
 {
-    "model_name": "ridesharing",
-    "models": {
-        "local_resources": [
-            "Feas/ridesharing.pkl"
-        ],
-        "is_solved": false,
-        "is_lp": false
-    },
-    "models_code": {
-        "local_resources": [
-            "Feas/ridesharing.py"
-        ]
-    }
+  "model_name": "ridesharing",
+  "models": {
+    "local_resources": [
+      "Feas/ridesharing.py"
+    ],
+    "is_solved": false,
+    "is_lp": false,
+    "json_data_path": "Feas/ridesharing_data.json"
+  },
+  "models_code": {
+    "local_resources": [
+      "Feas/ridesharing.py"
+    ]
+  }
 }

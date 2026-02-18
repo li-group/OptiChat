@@ -1,15 +1,16 @@
 {
-    "model_name": "pdi",
-    "models": {
-        "local_resources": [
-            "Feas/pdi.pkl"
-        ],
-        "is_solved": false,
-        "is_lp": false
-    },
-    "models_code": {
-        "local_resources": [
-            "Feas/pdi.py"
-        ]
-    }
+  "model_name": "pdi",
+  "models": {
+    "local_resources": [
+      "Feas/pdi.py"
+    ],
+    "is_solved": false,
+    "is_lp": false,
+    "json_data_path": "Feas/pdi_data.json"
+  },
+  "models_code": {
+    "local_resources": [
+      "Feas/pdi.py"
+    ]
+  }
 }

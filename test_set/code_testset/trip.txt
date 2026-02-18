@@ -4,7 +4,7 @@ Data Type: dict
 {
   "external_tools": [
     {
-      "type": "WHY_IF",
+      "type": "WHAT_IF",
       "Q": "The optimal travelling time is 3420.42 min of the original problem. Suppose the link capacity constraint is now removed. How much travelling time can be reduced?",
       "A": "In this case, the optimal travelling time becomes 1534.03 min. The travelling time reduces by 1886.39 min, which is a reduction of 55.15% in the original travelling time."
     }

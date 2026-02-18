@@ -1,15 +1,16 @@
 {
-    "model_name": "job",
-    "models": {
-        "local_resources": [
-            "Feas/job.pkl"
-        ],
-        "is_solved": false,
-        "is_lp": false
-    },
-    "models_code": {
-        "local_resources": [
-            "Feas/job.py"
-        ]
-    }
+  "model_name": "job",
+  "models": {
+    "local_resources": [
+      "Feas/job.py"
+    ],
+    "is_solved": false,
+    "is_lp": false,
+    "json_data_path": "Feas/job_data.json"
+  },
+  "models_code": {
+    "local_resources": [
+      "Feas/job.py"
+    ]
+  }
 }

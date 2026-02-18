@@ -1,15 +1,16 @@
 {
-    "model_name": "RTN",
-    "models": {
-        "local_resources": [
-            "Feas/RTN.pkl"
-        ],
-        "is_solved": false,
-        "is_lp": false
-    },
-    "models_code": {
-        "local_resources": [
-            "Feas/RTN.py"
-        ]
-    }
+  "model_name": "RTN",
+  "models": {
+    "local_resources": [
+      "Feas/RTN.py"
+    ],
+    "is_solved": false,
+    "is_lp": false,
+    "json_data_path": "Feas/RTN_data.json"
+  },
+  "models_code": {
+    "local_resources": [
+      "Feas/RTN.py"
+    ]
+  }
 }

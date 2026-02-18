@@ -1,15 +1,16 @@
 {
-    "model_name": "sroute",
-    "models": {
-        "local_resources": [
-            "Feas/sroute.pkl"
-        ],
-        "is_solved": false,
-        "is_lp": false
-    },
-    "models_code": {
-        "local_resources": [
-            "Feas/sroute.py"
-        ]
-    }
+  "model_name": "sroute",
+  "models": {
+    "local_resources": [
+      "Feas/sroute.py"
+    ],
+    "is_solved": false,
+    "is_lp": false,
+    "json_data_path": "Feas/sroute_data.json"
+  },
+  "models_code": {
+    "local_resources": [
+      "Feas/sroute.py"
+    ]
+  }
 }

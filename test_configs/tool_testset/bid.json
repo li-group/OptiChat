@@ -1,15 +1,16 @@
 {
-    "model_name": "bid",
-    "models": {
-        "local_resources": [
-            "Feas/bid.pkl"
-        ],
-        "is_solved": false,
-        "is_lp": false
-    },
-    "models_code": {
-        "local_resources": [
-            "Feas/bid.py"
-        ]
-    }
+  "model_name": "bid",
+  "models": {
+    "local_resources": [
+      "Feas/bid.py"
+    ],
+    "is_solved": false,
+    "is_lp": false,
+    "json_data_path": "Feas/bid_data.json"
+  },
+  "models_code": {
+    "local_resources": [
+      "Feas/bid.py"
+    ]
+  }
 }

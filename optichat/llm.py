@@ -10,4 +10,9 @@ gpt_5_mini = LiteLlm(model=GPT_5_MINI,
 gpt_5_nano = LiteLlm(model=GPT_5_NANO,
                      temperature=GPT_5_NANO_TEMPERATURE,
                      max_tokens=GPT_5_NANO_MAX_TOKENS)
-
+gpt_4o = LiteLlm(model=GPT_4o,
+                 temperature=GPT_4o_TEMPERATURE,
+                 max_tokens=GPT_4o_MAX_TOKENS)
+gpt_4o_mini = LiteLlm(model=GPT_4o_MINI,
+                     temperature=GPT_4o_MINI_TEMPERATURE,
+                     max_tokens=GPT_4o_MINI_MAX_TOKENS)

@@ -20,7 +20,10 @@ from optichat.config.constants import (IS_SESSION_INITIALIZED, PERSISTENT_STATES
                                        IS_MODELS_CODE_AVAILABLE, IS_MODELS_PAPER_AVAILABLE,
                                        SYNTHETIC_PAPER_GENERATED, NEED_SYNTHETIC_PAPER,
                                        MODEL_FOR_PAPER_GENERATION, USER_QUERY,
-                                       HAS_INFEASIBILITY_DIAGNOSIS, INFEASIBILITY_DIAGNOSIS)
+                                       HAS_INFEASIBILITY_DIAGNOSIS, INFEASIBILITY_DIAGNOSIS,
+                                       LLM_CALL_COUNTER, TOOL_CALL_START_TIME, LLM_CALL_START_TIME,
+                                       MODEL_COMPONENTS_CACHE)
+from optichat.tools import timing_tracker
 from optichat.tools.extract_tool import restore_model_object, save_model_object, extract_model_info, _solve_model
 from optichat.tools.rag_tool import init_paper_rag, init_code_rag
 from optichat.tools.metadata_store import (load_metadata, save_metadata, save_model_data,
@@ -69,6 +72,27 @@ def format_models_metadata_for_prompt(historical_metadata: dict) -> str:
                 formatted_lines.append(mod_line)
 
     return "\n".join(formatted_lines)
+
+
+def initialize_session_and_start_root_agent(callback_context: CallbackContext):
+    """
+    Wrapper callback for root agent before_agent_callback.
+    Calls initialize_session first, then starts root agent timing.
+
+    Args:
+        callback_context: Callback context with state
+
+    Returns:
+        None or Content (if initialization returns early)
+    """
+    # Call initialize_session
+    result = initialize_session(callback_context)
+    if result is not None:
+        return result
+
+    # Start root agent timing
+    timing_tracker.record_agent_start("root_agent")
+    return None
 
 
 def initialize_session(callback_context: CallbackContext):
@@ -171,6 +195,15 @@ def initialize_session(callback_context: CallbackContext):
     # reset temporary states for every query
     callback_context.state.update(TEMPORARY_STATES)
     callback_context.state[USER_QUERY] = user_query
+
+    # Clear model components cache for new query
+    callback_context.state[MODEL_COMPONENTS_CACHE] = {}
+    logger.info("🔄 Model components cache cleared for new query")
+
+    # Reset timing tracker for new query
+    timing_tracker.reset_tracker()
+    logger.info("⏱️  Timing tracker reset for new query")
+
     return None
 
 
@@ -236,6 +269,39 @@ def _find_and_copy_source_file(version_name: str, cfg: dict) -> Optional[str]:
         logger.error(f"Failed to copy source file {source_file}: {e}")
         return None
 
+def _load_model_from_py(py_file_path: str, json_data: dict = None):
+    """
+    Load Pyomo model from .py file with optional JSON data injection.
+    This enables the separated .py + .json format for model initialization.
+    
+    Args:
+        py_file_path: Path to the .py file containing model definition
+        json_data: Optional dictionary to inject as 'data' in module namespace
+    
+    Returns:
+        Tuple of (model, version_name)
+    """
+    import importlib.util
+    import sys
+    
+    # Create module from file
+    spec = importlib.util.spec_from_file_location("loaded_model", py_file_path)
+    loaded_module = importlib.util.module_from_spec(spec)
+    sys.modules["loaded_model"] = loaded_module
+    
+    # Inject JSON data if provided (same as extractor.py::initial_loading)
+    if json_data is not None:
+        loaded_module.__dict__["data"] = json_data
+    
+    # Execute the module
+    spec.loader.exec_module(loaded_module)
+    
+    # Extract model and version name
+    model = loaded_module.model
+    version = os.path.splitext(os.path.basename(py_file_path))[0]
+    
+    return model, version
+
 
 def _init_models(cfg: dict):
     """
@@ -268,39 +334,71 @@ def _init_models(cfg: dict):
         is_lp = cfg["models"].get("is_lp", False)
 
         for resource_path in cfg["models"].get("local_resources", []):
-            # Load and solve model
-            model, version = restore_model_object(resource_path)
-            model, termination_condition = _solve_model(model, is_lp=is_lp, is_solved=is_solved)
+            try:
+                # Check if this is .pkl (backward compat) or .py (new format)
+                if resource_path.endswith(".pkl"):
+                    # OLD PATH: Load from pickle
+                    logger.info(f"Loading model from pickle: {resource_path}")
+                    model, version = restore_model_object(resource_path)
+                elif resource_path.endswith(".py"):
+                    # NEW PATH: Load from .py + .json
+                    logger.info(f"Loading model from Python file: {resource_path}")
+                    
+                    # Load JSON data if provided
+                    json_data = None
+                    json_data_path = cfg["models"].get("json_data_path")
+                    if json_data_path and os.path.exists(json_data_path):
+                        logger.info(f"Loading JSON data from: {json_data_path}")
+                        with open(json_data_path, 'r') as f:
+                            json_data = json.load(f)
+                    else:
+                        logger.warning(f"No JSON data file found or specified for {resource_path}")
+                    
+                    # Load model from .py file with optional JSON data
+                    model, version = _load_model_from_py(resource_path, json_data)
+                else:
+                    raise ValueError(f"Unsupported model file format: {resource_path}. Must be .pkl or .py")
+                
+                # Solve model (same for both formats)
+                model, termination_condition = _solve_model(model, is_lp=is_lp, is_solved=is_solved)
 
-            # Extract model information
-            info = extract_model_info(model, termination_condition=termination_condition)
-            local_path_to_object = save_model_object(model, version)
-            info.update({"local_path_to_object": local_path_to_object})
+                # Extract model information
+                info = extract_model_info(model, termination_condition=termination_condition)
+                local_path_to_object = save_model_object(model, version)
+                info.update({"local_path_to_object": local_path_to_object})
 
-            # NEW: Copy .py source file to tmp if it exists
-            source_py_path = _find_and_copy_source_file(version, cfg)
-            if source_py_path:
-                info.update({"source_file_path": source_py_path})
+                # NEW: Copy .py source file to tmp if it exists
+                source_py_path = _find_and_copy_source_file(version, cfg)
+                if source_py_path:
+                    info.update({"source_file_path": source_py_path})
 
-            # Save full model data to individual file
-            save_model_data(version, info)
+                # Save full model data to individual file
+                save_model_data(version, info)
 
-            # Add to runtime cache
-            models_dictionary[version] = info
-            current_model_versions.append(version)
+                # Add to runtime cache
+                models_dictionary[version] = info
+                current_model_versions.append(version)
 
-            # Add/update metadata (base models get automatic description)
-            metadata = add_model_to_metadata(
-                metadata=metadata,
-                version_name=version,
-                model_info=info,
-                base_model=None,
-                description=None,  # Will auto-generate "Base model: {version}"
-                source_file_path=source_py_path  # NEW: track .py file path
-            )
+                # Add/update metadata (base models get automatic description)
+                metadata = add_model_to_metadata(
+                    metadata=metadata,
+                    version_name=version,
+                    model_info=info,
+                    base_model=None,
+                    description=None,  # Will auto-generate "Base model: {version}"
+                    source_file_path=source_py_path  # NEW: track .py file path
+                )
 
-            # Update historical_metadata dict
-            historical_metadata = metadata
+                # Update historical_metadata dict
+                historical_metadata = metadata
+                
+                logger.info(f"✓ Successfully loaded model: {version}")
+                
+            except Exception as e:
+                logger.error(f"Failed to load model from {resource_path}: {e}")
+                logger.exception("Full traceback:")
+                # Continue to next model instead of failing entire initialization
+                continue
 
         logger.info(f"Initialized {len(models_dictionary)} model(s) from config")
 
@@ -387,7 +485,7 @@ def _init_cfg(cfg: dict):
     
     required_sections = ["models", "models_code", "models_paper"]
     extension_filters = {
-        "models": [".pkl"],
+        "models": [".pkl", ".py"],  # Support both .pkl (old) and .py (new separated format)
         "models_code": [".py"],
         "models_paper": [".txt", ".pdf"]
     }
@@ -448,21 +546,22 @@ def check_is_expert_agent_used(callback_context: CallbackContext):
         # Only set start time on first use
         if expert_agent_uses == 0:
             callback_context.state[EXPERT_AGENT_START_TIME] = time.time()
-            callback_context.state[EXPERT_AGENT_START_TIME] = time.time()
-        
+            # Record agent start in timing tracker
+            timing_tracker.record_agent_start("expert_agent")
+
         # Parse Analysis Type from User Query (Agent Input)
         user_query = ""
         if callback_context.user_content and callback_context.user_content.parts:
             user_query = callback_context.user_content.parts[0].text or ""
 
         analysis_type = "GENERAL" # Default
-        
+
         # Regex to find tags like [WHAT_IF], [RETRIEVAL] at start of query
         match = re.search(r"^\[(FEASIBILITY_RESTORATION|DIAGNOSING|RETRIEVAL|SENSITIVITY|WHAT_IF|WHY_NOT)\]", user_query, re.IGNORECASE)
         if match:
             analysis_type = match.group(1).upper()
             logger.info(f"Detected Analysis Type: {analysis_type}")
-        
+
         callback_context.state["CURRENT_ANALYSIS_TYPE"] = analysis_type
         return None
 
@@ -470,6 +569,10 @@ def check_is_expert_agent_used(callback_context: CallbackContext):
 def check_expert_agent_runtime(callback_context: CallbackContext):
     expert_agent_uses = callback_context.state.get(EXPERT_AGENT_USES, 0)
     if expert_agent_uses > 0:
+        # Record agent end in timing tracker
+        timing_tracker.record_agent_end("expert_agent")
+
+        # Legacy timing (kept for backwards compatibility)
         start_time = callback_context.state.get(EXPERT_AGENT_START_TIME)
         if start_time:
             elapsed_time = time.time() - start_time
@@ -480,6 +583,10 @@ def check_expert_agent_runtime(callback_context: CallbackContext):
 
 def check_llm_request(callback_context: CallbackContext, llm_request: LlmRequest):
     agent_name = callback_context.agent_name
+
+    # Start timing for LLM call
+    callback_context.state[LLM_CALL_START_TIME] = time.time()
+
     original_instruction = llm_request.config.system_instruction or types.Content(role="system", parts=[])
     # Ensure system_instruction is Content and parts list exists
     if not isinstance(original_instruction, types.Content):
@@ -697,12 +804,23 @@ def _format_diagnosis_for_prompt(diagnosis_data: dict) -> str:
 
     return "\n".join(sections)
 
-
-
-
-
 def check_llm_response(callback_context: CallbackContext, llm_response: LlmResponse):
     agent_name = callback_context.agent_name
+
+    # Calculate LLM call duration
+    llm_start_time = callback_context.state.get(LLM_CALL_START_TIME)
+    if llm_start_time:
+        llm_duration = time.time() - llm_start_time
+
+        # Increment LLM call counter for this agent
+        llm_call_counters = callback_context.state.get(LLM_CALL_COUNTER, {})
+        call_number = llm_call_counters.get(agent_name, 0) + 1
+        llm_call_counters[agent_name] = call_number
+        callback_context.state[LLM_CALL_COUNTER] = llm_call_counters
+
+        # Record in timing tracker
+        timing_tracker.record_llm_call(agent_name, llm_duration, call_number)
+
     if llm_response.content and llm_response.content.parts:
         if llm_response.content.parts[0].text:
             original_text = llm_response.content.parts[0].text
@@ -725,6 +843,9 @@ def check_tool_usage(tool: BaseTool, args: Dict[str, Any], tool_context: ToolCon
     agent_name = tool_context.agent_name
     tool_name = tool.name
 
+    # Start timing for tool call
+    tool_context.state[TOOL_CALL_START_TIME] = time.time()
+
     usage_key = f"{agent_name.upper()}_{tool_name.upper()}_USES"
     if usage_key in tool_context.state:
         uses_left = tool_context.state[usage_key]
@@ -746,6 +867,19 @@ def check_tool_response(tool: BaseTool,
     show_first_n_chars = None
     agent_name = tool_context.agent_name
     tool_name = tool.name
+
+    # Calculate tool call duration
+    tool_start_time = tool_context.state.get(TOOL_CALL_START_TIME)
+    if tool_start_time:
+        tool_duration = time.time() - tool_start_time
+
+        # Record in timing tracker
+        # For AgentTool (expert_agent, illustrator_agent), this is delegation time
+        if tool_name in ["expert_agent", "illustrator_agent"]:
+            timing_tracker.record_delegation(agent_name, tool_name, tool_duration)
+        else:
+            timing_tracker.record_tool_call(agent_name, tool_name, tool_duration)
+
     # AgentTool may return str instead of Dict as tool_response
     if isinstance(tool_response, dict):
         result = tool_response.get("result", "")
@@ -788,7 +922,6 @@ def check_tool_response(tool: BaseTool,
     
     return None  # Return None to indicate no modification to tool_response
 
-
 def diagnose_if_infeasible(callback_context: CallbackContext):
     """
     Run infeasibility diagnosis before illustrator generates description.
@@ -804,6 +937,9 @@ def diagnose_if_infeasible(callback_context: CallbackContext):
         None (modifies state in-place)
     """
     from pyomo.opt import TerminationCondition
+
+    # Record illustrator agent start
+    timing_tracker.record_agent_start("illustrator_agent")
 
     # Get model information
     model_name = callback_context.state.get(MODEL_FOR_PAPER_GENERATION, "")
@@ -863,6 +999,62 @@ def diagnose_if_infeasible(callback_context: CallbackContext):
     else:
         logger.info(f"[DIAGNOSE_IF_INFEASIBLE] Model '{model_name}' is FEASIBLE. No diagnosis needed.")
         callback_context.state[HAS_INFEASIBILITY_DIAGNOSIS] = False
+
+    return None
+
+
+def check_illustrator_agent_runtime(callback_context: CallbackContext):
+    """
+    Record illustrator agent runtime after agent completes.
+
+    Args:
+        callback_context: Callback context with state
+
+    Returns:
+        None
+    """
+    timing_tracker.record_agent_end("illustrator_agent")
+    return None
+
+
+def check_root_agent_start(callback_context: CallbackContext):
+    """
+    Record root agent start before agent processes request.
+
+    This is called AFTER initialize_session, so tracker is already reset.
+
+    Args:
+        callback_context: Callback context with state
+
+    Returns:
+        None
+    """
+    timing_tracker.record_agent_start("root_agent")
+    return None
+
+
+def check_root_agent_runtime(callback_context: CallbackContext):
+    """
+    Record root agent runtime and print summary after agent completes.
+
+    Args:
+        callback_context: Callback context with state
+
+    Returns:
+        None
+    """
+    timing_tracker.record_agent_end("root_agent")
+
+    # End query timing and print summary
+    timing_tracker.get_tracker().end_query()
+    timing_tracker.print_summary()
+
+    # Optionally save to file
+    timestamp = time.strftime("%Y%m%d_%H%M%S")
+    output_dir = "tmp/timing"
+    os.makedirs(output_dir, exist_ok=True)
+    timing_file = os.path.join(output_dir, f"timing_{timestamp}.json")
+    timing_tracker.save_to_file(timing_file)
 
     return None
 

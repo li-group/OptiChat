@@ -19,7 +19,7 @@ Data Type: dict
       "A": "This results in an increase in cost of $200, raising the cost to $13375 even though it allows Job 7 to start sooner"
     },
     {
-      "type": "WHY_IF",
+      "type": "WHAT_IF",
       "Q": "What if Job 7 didn't end on the last possible day and was forced to end on or before Day 38?",
       "A": "The total duration of Job 7 would be cut to just 5 days from the optimal 7 days, causing an increase to $13275 in cost"
     },

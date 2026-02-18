@@ -1,37 +1,28 @@
 from pyomo.environ import *
 import pyomo.environ as pe
+import json
+
+data = globals().get("data", {})
+# with open("sroute_data.json", "r") as file:
+#     data = json.load(file)
 
 # Set
-I = ['boston', 'chicago', 'dallas', 'kansas-cty', 'losangeles', 'memphis', 'portland', 'salt-lake', 'wash-dc']
 model = pe.ConcreteModel()
-model.i = pe.Set(initialize=I, doc='cities')
+model.i = pe.Set(initialize=data["sets"]["cities"], doc='cities')
 model.r = pe.Set(model.i, model.i, doc='routes')
 
 # Alias
-model.ip = pe.Set(initialize = I)
-model.ipp = pe.Set(initialize = I)
+model.ip = pe.Set(initialize =  data["sets"]["cities"])
+model.ipp = pe.Set(initialize = data["sets"]["cities"])
 
 # Parameter
+
 uarc_init = {
-    ('boston', 'chicago'): 58, 
-    ('boston', 'wash-dc'): 25,
-    ('chicago', 'kansas-cty'): 29, 
-    ('chicago', 'memphis'): 32,
-    ('chicago', 'portland'): 130, 
-    ('chicago', 'salt-lake'): 85,
-    ('dallas', 'kansas-cty'): 29, 
-    ('dallas', 'losangeles'): 85,
-    ('dallas', 'memphis'): 28, 
-    ('dallas', 'salt-lake'): 75,
-    ('kansas-cty', 'memphis'): 27, 
-    ('kansas-cty', 'salt-lake'): 66,
-    ('kansas-cty', 'wash-dc'): 62, 
-    ('losangeles', 'portland'): 58,
-    ('losangeles', 'salt-lake'): 43, 
-    ('memphis', 'wash-dc'): 53,
-    ('portland', 'salt-lake'): 48
+    tuple(k.split(",")): v for k, v in data["parameters"]["uarc"].items()
 }
+
 model.uarc = pe.Param(model.i, model.ip, initialize=uarc_init, mutable = True, doc='undirected arcs')
+
 
 def darc_init(model, i, ip):
     if (i,ip) in uarc_init.keys():
@@ -41,6 +32,7 @@ def darc_init(model, i, ip):
     else:
         return 0
 model.darc = pe.Param(model.i, model.ip, initialize=darc_init, default = 0, doc='directed arcs')
+
 
 # Variable
 model.x = pe.Var(model.i, model.ip, model.ipp, within=NonNegativeReals, doc='arcs taken')

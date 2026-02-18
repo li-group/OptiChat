@@ -16,7 +16,7 @@ Data Type: dict
     {
       "type": "WHY_NOT",
       "Q": "Why doesn't it recommend having non-negative profit at every time period? Doesn't it mean that we are losing money at some point?",
-      "A": "By considering that profit at every time period to be a nonnegative quantity, there is a decrease of $14.95 in the profit value. Initially, the model calculated a profit of $505.22, After setting profit at each time period to be nonnegative, the profit declined to $49.27."
+      "A": "By considering that profit at every time period to be a nonnegative quantity, there is a decrease of $14.95 in the profit value. Initially, the model calculated a profit of $505.22, After setting profit at each time period to be nonnegative, the profit declined to $490.27."
     }
   ]
 }

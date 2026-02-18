@@ -1,57 +1,42 @@
+import json
 from pyomo.environ import *
+
+data = globals().get("data", {})
+# with open("pdi_data.json", "r") as file:
+#     data = json.load(file)
 
 model = ConcreteModel()
 
 # Sets
-model.p = Set(initialize=['one', 'two', 'three'], doc='production facilities')
-model.d = Set(initialize=['east', 'south', 'west', 'north'], doc='distribution centers')
-model.c = Set(initialize=[1, 2, 3, 4, 5], doc='customer zones')
-model.m = Set(initialize=['january', 'february', 'march', 'april'], doc='month')
-model.pf = Set(initialize=['min-prod', 'max-prod', 'over-prod', 'prod-cost', 'over-cost'], doc='production facility parameters')
-model.dcp = Set(initialize=['max-invent', 'hold-cost'], doc='distribution center parameters')
-model.czp = Set(initialize=['min-demand', 'max-demand', 'revenue'], doc='customer zone parameters')
+model.p = Set(initialize=data["sets"]["p"], doc='production facilities')
+model.d = Set(initialize=data["sets"]["d"], doc='distribution centers')
+model.c = Set(initialize=data["sets"]["c"], doc='customer zones')
+model.m = Set(initialize=data["sets"]["m"], doc='month')
+model.pf = Set(initialize=data["sets"]["pf"], doc='production facility parameters')
+model.dcp = Set(initialize=data["sets"]["dcp"], doc='distribution center parameters')
+model.czp = Set(initialize=data["sets"]["czp"], doc='customer zone parameters')
+
+# Helper function to parse comma-separated tuple keys from JSON
+def _parse_str_str(param_dict):
+    return {(k.split(',')[0], k.split(',')[1]): v for k, v in param_dict.items()}
+
+def _parse_str_int(param_dict):
+    return {(k.split(',')[0], int(k.split(',')[1])): v for k, v in param_dict.items()}
+
+def _parse_int_str(param_dict):
+    return {(int(k.split(',')[0]), k.split(',')[1]): v for k, v in param_dict.items()}
+
+params = data["parameters"]
 
 # Parameters
-model.pfd = Param(model.p, model.pf, initialize ={
-    ('one', 'max-prod'):  5000,  ('one', 'over-prod'): 1000, ('one', 'prod-cost'): 35, ('one', 'over-cost'): 45,
-    ('two', 'min-prod'):  1200,  ('two', 'max-prod'):  3000, ('two', 'over-prod'): 500,  ('two', 'prod-cost'): 40, ('two', 'over-cost'): 43,
-    ('three', 'min-prod'):  700, ('three', 'max-prod'):  1500, ('three', 'prod-cost'): 38}, default = 0, mutable = True, doc='production facility data')
-model.fdec = Param(model.p, model.d, initialize ={
-   ('one', 'east'):  10, ('one', 'south'): 12,
-   ('two', 'south'): 8, ('two', 'west'):  4, ('two', 'north'):  5,
-   ('three', 'west'):  6, ('three', 'north'):  8}, default = 0, doc='first distribution echelon cost ($ per unit)')
-model.sdec = Param(model.d, model.c, initialize ={
-   ('east',1):  15, ('east',2): 19,
-   ('south',2): 20, ('south',3): 22, ('south',4): 18,
-   ('west',2):  16, ('west',4): 18, ('west',5): 19,
-   ('north',4): 15, ('north',5): 21
-   }, default = 0, doc='second distribution echelon cost ($ per unit)')    
-model.dcd = Param(model.d, model.dcp, initialize ={
-   ('east','max-invent'):  3000, ('east','hold-cost'):  2,
-   ('south','max-invent'): 2500, ('south','hold-cost'): 2, 
-   ('west','max-invent'):  4000, ('west','hold-cost'):  1, 
-   ('north','max-invent'): 2500, ('north','hold-cost'): 3
-   }, default = 0, mutable = True, doc='distribution center data') 
-model.czd = Param(model.c, model.czp, initialize ={
-   (1,'min-demand'): 2000, (1,'max-demand'):  2500, (1,'revenue'):  70,
-   (2,'min-demand'): 0,    (2,'max-demand'):  2500, (2,'revenue'):  68,
-   (3,'min-demand'): 2000, (3,'max-demand'):  3000, (3,'revenue'):  65,
-   (4,'min-demand'): 1500, (4,'max-demand'):  2000, (4,'revenue'):  72,
-   (5,'min-demand'): 1500, (5,'max-demand'):  3000, (5,'revenue'):  71
-   }, default = 0, mutable = True, doc='customer zone data') 
-model.pc = Param(model.p, model.m, initialize={
-    ('one','january'): 35, ('one','february'): 36, ('one','march'): 37, ('one','april'): 38, 
-    ('two','january'): 40, ('two','february'): 41, ('two','march'): 42, ('two','april'): 43,
-    ('three','january'): 38, ('three','february'): 39, ('three','march'): 40, ('three','april'): 41,
-    }, mutable = True, doc='production cost normal shift') 
-model.pco = Param(model.p, model.m, initialize={    
-    ('one','january'): 45, ('one','february'): 46, ('one','march'): 47, ('one','april'): 49, 
-    ('two','january'): 43, ('two','february'): 44, ('two','march'): 45, ('two','april'): 47,
-    ('three','january'): 0, ('three','february'): 1, ('three','march'): 2, ('three','april'): 4,
-    }, mutable = True, doc='production cost overtime') 
-
-model.revfac = Param(model.m, initialize={
-    'january': 1, 'february': 1, 'march': 1.1, 'april': 1.1}, mutable = True, doc='revenue factor')
+model.pfd = Param(model.p, model.pf, initialize=_parse_str_str(params["pfd"]), default=0, mutable=True, doc='production facility data')
+model.fdec = Param(model.p, model.d, initialize=_parse_str_str(params["fdec"]), default=0, doc='first distribution echelon cost ($ per unit)')
+model.sdec = Param(model.d, model.c, initialize=_parse_str_int(params["sdec"]), default=0, doc='second distribution echelon cost ($ per unit)')
+model.dcd = Param(model.d, model.dcp, initialize=_parse_str_str(params["dcd"]), default=0, mutable=True, doc='distribution center data')
+model.czd = Param(model.c, model.czp, initialize=_parse_int_str(params["czd"]), default=0, mutable=True, doc='customer zone data')
+model.pc = Param(model.p, model.m, initialize=_parse_str_str(params["pc"]), mutable=True, doc='production cost normal shift')
+model.pco = Param(model.p, model.m, initialize=_parse_str_str(params["pco"]), mutable=True, doc='production cost overtime')
+model.revfac = Param(model.m, initialize=params["revfac"], mutable=True, doc='revenue factor')
 
 # Variables
 model.x = Var(model.p, model.d, model.m, within=NonNegativeReals, doc='shipments from production to distribution')
@@ -79,11 +64,11 @@ model.ib = Constraint(model.d, model.m, rule=ib_rule, doc='inventory balance')
 
 def pb_rule(model, p, m):
     return model.pn[p,m] + model.po[p,m] == sum(model.x[p,d,m] for d in model.d if model.fdec[p,d] != 0)
-model.pb = Constraint(model.p, model.m, rule=pb_rule, doc= 'production balance')
+model.pb = Constraint(model.p, model.m, rule=pb_rule, doc='production balance')
 
 def hb_rule(model, d, m):
     return model.s[d,m] == model.h[d,m] - sum(model.y[d,c,m] for c in model.c if model.sdec[d,c] != 0)
-model.hb = Constraint(model.d, model.m, rule=hb_rule, doc= 'handling balance')
+model.hb = Constraint(model.d, model.m, rule=hb_rule, doc='handling balance')
 
 def db_rule(model, c, m):
     return sum(model.y[d,c,m] for d in model.d if model.sdec[d,c] != 0) == model.dm[c]
@@ -91,15 +76,15 @@ model.db = Constraint(model.c, model.m, rule=db_rule, doc='demand balance')
 
 def ar_rule(model):
     return model.revenue == sum(model.revfac[m]*model.czd[c,"revenue"]*model.y[d,c,m] for d in model.d for c in model.c for m in model.m if model.sdec[d,c] != 0)
-model.ar = Constraint(rule=ar_rule, doc= 'revenue balance')
+model.ar = Constraint(rule=ar_rule, doc='revenue balance')
 
 def at_rule(model):
     return model.transport == sum(sum(model.fdec[p,d]*model.x[p,d,m] for p in model.p) + sum(model.sdec[d,c]*model.y[d,c,m] for c in model.c) for d in model.d for m in model.m)
-model.at = Constraint(rule=at_rule, doc= 'transport balance')
+model.at = Constraint(rule=at_rule, doc='transport balance')
 
 def ap_rule(model):
     return model.production == sum(model.pc[p,m]*model.pn[p,m] + model.pco[p,m]*model.po[p,m] for p in model.p for m in model.m)
-model.ap = Constraint(rule=ap_rule, doc= 'production cost balance')
+model.ap = Constraint(rule=ap_rule, doc='production cost balance')
 
 def ah_rule(model):
     return model.holding == sum(model.dcd[d,"hold-cost"]*model.s[d,m] for d in model.d for m in model.m)
@@ -107,7 +92,7 @@ model.ah = Constraint(rule=ah_rule, doc='inventory holding cost definition')
 
 def apr_rule(model):
     return model.profit == model.revenue - model.transport - model.production - model.holding + 10
-model.apr = Constraint(rule=apr_rule, doc= 'profit definition')
+model.apr = Constraint(rule=apr_rule, doc='profit definition')
 
 def slo_rule(model,d):
     return model.s[d,'april'] >= 200

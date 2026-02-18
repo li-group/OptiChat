@@ -1,0 +1,7 @@
+{
+    "parameters": {
+      "Number_of_aircraft": 5,
+      "Number_of_runway": 2,
+      "M_formulation": 20
+    }
+  }

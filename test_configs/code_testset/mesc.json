@@ -1,15 +1,16 @@
 {
-    "model_name": "mesc",
-    "models": {
-        "local_resources": [
-            "Feas/mesc.pkl"
-        ],
-        "is_solved": false,
-        "is_lp": false
-    },
-    "models_code": {
-        "local_resources": [
-            "Feas/mesc.py"
-        ]
-    }
+  "model_name": "mesc",
+  "models": {
+    "local_resources": [
+      "Feas/mesc.py"
+    ],
+    "is_solved": false,
+    "is_lp": false,
+    "json_data_path": "Feas/mesc_data.json"
+  },
+  "models_code": {
+    "local_resources": [
+      "Feas/mesc.py"
+    ]
+  }
 }

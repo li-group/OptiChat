@@ -4,29 +4,29 @@ Data Type: dict
 {
   "external_tools": [
     {
-      "type": "WHY_IF",
+      "type": "WHAT_IF",
       "Q": "What if chemical 5 (hydronium ion), an active reactant in reaction 2 that produces acetone, is not available?",
       "A": "If chemical 5 is missing and not available, reaction 2 is missing all its reactants and is not viable for acetone synthesis. However, there are other reactions such as reaction 6, 8, and 9 that have some available reactants for acetone production. The objective function value is not changed (still being 1) because the model can still produce acetone through other reactions. The optimal solution remains the same."
     },
     {
-      "type": "WHY_IF",
-      "Q": "Are you sure that the chemicals 31 (nacn) is involved in acetone rxns (Rxns 2, 6, 8, 9)? I think it is not involved in any of the acetone reactions.",
+      "type": "WHAT_IF",
+      "Q": "Are you sure that the chemicals 31 (nacn) is involved in acetone rxns (Rxns 2, 6, 8, 9)? I think it is not involved in any of the acetone reactions. If it's not available, what will the objective value changed?",
       "A": "If chemical 31 is missing, the objective function value is changed to 0. This non-participating chemical is involved in reactions that are producing necessary reactant for acetone production."
     },
     {
       "type": "WHY_NOT",
       "Q": "Why isn't it recommended to have chemical 17, 18, 19 all present in the optimal solution?",
-      "A": "After enforcing the presence of chemicals 17, 18, and 19, the objective function value is changed to 0. This indicates that the presence of these chemicals together conflicts with acetone production."
+      "A": "In the base model, chemicals 17, 18, and 19 cannot all be present because 19 is hard-fixed to 0, and even if 19 is allowed, having 18 and 19 together (with 12 fixed to 1) forces acetone (6) via reaction 09, which the objective minimizes and therefore discourages."
     },
     {
-      "type": "WHY_IF",
-      "Q": "We are currently limited by the presence of chemicals. We can only select one chemical from chemicals 1, 2 and 3. Can we still produce acetone successfully?",
-      "A": "No, you cannot produce acetone successfully. The objective function value is changed to 0. This indicates that you at least need two of the chemicals 1, 2, and 3 to produce acetone."
+      "type": "WHAT_IF",
+      "Q": "We are currently limited by the presence of chemicals. We may select at most one chemical from chemicals 1, 2, and 3, and none of these three chemicals are required to be present or required to be absent by the model. Under this restriction alone, can we still produce acetone successfully?",
+      "A": "Yes — with the operational rule “select at most one of chemicals 1, 2, 3,” acetone production is still possible in the current data. The model simply avoids using those three and produces acetone via Reaction 6 (using chemicals 11, 12, 13). Objective remains the same (y[6]=1)"
     },
     {
-      "type": "WHY_IF",
-      "Q": "We are currently limited by the presence of chemicals. We can only select one chemical from chemicals 3, 4 and 5. Can we still produce acetone successfully?",
-      "A": "No, you cannot produce acetone successfully. The objective function value is changed to 0. This indicates that you at least need two of the chemicals 3, 4, and 5 to produce acetone."
+      "type": "WHAT_IF",
+      "Q": "We are currently limited by the presence of chemicals. We may select at most one chemical from chemicals 3, 4 and 5, and none of these three chemicals are required to be present or required to be absent by the model. Under this restriction alone, can we still produce acetone successfully?",
+      "A": "Yes — with the operational rule “select at most one of chemicals 3, 4, 5,” acetone production is still possible in the current data. The model simply avoids using those three and produces acetone via Reaction 6 (using chemicals 11, 12, 13). Objective remains the same (y[6]=1)"
     }
   ]
 }

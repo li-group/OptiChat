@@ -1,34 +1,46 @@
 import numpy as np
 import pyomo.environ as pyo
 import pyomo.opt as po
+import json
+
+# Load data from json
+data = globals().get("data", {})
+# with open("process_data.json", "r") as file:
+#     data = json.load(file)
 
 # Create the Pyomo model
 model = pyo.ConcreteModel()
 
 # Define sets
-model.cond_hot_index = pyo.Set(initialize = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27], doc = "Condesnser hot streams")
-model.reb_cold_index = pyo.Set(initialize = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25], doc = "Reboiler cold streams")
-model.C_hu_index = pyo.Set(initialize = [1,2,3], doc = "Number of hot utilities")
-model.F_index = pyo.Set(initialize = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24], doc = "Columns in the superstructure")
-model.F_subset = pyo.Set(initialize=[1,2,3,4,5,6,7,8,9,10,11,12], doc = "number of division of ABC stream")
-model.F_index_first_six = pyo.Set(initialize=[1,2,3,4,5,6], doc = "A/BC types column")
-model.F_index_between_six = pyo.Set(initialize=[7,8,9,10,11,12], doc = "AB/C types column")
-model.F_index_next_between_six = pyo.Set(initialize=[13,14,15,16,17,18], doc = "A/B type columns")
-model.F_index_last_six = pyo.Set(initialize=[19,20,21,22,23,24], doc = "B/C types of column")
+model.cond_hot_index = pyo.Set(initialize = data["sets"]["Condesnser_hot_streams"], doc = "Condesnser hot streams")
+model.reb_cold_index = pyo.Set(initialize = data["sets"]["Reboiler_cold_streams"], doc = "Reboiler cold streams")
+model.C_hu_index = pyo.Set(initialize = data["sets"]["Number_of_hot_utilities"], doc = "Number of hot utilities")
+model.F_index = pyo.Set(initialize = data["sets"]["superstructure_columns"], doc = "Columns in the superstructure")
+model.F_subset = pyo.Set(initialize=data["sets"]["ABC_stream_division"], doc = "number of division of ABC stream")
+model.F_index_first_six = pyo.Set(initialize=data["sets"]["A/BC_type_column"], doc = "A/BC types column")
+model.F_index_between_six = pyo.Set(initialize=data["sets"]["AB/C_type_column"], doc = "AB/C types column")
+model.F_index_next_between_six = pyo.Set(initialize=data["sets"]["A/B_type_column"], doc = "A/B type columns")
+model.F_index_last_six = pyo.Set(initialize=data["sets"]["B/C_type_column"], doc = "B/C types of column")
+
+# print()
+# for f in model.reb_cold_index:
+#     print(f)
 
 # Define parameters
-cond_hot_dict = {i: val for i, val in enumerate([350, 370, 395, 420, 440, 465, 350, 370, 395, 420, 440, 465, 350, 370, 395, 420, 440, 465, 370, 395, 420, 440, 465, 485, 419, 459, 527], start=1)}
-reb_cold_dict = {i: val for i, val in enumerate([395, 420, 440, 465, 485, 515, 395, 420, 440, 465, 485, 515, 395, 420, 440, 465, 485, 515, 395, 420, 440, 465, 485, 515, 305], start=1)}
-C_hu_dict = {i: val/1e6 for i, val in enumerate([2.81, 3.98, 5.33], start=1)}
+cond_hot_dict = {int(k): v for k, v in data["parameters"]["cond_hot_temp"].items()}
+reb_cold_dict = {int(k): v for k, v in data["parameters"]["reb_cold_temp"].items()}
+C_hu_dict = {int(k): v / 1e6 for k, v in data["parameters"]["C_hu_cost"].items()}
 
-model.FC = pyo.Param(initialize=30000, doc = "Fixed cost", mutable = True)
-model.F_tot = pyo.Param(initialize=250, doc = "total flow rate", mutable = True) 
-model.K = pyo.Param(initialize=3, doc = "Slope for heat duty vs flow rates", mutable = True) 
-model.V = pyo.Param(initialize=500, doc = "Slope of column cost of flowrates", mutable = True)
-model.alpha = pyo.Param(initialize=2.5, doc = "payout time for capital cost", mutable = True)
-model.beta = pyo.Param(initialize=0.52, doc = "Income tax correction parameter", mutable = True)
-model.C_cu = pyo.Param(initialize=0.159/1e6, doc = "Cost of cold water", mutable = True)
-model.hex_cost = pyo.Param(initialize = 300, doc = 'cost associated with heat exchanger')
+
+params = data["parameters"]
+model.FC = pyo.Param(initialize=params["Fixed_Cost"], doc = "Fixed cost", mutable = True)
+model.F_tot = pyo.Param(initialize=params["Total_Flow_Rate"], doc = "total flow rate", mutable = True) 
+model.K = pyo.Param(initialize=params["K"], doc = "Slope for heat duty vs flow rates", mutable = True) 
+model.V = pyo.Param(initialize=params["V"], doc = "Slope of column cost of flowrates", mutable = True)
+model.alpha = pyo.Param(initialize=params["alpha"], doc = "payout time for capital cost", mutable = True)
+model.beta = pyo.Param(initialize=params["beta"], doc = "Income tax correction parameter", mutable = True)
+model.C_cu = pyo.Param(initialize=params["C_cu"]/1e6, doc = "Cost of cold water", mutable = True)
+model.hex_cost = pyo.Param(initialize = params["hex_cost"], doc = 'cost associated with heat exchanger')
 model.C_hu = pyo.Param(model.C_hu_index, initialize=C_hu_dict, doc = "Cost of hot utilities i.e. LP, MP and HP steam", mutable = True)
 model.Stream_Matrix = pyo.Param(model.reb_cold_index, model.cond_hot_index, initialize=dict(
     ((i, j), 1 if (i in reb_cold_dict) and (j in cond_hot_dict) and (cond_hot_dict[j] >= reb_cold_dict[i]) else 0) for i in model.reb_cold_index for j in model.cond_hot_index

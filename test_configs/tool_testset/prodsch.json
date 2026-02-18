@@ -1,15 +1,16 @@
 {
-    "model_name": "prodsch",
-    "models": {
-        "local_resources": [
-            "Feas/prodsch.pkl"
-        ],
-        "is_solved": false,
-        "is_lp": false
-    },
-    "models_code": {
-        "local_resources": [
-            "Feas/prodsch.py"
-        ]
-    }
+  "model_name": "prodsch",
+  "models": {
+    "local_resources": [
+      "Feas/prodsch.py"
+    ],
+    "is_solved": false,
+    "is_lp": false,
+    "json_data_path": "Feas/prodsch_data.json"
+  },
+  "models_code": {
+    "local_resources": [
+      "Feas/prodsch.py"
+    ]
+  }
 }

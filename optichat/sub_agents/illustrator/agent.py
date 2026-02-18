@@ -1,12 +1,12 @@
 """Illustrator agent for automatic model description generation."""
 
 from google.adk.agents import Agent
-from optichat.llm import gpt_5_mini
+from optichat.llm import *
 from optichat.sub_agents.illustrator.prompt import ILLUSTRATOR_PROMPT
 from optichat.tools.illustrator_tool import get_model_info_for_description
 from optichat.tools.callback_tool import (check_llm_request, check_llm_response,
                                           check_tool_usage, check_tool_response,
-                                          diagnose_if_infeasible)
+                                          diagnose_if_infeasible, check_illustrator_agent_runtime)
 
 
 def create_illustrator_agent():
@@ -31,7 +31,8 @@ def create_illustrator_agent():
         ),
         instruction=ILLUSTRATOR_PROMPT,
         output_key="MODEL_DESCRIPTION",
-        before_agent_callback=diagnose_if_infeasible,  # NEW: Run diagnosis if model is infeasible
+        before_agent_callback=diagnose_if_infeasible,  # Run diagnosis if model is infeasible
+        after_agent_callback=check_illustrator_agent_runtime,  # Track runtime
         before_model_callback=check_llm_request,
         after_model_callback=check_llm_response,
         before_tool_callback=check_tool_usage,

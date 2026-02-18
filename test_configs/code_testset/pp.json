@@ -1,15 +1,16 @@
 {
-    "model_name": "pp",
-    "models": {
-        "local_resources": [
-            "Feas/pp.pkl"
-        ],
-        "is_solved": false,
-        "is_lp": false
-    },
-    "models_code": {
-        "local_resources": [
-            "Feas/pp.py"
-        ]
-    }
+  "model_name": "pp",
+  "models": {
+    "local_resources": [
+      "Feas/pp.py"
+    ],
+    "is_solved": false,
+    "is_lp": false,
+    "json_data_path": "Feas/pp_data.json"
+  },
+  "models_code": {
+    "local_resources": [
+      "Feas/pp.py"
+    ]
+  }
 }
