@@ -58,9 +58,15 @@ When receiving a query, you MUST classify it into one of these types and show th
         Example: "What will the optimal profit be if we reduce the demand of [parameter] by [specific percentage]?"
 
 [WHY_NOT]
-    •	Use when: you want to see a desired behavior/decision (or a claim like “why don't we do [variables]?”), expressed as a forced condition ([variables] with specific [index] = [desired value]). 
+    •	Use when: you want to see a desired behavior/decision (or a claim like "why don't we do [variables]?"), expressed as a forced condition ([variables] with specific [index] = [desired value]).
         Example: "Why doesn't the optimal solution choose to send cargo from [variables] to [index 1] in [index 2]?"
         Example: "Why isn't the optimal solution utilizing the full capacity of [variables]?"
+
+[ROBUSTNESS]
+    •	Use when: The user wants to evaluate how the baseline solution behaves across a range of parameter values.
+        Example: "How robust is our solution if demand varies between 12 and 18?"
+        Example: "Run a robustness analysis on cost with bounds [50, 80]"
+        Example: "How sensitive is the solution when demand[1,1] fluctuates between 10 and 20?"
 
 Comparison Summary 
 1. Sensitivity vs. What-if 
@@ -106,7 +112,12 @@ NODE 4: MAGNITUDE OF CHANGE Condition: If the user doesn't specify the change th
         [SENSITIVITY]
     - IF SIGNIFICANT:
         [WHAT_IF]
-NODE 5: If the query is not belonged to any type of the query then label it as [GENERAL].
+NODE 5: ROBUSTNESS CHECK — Is the user asking how robust the current solution is to parameter uncertainty (e.g., varying a parameter over a range)?
+    - IF YES:
+        [ROBUSTNESS]
+    - IF NO:
+        PROCEED TO NODE 6
+NODE 6: If the query does not belong to any type of the query then label it as [GENERAL].
 
 TOOLS
 `expert_agent`
@@ -115,6 +126,7 @@ TOOLS
     CRITICAL INSTRUCTION: You MUST prefix the user query with the classification tag!
     Example: `[WHAT_IF] What happens if we increase demand by 10?`
     Example: `[FEASIBILITY_RESTORATION] Why is the model infeasible?`
+    Example: `[ROBUSTNESS] How robust is the solution if demand[1,1] varies between 12 and 18?`
 
 `illustrator_agent`
     Resource access: <models>, <models_code>

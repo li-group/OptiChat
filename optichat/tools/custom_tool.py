@@ -1,11 +1,13 @@
 from __future__ import annotations
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 import os, shutil, tempfile, subprocess
 from loguru import logger
 
 import pyomo.environ as pyo
 from pyomo.contrib.iis import write_iis
 from pyomo.opt import SolverFactory, SolverStatus, TerminationCondition
+from pyomo.core.base.param import ParamData
+from pyomo.core.base.componentuid import ComponentUID
 
 from google.adk.tools.tool_context import ToolContext
 from optichat.tools.shortcut_functions import load_model, solve_model, parse_uncertainty_from_state, relax_constraint_and_penalize_violation
@@ -872,21 +874,71 @@ def ldr_expression_generator(
 
 
 # Robustness Analysis
+
+def _resolve_param(model: pyo.ConcreteModel, name: str):
+    """
+    Resolve a string like "demand[1,1]" or "cost" into a live Pyomo ParamData or Param object.
+
+    Uses ComponentUID — the Pyomo-native way to resolve component references from strings.
+    Handles all index forms (integers, strings, negative numbers, multi-dimensional).
+
+    Raises
+    ------
+    ValueError
+        If the name is not found on the model or is not a Param component.
+    """
+    cuid = ComponentUID(name)
+    comp = cuid.find_component(model)
+    if comp is None:
+        raise ValueError(f"'{name}' not found on the model.")
+    if not isinstance(comp, (pyo.Param, ParamData)):
+        raise ValueError(f"'{name}' is not a Param.")
+    return comp
+
+
 def robustness_analysis(
     version: str,
+    uncertain_param_names: List[str],
+    bounds: List[List[float]],
     tool_context: ToolContext = None,
     n_scenarios: int = 10,
+    dist: str = "uniform",
 ) -> Dict[str, Any]:
     """
-    Generate uniform scenarios and run robustness analysis on a FEASIBLE base model `version`.
-    - No state/registry updates.
-    - Returns JSON-safe payload (DataFrame -> records), suitable for LLM consumption.
-    - `n_scenarios` defaults to 10; CSV path is intentionally unsupported here.
+    Generate scenarios and run robustness analysis on a FEASIBLE base model `version`.
+
+    Parameters
+    ----------
+    version : str
+        The base model version name.
+    uncertain_param_names : list of str
+        Exact parameter names as strings, e.g. ["demand[1,1]", "demand[2,1]"] or ["cost"].
+    bounds : list of [lb, ub]
+        Lower/upper bounds aligned 1:1 with uncertain_param_names, e.g. [[12, 18], [10, 20]].
+    n_scenarios : int
+        Number of scenarios to sample (default 10).
+    dist : str
+        Distribution to use: "uniform" (default) or "normal".
+
+    Returns
+    -------
+    dict
+        JSON-safe payload with status, result summary, and data (DataFrame records).
     """
+    # --- Input validation ---
+    if len(uncertain_param_names) != len(bounds):
+        return {
+            "status": "error",
+            "result": (
+                f"'uncertain_param_names' has {len(uncertain_param_names)} entries but "
+                f"'bounds' has {len(bounds)}. They must be the same length."
+            ),
+        }
+
     state = tool_context.state
     md = state[MODELS_DICTIONARY].copy()
 
-    # Feasibility guard (mirrors your LDR style)
+    # Feasibility guard
     status_in_obj = md.get(version, {}).get("obj", {}).get("sol_status", "unknown")
     if (
         status_in_obj in [TerminationCondition.infeasible, TerminationCondition.infeasibleOrUnbounded]
@@ -894,38 +946,37 @@ def robustness_analysis(
     ):
         return {
             "status": "error",
-            "result": f"Base model version '{version}' is not feasible; robustness analysis aborted."
+            "result": f"Base model version '{version}' is not feasible; robustness analysis aborted.",
         }
 
     base_model = load_model(version, md)
 
-    # # --- Scenario generation (uniform by default) ---
-    # if hasattr(robust_scenarios, "generate_scenarios_from_model"):
-    #     scen_fn = robust_scenarios.generate_scenarios_from_model
-    #     scenarios_df = scen_fn(uncertain_params = ["demand[1,1]", "demand[2,1]"], bounds = [(12, 18), (10, 20)], n = n_scenarios)
-    # else:
-    #     raise RuntimeError(
-    #         "robust_analysis.scenario_generator has no supported entrypoint: "
-    #         "expected 'generate_uniform_scenarios' or 'generate_scenarios'."
-    #     )
-    
-    # print(scenarios_df) # Works till here, perfect
+    # --- Resolve string param names -> Pyomo objects ---
+    try:
+        uncertain_params = [_resolve_param(base_model, name) for name in uncertain_param_names]
+    except ValueError as e:
+        return {"status": "error", "result": str(e)}
+
+    # --- Convert bounds List[List[float]] -> List[Tuple[float, float]] ---
+    bounds_tuples: List[Tuple[float, float]] = [(float(b[0]), float(b[1])) for b in bounds]
 
     # --- Robustness analysis ---
-    if hasattr(robust_core, "run_robustness"):
-        robust_function = getattr(robust_core, "run_robustness")
-    else:
+    if not hasattr(robust_core, "run_robustness"):
         raise RuntimeError(
-            "robust_analysis.robustness_analysis has no supported entrypoint "
-            "Missing run_robustness function"
+            "robust_analysis.robustness_analysis has no supported entrypoint. "
+            "Missing run_robustness function."
         )
-    
-    robust_df = robust_function(model = base_model, uncertain_params = [base_model.demand[1,1], base_model.demand[2,1]], bounds = [(12, 18), (10, 20)],
-                                n_scenarios = n_scenarios, dist = "uniform")
 
-    print(robust_df)
+    robust_function = getattr(robust_core, "run_robustness")
+    robust_df = robust_function(
+        model=base_model,
+        uncertain_params=uncertain_params,
+        bounds=bounds_tuples,
+        n_scenarios=n_scenarios,
+        dist=dist,
+    )
 
-    # --- JSON-safe return (no Pyomo / pandas objects in payload) ---
+    # --- JSON-safe return ---
     js = _json_safe(robust_df)
     rows = 0
     try:
@@ -935,7 +986,10 @@ def robustness_analysis(
 
     return {
         "status": "success",
-        "result": f"Robustness analysis (uniform, {n_scenarios} scenarios) completed for '{version}'. Rows: {rows}.",
+        "result": (
+            f"Robustness analysis ({dist}, {n_scenarios} scenarios) completed for '{version}'. "
+            f"Rows: {rows}. Uncertain params: {uncertain_param_names}."
+        ),
         "data": js,
     }
 

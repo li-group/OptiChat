@@ -557,7 +557,7 @@ def check_is_expert_agent_used(callback_context: CallbackContext):
         analysis_type = "GENERAL" # Default
 
         # Regex to find tags like [WHAT_IF], [RETRIEVAL] at start of query
-        match = re.search(r"^\[(FEASIBILITY_RESTORATION|DIAGNOSING|RETRIEVAL|SENSITIVITY|WHAT_IF|WHY_NOT)\]", user_query, re.IGNORECASE)
+        match = re.search(r"^\[(FEASIBILITY_RESTORATION|DIAGNOSING|RETRIEVAL|SENSITIVITY|WHAT_IF|WHY_NOT|ROBUSTNESS)\]", user_query, re.IGNORECASE)
         if match:
             analysis_type = match.group(1).upper()
             logger.info(f"Detected Analysis Type: {analysis_type}")
@@ -607,6 +607,9 @@ def check_llm_request(callback_context: CallbackContext, llm_request: LlmRequest
         logger.info(f"Injecting Dynamic Prompt for {agent_name} with strategy: {analysis_type}")
 
         try:
+            # Inject component index for ALL expert_agent queries
+            component_index = _get_component_index_for_prompt(callback_context.state)
+
             # Inject source code for code-modification queries
             model_source_code = None
             if analysis_type in ["WHAT_IF", "WHY_NOT", "FEASIBILITY_RESTORATION"]:
@@ -639,7 +642,8 @@ def check_llm_request(callback_context: CallbackContext, llm_request: LlmRequest
                 analysis_type=analysis_type,
                 model_source_code=model_source_code,
                 diagnosis_report=diagnosis_report,
-                cached_model_name=cached_model_name
+                cached_model_name=cached_model_name,
+                component_index=component_index
             )
             # Create new Content object
             # new_instruction = types.Content(
@@ -653,6 +657,100 @@ def check_llm_request(callback_context: CallbackContext, llm_request: LlmRequest
             logger.error(f"Failed to inject dynamic prompt: {e}")
 
     return None
+
+
+def _generate_component_index(version: str, models_dictionary: dict) -> str:
+    """
+    Generate a compact component families index for a model version.
+    Groups indexed components by base name, shows type and doc string.
+    No values or expressions — just enough to make precise GMC calls.
+    """
+    from collections import defaultdict
+
+    if version not in models_dictionary:
+        return ""
+
+    model_data = models_dictionary[version]
+    sol_status = model_data.get("obj", {}).get("sol_status", "unknown")
+    obj_value = model_data.get("obj", {}).get("value", "unknown")
+
+    # Group components by base name (strip index brackets)
+    families = {}
+    for comp_name, comp_data in model_data.items():
+        if not isinstance(comp_data, dict):
+            continue
+        comp_type = comp_data.get("component_type", "")
+        if not comp_type:
+            continue
+        # Extract base name: "demand[1,2]" → "demand"
+        base_match = re.match(r'^([^\[]+)', comp_name)
+        base_name = base_match.group(1).strip() if base_match else comp_name
+        is_indexed = '[' in comp_name
+        if base_name not in families:
+            families[base_name] = {
+                "type": comp_type,
+                "doc": comp_data.get("doc", ""),
+                "indexed": is_indexed
+            }
+
+    # Group by component type
+    by_type = defaultdict(list)
+    for name, info in sorted(families.items()):
+        by_type[info["type"]].append((name, info))
+
+    type_order = ["objective", "parameter", "variable", "constraint"]
+    type_labels = {
+        "objective": "Objective",
+        "parameter": "Parameters",
+        "variable": "Variables",
+        "constraint": "Constraints"
+    }
+
+    lines = [f"MODEL COMPONENTS INDEX: {version} ({sol_status}, obj={obj_value})"]
+    for t in type_order:
+        if t not in by_type:
+            continue
+        lines.append(f"\n{type_labels[t]}:")
+        for name, info in by_type[t]:
+            idx_str = "[indexed]" if info["indexed"] else "[scalar]"
+            doc_str = f" — {info['doc']}" if info.get("doc") else ""
+            lines.append(f"  {name} {idx_str}{doc_str}")
+    lines.append(
+        "\nUse component names above as pattern filters in get_model_components "
+        "to fetch specific current values (e.g., pattern='demand' to get all demand entries)."
+    )
+    return "\n".join(lines)
+
+
+def _get_component_index_for_prompt(state: dict) -> Optional[str]:
+    """
+    Generate and cache a compact component index for the model being queried.
+    Follows the same pattern as _get_source_code_for_prompt.
+    """
+    user_query = state.get(USER_QUERY, "")
+    models_dict = state.get(MODELS_DICTIONARY, {})
+
+    base_model = _extract_base_model_from_query(user_query, models_dict)
+    if not base_model:
+        logger.warning("Could not identify base model for component index injection")
+        return None
+
+    # Check cache
+    cache_key = f"COMPONENT_INDEX_{base_model}"
+    if cache_key in state:
+        logger.info(f"Using cached component index for {base_model}")
+        return state[cache_key]
+
+    # Generate
+    index_str = _generate_component_index(base_model, models_dict)
+    if not index_str:
+        logger.warning(f"Could not generate component index for {base_model}")
+        return None
+
+    # Cache and return
+    state[cache_key] = index_str
+    logger.info(f"Generated component index for {base_model} ({len(index_str)} chars)")
+    return index_str
 
 
 def _get_source_code_for_prompt(state: dict) -> Optional[str]:

@@ -192,9 +192,16 @@ def modify_and_solve(
         version (str): Base model version to modify (must exist in models_dictionary)
         modifications (List[Dict]): List of modification specs. Each dict must have:
             - "component_name" (str): Name of the parameter or variable to modify
-            - "component_indexes": Index for the component — use None for scalar (non-indexed)
-              components, int/str for 1-D indexed, tuple for multi-D (e.g., (1, 2)), or a
-              tuple containing slice(None) to apply across all matching elements (e.g., (slice(None), 2)).
+            - "component_indexes": Index for the component. Supported forms:
+                None                    scalar (non-indexed) component
+                int / str               single 1-D index
+                (i, j)                  exact multi-D index
+                (slice(None), j)        all first indices, fixed second (rectangular grids only)
+                lambda idx: <cond>      predicate — applied to every index in the component;
+                                        use this for subset-indexed params (e.g. model.vs) or
+                                        string/mixed indices:
+                                          lambda idx: idx[1] == 1
+                                          lambda idx: idx[0] in ('a', 'b')
             - "operation" (str): "+", "-", "*", "/", or "=" (to set an absolute value)
             - "delta" (float | int): Amount to apply (for +/-/*/÷) or the target value (for =)
         new_version (str): Version name for the modified model. Follow the naming convention:
@@ -221,9 +228,6 @@ def modify_and_solve(
         ```
     """
     model = load_model(version, models_dictionary)
-    model_info = models_dictionary[version]
-    known_params = set(model_info["components"].get("parameters", {}).keys())
-    known_vars = set(model_info["components"].get("variables", {}).keys())
 
     change_log = []
 
@@ -237,16 +241,17 @@ def modify_and_solve(
             print(f"Skipping '{component_name}': operation '!' requires sensitivity analysis, not modify_and_solve.")
             continue
 
-        is_param = component_name in known_params
-        is_var = component_name in known_vars
-
-        if not is_param and not is_var:
-            print(f"Warning: '{component_name}' not found as a parameter or variable in '{version}'. Skipping.")
-            continue
-
         model_component = model.find_component(component_name)
         if model_component is None:
             print(f"Warning: '{component_name}' not found on the Pyomo model object. Skipping.")
+            continue
+
+        # Determine type directly from the Pyomo model object
+        is_param = isinstance(model_component, pe.Param)
+        is_var = isinstance(model_component, pe.Var)
+
+        if not is_param and not is_var:
+            print(f"Warning: '{component_name}' is neither a Param nor a Var. Skipping.")
             continue
 
         def _apply_at(idx, _comp=model_component, _is_param=is_param, _op=operation, _delta=delta):
@@ -265,7 +270,18 @@ def modify_and_solve(
             change_log.append(f"  {component_name}{idx_str} {verb} {new_val} (was {current_val})")
 
         # Dispatch based on index type
-        if isinstance(component_indexes, tuple) and any(isinstance(i, slice) for i in component_indexes):
+        if callable(component_indexes):
+            # Lambda/predicate — iterate over all indices and apply where predicate returns True.
+            # Use for subset-indexed params (e.g. model.vs) or any conditional filter:
+            #   lambda idx: idx[1] == 1       (second index equals 1)
+            #   lambda idx: idx[0] in ('a', 'b')   (first index is one of a set)
+            matched = [idx for idx in model_component if component_indexes(idx)]
+            if not matched:
+                print(f"Warning: predicate for '{component_name}' matched no elements. Skipping.")
+                continue
+            for idx in matched:
+                _apply_at(idx)
+        elif isinstance(component_indexes, tuple) and any(isinstance(i, slice) for i in component_indexes):
             elements = list(model_component[component_indexes])
             if not elements:
                 print(f"Warning: index {component_indexes} for '{component_name}' matched no elements. "

@@ -1,5 +1,6 @@
 import pyomo.environ as pe
 from pyomo.opt import SolverFactory, SolverStatus, TerminationCondition
+from pyomo.core.expr.visitor import identify_mutable_parameters, identify_variables
 import cloudpickle
 import os
 from optichat.config.constants import TMP_MODEL_OBJECT_FOLDER
@@ -165,7 +166,9 @@ def extract_model_constraint(model, termination_condition):
 def extract_model_objective(model, termination_condition):
     """
     Extract objectives from a Pyomo model.
-    Information includes name, component_type, expression (with sense: min/max), value. 
+    Information includes name, component_type, sense (min/max), value, sol_status,
+    params_in (parameter names used), and vars_in (variable names used).
+    The full symbolic expression is omitted to keep output compact.
     """
     objective_info = {}
     objectives = list(model.component_objects(pe.Objective, active=True))
@@ -174,15 +177,46 @@ def extract_model_objective(model, termination_condition):
     else:
         obj = objectives[0]
         if obj.sense == pe.minimize:
-            obj_sense = "MINIMIZE: "
+            obj_sense = "MINIMIZE"
         elif obj.sense == pe.maximize:
-            obj_sense = "MAXIMIZE: "
+            obj_sense = "MAXIMIZE"
         else:
             raise ValueError(f"Unknown objective sense {obj.sense} for objective {pe.name(obj)}")
+
+        params_in = set()
+        vars_in = set()
+        for obj_idx in obj:
+            try:
+                obj_i = obj[obj_idx]
+                for p in identify_mutable_parameters(obj_i.expr):
+                    params_in.add(p.name.split("[")[0])
+                for v in identify_variables(obj_i.expr):
+                    vars_in.add(v.name.split("[")[0])
+            except Exception:
+                pass
+
+        # Build compact expression: show first term to reveal the structure,
+        # then ellipsis with total term count. Mutable parameters appear by name
+        # (e.g. cost[chicken]) rather than numeric value, so the pattern is readable.
+        try:
+            full_expr_str = str(obj.expr)
+            if ' + ' in full_expr_str:
+                first_plus = full_expr_str.find(' + ')
+                first_term = full_expr_str[:first_plus]
+                n_terms = full_expr_str.count(' + ') + 1
+                compact_expr = f"{first_term} + ... ({n_terms} terms)"
+            else:
+                compact_expr = full_expr_str
+        except Exception:
+            compact_expr = "(expression unavailable)"
+
         objective_info["obj"] = {"component_type": "objective",
-                                 "expression": obj_sense + str(obj.expr),
-                                 "sol_status": str(termination_condition), 
-                                 "value": pe.value(obj) if str(termination_condition) == 'optimal' else "unknown"}
+                                 "sense": obj_sense,
+                                 "expression": compact_expr,
+                                 "sol_status": str(termination_condition),
+                                 "value": pe.value(obj) if str(termination_condition) == 'optimal' else "unknown",
+                                 "params_in": sorted(list(params_in)),
+                                 "vars_in": sorted(list(vars_in))}
     return objective_info
 
 

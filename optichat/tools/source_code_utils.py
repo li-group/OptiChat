@@ -7,9 +7,107 @@ This module provides functions to:
 3. Extract modification history from metadata
 """
 
+import ast
 import os
 from typing import Optional, Dict, Any
 from loguru import logger
+
+
+def extract_constraint_source(source_code: str) -> str:
+    """
+    Extract only constraint-related code from a Pyomo model source file.
+
+    Handles all common Pyomo constraint styles:
+    - Named rule functions:  def rule(...): ...  +  model.c = Constraint(..., rule=rule)
+    - Lambda rules:          model.c = Constraint(..., rule=lambda ...)
+    - Direct expr=:          model.c = Constraint(expr=...)
+    - ConstraintList:        model.cl = ConstraintList()  +  for-loop with .add(...)
+
+    Returns the extracted lines joined as a string, or the original source if
+    AST parsing fails (so the caller always gets something useful).
+    """
+    try:
+        tree = ast.parse(source_code)
+    except SyntaxError:
+        logger.warning("extract_constraint_source: SyntaxError, returning full source")
+        return source_code
+
+    lines = source_code.splitlines()
+    line_ranges = []
+
+    # ── Pass 1: Constraint(...) assignments ───────────────────
+    rule_names = set()
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Assign):
+            continue
+        call = node.value
+        func = call.func if isinstance(call, ast.Call) else None
+        is_constraint = func and (
+            (isinstance(func, ast.Name) and func.id == 'Constraint') or
+            (isinstance(func, ast.Attribute) and func.attr == 'Constraint')
+        )
+        if not is_constraint:
+            continue
+        line_ranges.append((node.lineno - 1, node.end_lineno))
+        for kw in call.keywords:
+            if kw.arg == 'rule' and isinstance(kw.value, ast.Name):
+                rule_names.add(kw.value.id)
+
+    # Rule function definitions referenced by Constraint(rule=...)
+    for node in ast.walk(tree):
+        if isinstance(node, ast.FunctionDef) and node.name in rule_names:
+            line_ranges.append((node.lineno - 1, node.end_lineno))
+
+    # ── Pass 2: ConstraintList declarations + containing for loops ──
+    cl_names = set()
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Assign):
+            continue
+        call = node.value
+        func = call.func if isinstance(call, ast.Call) else None
+        is_cl = func and (
+            (isinstance(func, ast.Name) and func.id == 'ConstraintList') or
+            (isinstance(func, ast.Attribute) and func.attr == 'ConstraintList')
+        )
+        if not is_cl:
+            continue
+        line_ranges.append((node.lineno - 1, node.end_lineno))
+        for target in node.targets:
+            if isinstance(target, ast.Attribute):
+                cl_names.add(target.attr)
+
+    def _contains_cl_add(node):
+        for child in ast.walk(node):
+            if (isinstance(child, ast.Call) and
+                    isinstance(child.func, ast.Attribute) and
+                    child.func.attr == 'add' and
+                    isinstance(child.func.value, ast.Attribute) and
+                    child.func.value.attr in cl_names):
+                return True
+        return False
+
+    # Only scan top-level statements to avoid duplicating nested loops
+    for node in tree.body:
+        if isinstance(node, ast.For) and _contains_cl_add(node):
+            line_ranges.append((node.lineno - 1, node.end_lineno))
+
+    if not line_ranges:
+        logger.warning("extract_constraint_source: no constraints found, returning full source")
+        return source_code
+
+    # Merge overlapping ranges and extract
+    line_ranges = sorted(set(line_ranges))
+    merged = []
+    for start, end in line_ranges:
+        if merged and start <= merged[-1][1]:
+            merged[-1] = (merged[-1][0], max(merged[-1][1], end))
+        else:
+            merged.append([start, end])
+
+    parts = ["\n".join(lines[s:e]) for s, e in merged]
+    result = "\n\n".join(parts)
+    logger.debug(f"extract_constraint_source: {len(source_code)} → {len(result)} chars")
+    return result
 
 
 def get_source_code_for_model(
@@ -49,12 +147,13 @@ def get_source_code_for_model(
             logger.warning(f"No source file found for {version_name}")
             return None
     
-    # Read and clean
+    # Read, extract constraints only, then clean
     try:
         with open(source_path, 'r') as f:
             source_code = f.read()
         logger.info(f"Read source code from {source_path} ({len(source_code)} chars)")
-        return clean_source_code(source_code)
+        constraint_source = extract_constraint_source(source_code)
+        return clean_source_code(constraint_source)
     except Exception as e:
         logger.error(f"Error reading source file {source_path}: {e}")
         return None
@@ -148,11 +247,11 @@ and account for the previous modifications listed.
 """
     else:
         return f"""
-===== MODEL SOURCE CODE: {version_name} =====
+===== MODEL CONSTRAINT DEFINITIONS: {version_name} =====
 Pickle file: {pkl_path}
 Source file: tmp/model_objects/{version_name}.py
 
-The model was defined with the Python code below.
+These are the constraint definitions extracted from the model source.
 When writing modification code in python_repl_func:
 - Use the EXACT same syntax patterns (ConstraintList vs lambda rules)
 - Match the index structures (e.g., mu[i, r, theta] not mu[i])

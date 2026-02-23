@@ -4,8 +4,10 @@ from pyomo.environ import *
 import json
 
 data = globals().get("data", {})
-# with open('magic_data.json') as f:
-#     data = json.load(f)
+# if not data:
+#     import os
+#     with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'magic_data.json')) as f:
+#         data = json.load(f)
 
 # Model
 model = ConcreteModel()

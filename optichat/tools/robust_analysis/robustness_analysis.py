@@ -502,8 +502,8 @@ def run_robustness(
     scenarios_out = Path(out_path).with_suffix(Path(out_path).suffix + ".scenarios.csv")
     scenarios.to_csv(scenarios_out, index=False)
 
-    # 4) Solve once at baseline
-    stored_vars = _solve_once(model_obj, solver=solver)
+    # 4) Collect baseline variable values (model already solved before arriving here)
+    stored_vars = _collect_var_values(model_obj)
 
     # 5) Constraints roster
     con_list: List[Constraint] = list(

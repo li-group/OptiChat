@@ -188,6 +188,11 @@ def _generate_component_description(name: str, data: dict, comp_type: str) -> st
 
 def _extract_objective_sense(obj_data: dict) -> str:
     """Extract MINIMIZE/MAXIMIZE from objective data."""
+    # New format: sense stored as a dedicated field
+    sense = obj_data.get("sense", "")
+    if sense in ("MINIMIZE", "MAXIMIZE"):
+        return sense
+    # Legacy fallback: sense embedded as prefix in expression string
     expression = obj_data.get("expression", "")
     if expression.startswith("MINIMIZE"):
         return "MINIMIZE"

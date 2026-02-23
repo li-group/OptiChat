@@ -219,8 +219,10 @@ def get_model_components(version: List[str], component_type: Union[str, List[str
     final_result = {"status": "success" if is_valid else "error",
                     "result": json.dumps(result_dictionary, indent=4) if is_valid else result}
 
-    # Store in cache with size limit
-    if is_valid:
+    # Store in cache with size limit — skip caching empty results so that
+    # modified models created mid-session can be fetched on a retry.
+    has_results = any(bool(v) for v in result_dictionary.values())
+    if is_valid and has_results:
         cache[cache_key] = final_result
         if len(cache) > MAX_CACHE_ENTRIES:
             # Keep newest 75%

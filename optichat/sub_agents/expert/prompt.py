@@ -17,6 +17,8 @@ GUIDELINES
 RESOURCES
 <models> (available: {IS_MODELS_DICTIONARY_AVAILABLE}):
     {MODELS_METADATA_FORMATTED}
+<component_index> (component names, types & descriptions — consult BEFORE calling get_model_components):
+    {MODEL_COMPONENTS_INDEX}
 <models_code> (available: {IS_MODELS_CODE_AVAILABLE}): optimization model source code
 <models_paper> (available: {IS_MODELS_PAPER_AVAILABLE}): associated research papers
 
@@ -30,10 +32,12 @@ __STRATEGY_PLACEHOLDER__
 
 TOOL CONVENTIONS
 `get_model_components(versions, component_type, pattern, tool_context)`
-    • component_type: string or LIST — e.g., "objective" or ["objective", "variable", "constraint"]
+    • component_type: string or LIST — e.g., "objective" or ["objective", "variable"]
     • pattern: wildcard/substring name filter — e.g., "cost*", "demand" (or "" for no filter)
-    • Maximum 3 versions per call.
-    • ALWAYS batch multiple types into ONE call — results are cached, redundant calls return instantly.
+    • Maximum 3 versions per call. Batch at most 2 types per call to avoid context overflow.
+    • Use <component_index> above to identify exact component names, then fetch only what you need.
+    • NEVER call get_model_components on modified versions (names containing "__") — read their
+      objective value and key variables directly from the python_repl_func output instead.
 
     Anti-pattern (NEVER DO THIS — wastes one round-trip per call):
     get_model_components(["v1"], "objective", "", tool_context)
@@ -41,7 +45,6 @@ TOOL CONVENTIONS
     get_model_components(["v1"], "constraint", "", tool_context)
 
     Good patterns:
-    get_model_components(["v1"], ["objective", "variable", "constraint", "parameter"], "", tool_context)
     get_model_components(["v1"], ["objective", "variable"], "", tool_context)
     get_model_components(["v1", "v2", "v3"], ["objective"], "", tool_context)     # compare up to 3 versions
     get_model_components(["v1"], "", "cost*", tool_context)                       # cross-type name search
@@ -51,12 +54,18 @@ TOOL CONVENTIONS
     - Solver: gurobi. Do NOT import packages (already injected). tool_context is in scope.
     - If you're going to create a new constraint and it's conflicting with the existing constraints, remember to deactivate the existing constraints first.
     - STOP the snippet as soon as solve_model() is called; never query new models inside the snippet.
+    - To read a Param/Var value for arithmetic, use value(...) — never float(), int(), or other casts:
+      model.price[v,s] = value(model.price[v,s]) * 2.0   ✓
+      model.price[v,s] = float(model.price[v,s]) * 2.0   ✗  (TypeError)
+      model.qty[i]     = int(model.qty[i]) + 1           ✗  (TypeError)
     - Model naming: <base>__<param>_<index>_<op><val>
         demand[3,1] += 10  →  supply_chain__demand_3_1_plus10
         cost[0]     = 50   →  supply_chain__cost_0_set50
         ops: plus, minus, set, times, div | brackets [i,j] → i_j | check MODEL_VERSIONS first
     - solve_model() requires description as 5th arg (50-100 words: analysis type, what changed, why).
       Format: solve_model(model, version_name, models_dictionary, tool_context, description)
+    - After solve_model(), print any variable values needed for comparison in the SAME snippet.
+      Do NOT call get_model_components on the resulting modified model — its output is in the REPL result.
 
     __SHORTCUT_FUNCTIONS_PLACEHOLDER__
 
@@ -75,10 +84,7 @@ STRATEGY_FEASIBILITY_RESTORATION = """
    1. Review the DIAGNOSIS REPORT above to understand previous diagnosis results:
       - The infeasible model's name.
       - The constraints that were relaxed and their corresponding slacks.
-   2. Review the MODEL SOURCE CODE above to understand:
-      - Parameter index structures 
-      - Variable definitions and domains
-      - Constraint patterns (ConstraintList, lambda rules, indexed constraints)
+   2. Review MODEL SOURCE CODE to understand the model structure and constraint definitions.
    3. Use `python_repl_func` to implement the change. The `relax_constraint_and_penalize_violation` tool is available to help you.
    4. Follow the "Model naming convention" strictly (e.g., base_model__param_change).
    5. Explain the delta (change in objective value, key variables).
@@ -128,7 +134,7 @@ STRATEGY_WHAT_IF = """
    {MODEL_SOURCE_CODE}
 
    ACTION GUIDELINES:
-   1. Review MODEL SOURCE CODE to find the exact parameter/variable name and its index structure.
+   1. Review MODEL SOURCE CODE to understand the model structure and constraint definitions.
    2. Map the user's requested change to a `modify_and_solve` operation:
          set to value        →  operation="=",  delta=<value>
          add X               →  operation="+",  delta=X
@@ -136,10 +142,19 @@ STRATEGY_WHAT_IF = """
          multiply by X       →  operation="*",  delta=X
          increase by X%      →  operation="*",  delta=1 + X/100   (e.g., +20% → delta=1.2)
          decrease by X%      →  operation="*",  delta=1 - X/100   (e.g., -20% → delta=0.8)
-         apply to all indices →  component_indexes=(slice(None),)  (1D), or (slice(None), j) (2D)
-   3. Call `modify_and_solve` with the mapped operation. Follow the "Model naming convention" strictly.
+         apply to all indices →  component_indexes=(slice(None),)  (1D), or (slice(None), j) (2D, rectangular only)
+         subset/conditional   →  component_indexes=lambda idx: idx[1] == 1   (e.g. all vendors in segment 1)
+                                 component_indexes=lambda idx: idx[0] in ('a','b')
+   3. Call `python_repl_func` with a snippet that calls `modify_and_solve` (already injected) for simple
+      parameter/variable value changes. Example:
+      models_dictionary = modify_and_solve(
+          "bid", [{"component_name": "price", "component_indexes": lambda idx: idx[1]==1,
+                   "operation": "*", "delta": 2.0}],
+          "bid__price_seg1_times2", models_dictionary, tool_context, description)
+
    4. If `modify_and_solve` raises an error OR the change requires adding/removing constraints or variables,
-      use `python_repl_func` instead. Match the Pyomo syntax patterns from MODEL SOURCE CODE exactly.
+      use `python_repl_func` with load_model + manual modification + solve_model.
+      Match the Pyomo syntax patterns from MODEL SOURCE CODE exactly.
       If a new constraint conflicts with an existing one, deactivate the existing one first.
    5. Explain the delta (change in objective value and key variables).
 """
@@ -147,11 +162,11 @@ STRATEGY_WHAT_IF = """
 STRATEGY_WHY_NOT = """
    This is a WHY-NOT query. The user is asking why a certain outcome did NOT happen.
    You need to force a specific alternative descision by applying new [parameters], [variables], or [constraints] and compare this specific decision with original optimal decision.
-   
+
    {MODEL_SOURCE_CODE}
 
    ACTION GUIDELINES:
-   1. Review MODEL SOURCE CODE to find the exact parameter/variable name and its index structure.
+   1. Review MODEL SOURCE CODE to understand the model structure and constraint definitions.
    2. Use `python_repl_func` to implement a constraint that forces the alternative "X" and solve the model.
       Match the Pyomo syntax patterns from the source code exactly.
       If the new constraint conflicts with an existing one, deactivate the existing one first.
@@ -160,11 +175,30 @@ STRATEGY_WHY_NOT = """
       (binding constraint, prohibitive cost, or bound), and provide an economic or constraint-based explanation.
 """
 
+STRATEGY_ROBUSTNESS = """
+   This is a ROBUSTNESS query. The user wants to evaluate how robust the baseline solution is
+   under uncertainty in specific parameters.
 
-def get_expert_agent_prompt(prompt_version=1, analysis_type="RETRIEVAL", model_source_code=None, diagnosis_report=None, cached_model_name=None):
+   ACTION GUIDELINES:
+   1. Call `get_model_components` to confirm the exact parameter names and index structure the user refers to.
+   2. Call `robustness_analysis` with:
+      - `version`: the base model version name
+      - `uncertain_param_names`: list of exact parameter names (e.g. ["demand[1,1]", "demand[2,1]"])
+      - `bounds`: list of [lb, ub] pairs aligned 1:1 with uncertain_param_names (e.g. [[12, 18], [10, 20]])
+      - `n_scenarios`: number of scenarios (default 10, increase if user wants more)
+      - `dist`: "uniform" (default) or "normal"
+   3. Interpret the results:
+      - Report the % of scenarios where the baseline solution remains fully feasible.
+      - Report the range of objective values across scenarios.
+      - Highlight which constraints are violated most often.
+      - Note: objective changes only reflect parameter-in-objective effects; constraint RHS changes require re-solve for true optimality.
+"""
+
+
+def get_expert_agent_prompt(prompt_version=1, analysis_type="RETRIEVAL", model_source_code=None, diagnosis_report=None, cached_model_name=None, component_index=None):
     """
     Get the expert agent prompt based on version and analysis type.
-    analysis_type must be one of: ['RETRIEVAL', 'SENSITIVITY', 'WHAT_IF', 'WHY_NOT', 'FEASIBILITY_RESTORATION']
+    analysis_type must be one of: ['RETRIEVAL', 'SENSITIVITY', 'WHAT_IF', 'WHY_NOT', 'FEASIBILITY_RESTORATION', 'ROBUSTNESS']
 
     Args:
         prompt_version: Version of the prompt (currently unused)
@@ -172,6 +206,7 @@ def get_expert_agent_prompt(prompt_version=1, analysis_type="RETRIEVAL", model_s
         model_source_code: Optional formatted source code to inject (for WHAT_IF/WHY_NOT/FEASIBILITY_RESTORATION)
         diagnosis_report: Optional formatted diagnosis report to inject (for FEASIBILITY_RESTORATION)
         cached_model_name: Optional model name for which diagnosis was cached (for FEASIBILITY_RESTORATION)
+        component_index: Optional compact component index string (names, types, docs — no values)
     """
 
     # Map types to strategies
@@ -180,7 +215,8 @@ def get_expert_agent_prompt(prompt_version=1, analysis_type="RETRIEVAL", model_s
         "RETRIEVAL": STRATEGY_RETRIEVAL,
         "SENSITIVITY": STRATEGY_SENSITIVITY,
         "WHAT_IF": STRATEGY_WHAT_IF,
-        "WHY_NOT": STRATEGY_WHY_NOT
+        "WHY_NOT": STRATEGY_WHY_NOT,
+        "ROBUSTNESS": STRATEGY_ROBUSTNESS,
     }
 
     # improved flexibility for case-insensitive matching
@@ -210,6 +246,12 @@ def get_expert_agent_prompt(prompt_version=1, analysis_type="RETRIEVAL", model_s
         prompt = prompt.replace("{MODEL_SOURCE_CODE}", model_source_code)
     else:
         prompt = prompt.replace("{MODEL_SOURCE_CODE}", "(No model source code available)")
+
+    # Inject component index
+    if component_index:
+        prompt = prompt.replace("{MODEL_COMPONENTS_INDEX}", component_index)
+    else:
+        prompt = prompt.replace("{MODEL_COMPONENTS_INDEX}", "(No component index available — use get_model_components to discover components)")
 
     # Inject shortcut functions
     shortcut_functions_docs = auto_extract_function_docs("optichat.tools.shortcut_functions")

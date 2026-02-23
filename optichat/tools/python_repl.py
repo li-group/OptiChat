@@ -106,7 +106,6 @@ def python_repl_func(code_snippet: str, tool_context: ToolContext) -> Dict[str, 
         logger.error(f"REPL execution exception:\n{tb_str}")
         result = f"Exception during execution: {type(e).__name__}: {e}\n\nTraceback:\n{tb_str}"
 
-    # update MODELS_DICTIONARY if a model was modified and solved in REPL
     # Read back from REPL globals to capture any updates made during execution
     updated_models_dictionary = python_repl.globals.get(MODELS_DICTIONARY.lower(), models_dictionary)
     tool_context.state[MODELS_DICTIONARY] = updated_models_dictionary
