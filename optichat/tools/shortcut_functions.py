@@ -54,21 +54,25 @@ def load_model(version: str, models_dictionary: dict):
 def add_dual_suffix(model: pe.ConcreteModel):
     """
     ```model_with_dual_suffix = add_dual_suffix(model: pe.ConcreteModel)```
-    adds dual suffix to the model so that the resulting model will include dual solution after being solved
+    adds a dual suffix to the model so that after solving:
+      - model.dual[constraint]      — shadow price / marginal change in objective per unit increase in constraint RHS
+    After calling solve_model(), dual values are accessible via get_model_components().
     """
-    if hasattr(model, "dual"):
-        print("Model already has dual suffix. Original model is returned.")
-    else:
-        # simple safeguard to ensure model is LP
-        for var in model.component_objects(pe.Var, active=True):
-            for idx in var:
-                if var[idx].is_binary():
-                    print(("Model has binary variables. "
-                    "Dual suffix can only be added to LP models. "
-                    "Original model is returned."))
-                    return model
+    # simple safeguard to ensure model is LP
+    for var in model.component_objects(pe.Var, active=True):
+        for idx in var:
+            if var[idx].is_binary() or var[idx].is_integer():
+                print(("Model has integer/binary variables. "
+                "Dual/ranging suffixes can only be added to LP models. "
+                "Original model is returned."))
+                return model
+
+    if not hasattr(model, "dual"):
         model.dual = pe.Suffix(direction=pe.Suffix.IMPORT_EXPORT)
-    return model 
+    else:
+        print("Model already has dual suffix.")
+
+    return model
 
 
 def solve_model(model: pe.ConcreteModel, version: str, models_dictionary: dict, tool_context=None, description=None, repl_code=None):

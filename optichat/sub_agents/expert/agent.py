@@ -14,17 +14,17 @@ def create_expert_agent(prompt_version=1, tools_version=1):
     if tools_version == 1:
         expert_agent_tools = [get_model_components,
                               python_repl_func,
-                              code_rag,
-                              paper_rag,
+                            #   code_rag,
+                            #   paper_rag,
                               infeasibility_diagnosis,
-                              ldr_model_generator,
-                              ldr_expression_generator,
+                            #   ldr_model_generator,
+                            #   ldr_expression_generator,
                               robustness_analysis] # TODO: infeasibility diagnosis, ldr_model_generator and ldr_expression_generator, robustness_analysis under testing
     else:
         raise NotImplementedError(f"Tools version '{tools_version}' is not implemented.")
 
     expert_agent = Agent(name="expert_agent",
-                         model=gpt_5,  # remember to change it back under debugging
+                         model=gpt_5_1,  # remember to change it back under debugging
                          tools=expert_agent_tools,
                          description=("Optimization & operations research expert that "
                                       "interacts with <models>, <models_code>, <models_paper>"),

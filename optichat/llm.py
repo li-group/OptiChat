@@ -18,3 +18,11 @@ gpt_4o = LiteLlm(model=GPT_4o,
 gpt_4o_mini = LiteLlm(model=GPT_4o_MINI,
                      temperature=GPT_4o_MINI_TEMPERATURE,
                      max_tokens=GPT_4o_MINI_MAX_TOKENS)
+gpt_5_codex = LiteLlm(model=GPT_5_CODEX,
+                      temperature=GPT_5_CODEX_TEMPERATURE,
+                      max_tokens=GPT_5_CODEX_MAX_TOKENS)
+gpt_5_1 = LiteLlm(model=GPT_5_1,
+                      temperature=GPT_5_1_TEMPERATURE,
+                      max_tokens=GPT_5_1_MAX_TOKENS,
+                      reasoning_effort="none",
+                      verbosity="low")

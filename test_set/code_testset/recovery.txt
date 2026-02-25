@@ -5,6 +5,11 @@ Data Type: dict
   "external_tools": [
     {
       "type": "WHY_NOT",
+      "Q": "Local regulations are being considered to discourage new constructions within residential zones, which includes the location of Recovery Center #2 (indexed as 2). Dealing with the local government will be challenging, though this process won't incur any extra costs. We really want to avoid opening Recovery Center #2. Will the final cost differ significantly from the original cost of $13,711,878?",
+      "A": "This gives a minimum cost of $13712761.20, giving a difference of $881"
+    },
+    {
+      "type": "WHY_NOT",
       "Q": "For the Collection/Inspection Centers, we notice that there is a center opened at position 2.  Why was this chosen?",
       "A": "To answer this question, we can perform a counterfactual analysis to see why this site was chosen to be opened as a collection center.  We require the model to not place a center at position 2, and see how the optimal solution changes.  We see that the overall cost increased from $13.7M to $14.2M.  Instead of opening at position 2, the optimal solution now opens at position 0 instead.  Position 0 has a construction cost of $1.62M while position 2 $1.09M."
     },
@@ -22,11 +27,6 @@ Data Type: dict
       "type": "WHY_NOT",
       "Q": "Currently, only Recovery Centers #1 and #2 are planned to be built, while Recovery Center #0 is not. Why isn't building Recovery Center #0 recommended? I thought it was a good plan.",
       "A": "The minimum cost such that #0 be built is $13712761, while the unconstrained cost is $13711878."
-    },
-    {
-      "type": "WHY_NOT",
-      "Q": "Local regulations are being considered to discourage new constructions within residential zones, which includes the location of Recovery Center #2 (indexed as 2). Dealing with the local government will be challenging, though this process won't incur any extra costs. We really want to avoid opening Recovery Center #2. Will the final cost differ significantly from the original cost of $13,711,878?",
-      "A": "This gives a minimum cost of $13712761.20, giving a difference of $881"
     }
   ]
 }

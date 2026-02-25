@@ -76,3 +76,5 @@ CLAUDE.md
 /run_auto_tests.sh
 /hybrid_verifier.py
 *.ipynb
+
+optichat/sub_agents/generator/

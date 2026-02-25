@@ -33,7 +33,7 @@ def python_repl_func(code_snippet: str, tool_context: ToolContext) -> Dict[str, 
     if hasattr(python_repl, 'globals') and python_repl.globals:
         # List of keys to preserve (injected functions, modules, pyomo objects)
         preserved_keys = {
-            '__builtins__', 'pyo', 'value', 'Constraint', 'ConstraintList', 'Var',
+            '__builtins__', 'pyo', 'pe', 'value', 'Constraint', 'ConstraintList', 'Var',
             'Param', 'Objective', 'ConcreteModel', 'Set', 'Expression', 'minimize',
             'maximize', 'models_dictionary', 'MODEL_VERSIONS', 'tool_context'
         }
@@ -52,6 +52,7 @@ def python_repl_func(code_snippet: str, tool_context: ToolContext) -> Dict[str, 
 
     # Pre-inject pyomo module and commonly used objects to handle various import styles
     python_repl.globals['pyo'] = pyo
+    python_repl.globals['pe'] = pyo   # alias used in most model source files
     python_repl.globals['value'] = pyo.value
     python_repl.globals['Constraint'] = pyo.Constraint
     python_repl.globals['ConstraintList'] = pyo.ConstraintList
