@@ -1,8 +1,8 @@
-{   
+{
     "model_name": "allocation_model",
     "models": {
         "local_resources": [
-            "debug_use/supply_chain_model.pkl"
+            "debug_use/supply_chain_feasible.py"
         ],
         "is_solved": false,
         "is_lp": false

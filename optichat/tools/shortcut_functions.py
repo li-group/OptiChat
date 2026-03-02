@@ -217,6 +217,24 @@ def modify_and_solve(
     Returns:
         Updated models_dictionary with the new model version added
 
+    Operation mapping (translate user request → operation + delta):
+        set to value        →  operation="=",  delta=<value>
+        add X               →  operation="+",  delta=X
+        subtract X          →  operation="-",  delta=X
+        multiply by X       →  operation="*",  delta=X
+        increase by X%      →  operation="*",  delta=1 + X/100   (e.g. +20% → delta=1.2)
+        decrease by X%      →  operation="*",  delta=1 - X/100   (e.g. -20% → delta=0.8)
+
+    component_indexes guide:
+        single index          →  (3, 1)  or  "BEEF"  or  3
+        all indices (1D)      →  (slice(None),)
+        all indices (2D)      →  (slice(None), j)  — rectangular grids only
+        subset/conditional    →  lambda idx: idx[1] == 1
+                                 lambda idx: idx[0] in ('a', 'b')
+        IMPORTANT — check component dimensionality first:
+            1D → scalar or (slice(None),)       — NEVER use (slice(None), j)
+            2D → (i, j) or (slice(None), j)
+
     Example:
         ```python
         # Increase demand at index (3, 1) by 10
@@ -444,7 +462,7 @@ def relax_parameter_and_penalize_deviation(
     return model
 
 # Parse user query and return the uncertain parameters and it's bounds
-def parse_uncertainty_from_state(state: Dict[str, Any]) -> Tuple[List[str], Dict[str, Tuple[float, float]]]:
+def _parse_uncertainty_from_state(state: Dict[str, Any]) -> Tuple[List[str], Dict[str, Tuple[float, float]]]:
     """
     Parse uncertainty specification from the most recent user message in `state`.
     Priority:

@@ -77,4 +77,4 @@ CLAUDE.md
 /hybrid_verifier.py
 *.ipynb
 
-optichat/sub_agents/generator/
+# optichat/sub_agents/generator/

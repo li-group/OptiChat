@@ -588,6 +588,39 @@ in the relevant domain who may not have formal optimization training.*
     return os.path.abspath(file_path)
 
 
+def _make_serializable(obj):
+    """Recursively convert pyomo2json output to a JSON-serializable structure.
+
+    Handles:
+    - Python sets/frozensets → sorted lists
+    - Pyomo ConcreteModel ('model class' key) → dropped
+    - Pyomo Set objects (iterable non-primitive) → list of members
+    - Everything else → str() as last resort
+    """
+    if isinstance(obj, dict):
+        return {k: _make_serializable(v) for k, v in obj.items() if k != "model class"}
+    elif isinstance(obj, (set, frozenset)):
+        items = [i if isinstance(i, (int, float, str, bool, type(None))) else str(i) for i in obj]
+        try:
+            return sorted(items)
+        except TypeError:
+            return items
+    elif isinstance(obj, (list, tuple)):
+        return [_make_serializable(i) for i in obj]
+    elif obj is None or isinstance(obj, (int, float, str, bool)):
+        return obj
+    else:
+        # Pyomo Set objects and other non-primitives — try iterating first
+        try:
+            members = [_make_serializable(m) for m in obj]
+            try:
+                return sorted(members)
+            except TypeError:
+                return members
+        except Exception:
+            return str(obj)
+
+
 def get_model_info_for_description(request: str, tool_context: ToolContext) -> str:
     """
     Retrieve model components and code from session state for description generation.
@@ -634,10 +667,34 @@ def get_model_info_for_description(request: str, tool_context: ToolContext) -> s
 
         logger.info(f"[ILLUSTRATOR_TOOL] Model has {len(model_components)} components")
 
-        # Format model components using hierarchical structure
+        # Load Pyomo model and generate rich structural info via pyomo2json
         import json
-        hierarchical_structure = format_hierarchical_components({model_name: model_components})
-        formatted_components = json.dumps(hierarchical_structure, indent=2)
+        from optichat.tools.extract_tool import restore_model_object
+        from pyomo.opt import TerminationCondition
+
+        pkl_path = model_components.get("local_path_to_object")
+        sol_status = model_components.get("obj", {}).get("sol_status", "unknown")
+
+        formatted_components = None
+        if pkl_path:
+            try:
+                from extractor import pyomo2json
+                pyomo_model, _ = restore_model_object(pkl_path)
+                tc = (TerminationCondition.infeasible
+                      if sol_status == "infeasible"
+                      else TerminationCondition.optimal)
+                raw_dict = pyomo2json(pyomo_model, termination_condition=tc)
+                serializable_dict = _make_serializable(raw_dict)
+                serializable_dict["model_name"] = model_name
+                serializable_dict["sol_status"] = sol_status
+                formatted_components = json.dumps(serializable_dict, indent=2)
+                logger.info(f"[ILLUSTRATOR_TOOL] pyomo2json produced {len(formatted_components)} chars")
+            except Exception as e:
+                logger.warning(f"[ILLUSTRATOR_TOOL] pyomo2json failed ({e}), falling back to hierarchical format")
+
+        if formatted_components is None:
+            hierarchical_structure = format_hierarchical_components({model_name: model_components})
+            formatted_components = json.dumps(hierarchical_structure, indent=2)
 
         # Build response with model info
         response_parts = [

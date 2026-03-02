@@ -537,4 +537,19 @@ def run_robustness(
     _save_df(results, out_path)
     print(f"[OK] Wrote {len(scenarios)} scenarios -> {scenarios_out.name}")
     print(f"[OK] Wrote results -> {Path(out_path).name} (shape {results.shape[0]} x {results.shape[1]})")
+
+    # 8) Warn if all scenarios feasible (may indicate wrong param or insufficient coverage)
+    if len(con_cols) > 0:
+        constraint_df = results[con_cols]
+        total_violations = int(constraint_df.values.sum())
+        if total_violations == 0:
+            # Compute how many scenario param values actually differ from baseline
+            print(
+                f"[WARN] All {n_scenarios} scenarios appear feasible (0 constraint violations). "
+                "This may mean: (a) the perturbed parameters only appear in the objective (not constraints), "
+                "(b) the perturbation range is too small relative to slack in the binding constraints, "
+                "or (c) more scenarios are needed. "
+                "Verify that the uncertain parameters appear in constraint expressions."
+            )
+
     return results

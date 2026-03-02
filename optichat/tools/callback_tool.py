@@ -19,7 +19,7 @@ from optichat.config.constants import (IS_SESSION_INITIALIZED, PERSISTENT_STATES
                                        IS_MODELS_DICTIONARY_AVAILABLE,
                                        IS_MODELS_CODE_AVAILABLE, IS_MODELS_PAPER_AVAILABLE,
                                        SYNTHETIC_PAPER_GENERATED, NEED_SYNTHETIC_PAPER,
-                                       MODEL_FOR_PAPER_GENERATION, USER_QUERY,
+                                       MODEL_FOR_PAPER_GENERATION, USER_QUERY, EXPERT_AGENT_PYTHON_REPL_FUNC_USES,
                                        HAS_INFEASIBILITY_DIAGNOSIS, INFEASIBILITY_DIAGNOSIS,
                                        LLM_CALL_COUNTER, TOOL_CALL_START_TIME, LLM_CALL_START_TIME,
                                        MODEL_COMPONENTS_CACHE)
@@ -258,6 +258,10 @@ def _find_and_copy_source_file(version_name: str, cfg: dict) -> Optional[str]:
     # Create tmp/inf_detail directory for infeasibility diagnosis reports
     inf_detail_dir = os.path.join(os.getcwd(), "tmp/inf_detail")
     os.makedirs(inf_detail_dir, exist_ok=True)
+
+    # Create tmp/robust directory for robustness analysis outputs
+    robust_dir = os.path.join(os.getcwd(), "tmp/robust")
+    os.makedirs(robust_dir, exist_ok=True)
     
     dest_path = os.path.join(tmp_dir, f"{version_name}.py")
     
@@ -283,23 +287,29 @@ def _load_model_from_py(py_file_path: str, json_data: dict = None):
     """
     import importlib.util
     import sys
-    
-    # Create module from file
+
+    # Create module from file.
+    # IMPORTANT: do NOT register in sys.modules before pickling.
+    # If cloudpickle sees the module in sys.modules it stores a lightweight
+    # reference ("module: loaded_model, fn: supply_rule") instead of the actual
+    # bytecode. That reference breaks across server restarts because sys.modules
+    # is wiped. By keeping the module out of sys.modules, cloudpickle is forced
+    # to serialize the full function bytecode into the .pkl, making it truly
+    # self-contained and loadable in future sessions without needing the .py file.
     spec = importlib.util.spec_from_file_location("loaded_model", py_file_path)
     loaded_module = importlib.util.module_from_spec(spec)
-    sys.modules["loaded_model"] = loaded_module
-    
+
     # Inject JSON data if provided (same as extractor.py::initial_loading)
     if json_data is not None:
         loaded_module.__dict__["data"] = json_data
-    
-    # Execute the module
+
+    # Execute the module (works without sys.modules registration)
     spec.loader.exec_module(loaded_module)
-    
+
     # Extract model and version name
     model = loaded_module.model
     version = os.path.splitext(os.path.basename(py_file_path))[0]
-    
+
     return model, version
 
 
@@ -608,12 +618,7 @@ def check_llm_request(callback_context: CallbackContext, llm_request: LlmRequest
 
         try:
             # Inject component index for ALL expert_agent queries
-            component_index = _get_component_index_for_prompt(callback_context.state)
-
-            # Inject source code for code-modification queries
-            model_source_code = None
-            if analysis_type in ["WHAT_IF", "WHY_NOT", "FEASIBILITY_RESTORATION"]:
-                model_source_code = _get_source_code_for_prompt(callback_context.state)
+            model_description = _get_component_index_for_prompt(callback_context.state)
 
             # Inject diagnosis report for feasibility restoration queries
             diagnosis_report = None
@@ -640,19 +645,33 @@ def check_llm_request(callback_context: CallbackContext, llm_request: LlmRequest
             new_prompt_text = get_expert_agent_prompt(
                 prompt_version=1,
                 analysis_type=analysis_type,
-                model_source_code=model_source_code,
                 diagnosis_report=diagnosis_report,
                 cached_model_name=cached_model_name,
-                component_index=component_index
+                model_description=model_description
             )
-            # Create new Content object
-            # new_instruction = types.Content(
-            #    role="system", 
-            #    parts=[types.Part(text=new_prompt_text)]
-            # )
-            # Overwrite the system instruction in the request config
-            # Litellm seems to expect string for system message content or fails to serialize types.Content
+
+            # Manually substitute state-based placeholders that ADK would normally
+            # inject into the static instruction but won't re-process on our override.
+            state = callback_context.state
+            new_prompt_text = new_prompt_text.replace(
+                "{IS_MODELS_DICTIONARY_AVAILABLE}",
+                str(state.get(IS_MODELS_DICTIONARY_AVAILABLE, False))
+            )
+            new_prompt_text = new_prompt_text.replace(
+                "{MODELS_METADATA_FORMATTED}",
+                state.get("MODELS_METADATA_FORMATTED", "No models available")
+            )
+            new_prompt_text = new_prompt_text.replace(
+                "{USER_QUERY}",
+                state.get(USER_QUERY, "")
+            )
+            new_prompt_text = new_prompt_text.replace(
+                "{EXPERT_AGENT_PYTHON_REPL_FUNC_USES}",
+                str(state.get(EXPERT_AGENT_PYTHON_REPL_FUNC_USES, 3))
+            )
+
             llm_request.config.system_instruction = new_prompt_text
+            logger.info(f"[ExpertAgent] Full system prompt ({len(new_prompt_text)} chars):\n{new_prompt_text}")
         except Exception as e:
             logger.error(f"Failed to inject dynamic prompt: {e}")
 
@@ -722,54 +741,122 @@ def _generate_component_index(version: str, models_dictionary: dict) -> str:
     return "\n".join(lines)
 
 
+def _strip_paper_metadata(content: str) -> str:
+    """Strip header metadata and footer disclaimer from a generated paper file.
+
+    Removes everything up to and including the first '---' line (header block
+    with timestamp / author / model name) and everything from the last '---'
+    line onward (the auto-generated disclaimer footer).
+    """
+    lines = content.split('\n')
+
+    # Find first '---' separator → marks end of header
+    start_idx = 0
+    for i, line in enumerate(lines):
+        if line.strip() == '---':
+            start_idx = i + 1
+            break
+
+    # Find last '---' separator → marks start of footer
+    end_idx = len(lines)
+    for i in range(len(lines) - 1, -1, -1):
+        if lines[i].strip() == '---':
+            end_idx = i
+            break
+
+    return '\n'.join(lines[start_idx:end_idx]).strip()
+
+
 def _get_component_index_for_prompt(state: dict) -> Optional[str]:
     """
-    Generate and cache a compact component index for the model being queried.
-    Follows the same pattern as _get_source_code_for_prompt.
+    Return the component index / model description for the model being queried.
+
+    Priority:
+    1. Cache (state key COMPONENT_INDEX_{base_model})
+    2. Generated paper file at tmp/model_objects/generated_papers/{base_model}_description.txt
+    3. Fall back to _generate_component_index (programmatic summary)
     """
     user_query = state.get(USER_QUERY, "")
     models_dict = state.get(MODELS_DICTIONARY, {})
 
     base_model = _extract_base_model_from_query(user_query, models_dict)
     if not base_model:
-        logger.warning("Could not identify base model for component index injection")
-        return None
+        # models_dictionary may not be loaded yet (e.g. frontend model selection before init).
+        # Scan the papers directory to find an available description file.
+        papers_dir = os.path.join(os.getcwd(), "tmp", "model_objects", "generated_papers")
+        paper_files = sorted(glob.glob(os.path.join(papers_dir, "*_description.txt")))
+        if paper_files:
+            # Pick the most recently modified paper
+            paper_files.sort(key=os.path.getmtime, reverse=True)
+            chosen = os.path.basename(paper_files[0])          # e.g. "recovery_description.txt"
+            base_model = chosen[: chosen.rfind("_description.txt")]
+            logger.info(f"Inferred base model from papers directory: {base_model}")
+        else:
+            logger.warning("Could not identify base model for component index injection")
+            return None
 
-    # Check cache
+    # 1. Check cache
     cache_key = f"COMPONENT_INDEX_{base_model}"
     if cache_key in state:
         logger.info(f"Using cached component index for {base_model}")
         return state[cache_key]
 
-    # Generate
+    # 2. Try generated paper file
+    paper_path = os.path.join(os.getcwd(), "tmp", "model_objects", "generated_papers",
+                              f"{base_model}_description.txt")
+    if os.path.exists(paper_path):
+        try:
+            with open(paper_path, "r", encoding="utf-8") as f:
+                raw = f.read()
+            index_str = _strip_paper_metadata(raw)
+            logger.info(f"Loaded component index from paper for {base_model} ({len(index_str)} chars)")
+            state[cache_key] = index_str
+            return index_str
+        except Exception as e:
+            logger.warning(f"Failed to read paper file for {base_model}: {e}")
+
+    # 3. Fall back to programmatic generation
     index_str = _generate_component_index(base_model, models_dict)
     if not index_str:
         logger.warning(f"Could not generate component index for {base_model}")
         return None
 
-    # Cache and return
     state[cache_key] = index_str
     logger.info(f"Generated component index for {base_model} ({len(index_str)} chars)")
     return index_str
 
 
-def _get_source_code_for_prompt(state: dict) -> Optional[str]:
+def _get_source_code_for_prompt(state: dict, model_hint: str = None) -> Optional[str]:
     """
     Retrieve and format source code for the base model referenced in query.
-    
+
+    model_hint: optional model name (e.g. parsed from grammar instruction MODEL: field)
+                used as fallback when USER_QUERY doesn't mention the model name.
+
     Returns formatted source code string or None if not available.
     """
     from optichat.tools.source_code_utils import (
         get_source_code_for_model,
         format_source_for_prompt
     )
-    
+
     # 1. Identify base model
     user_query = state.get(USER_QUERY, "")
     models_dict = state.get(MODELS_DICTIONARY, {})
     historical_metadata = state.get(HISTORICAL_MODELS_METADATA, {})
-    
+
     base_model = _extract_base_model_from_query(user_query, models_dict)
+    if not base_model and model_hint:
+        # Fall back to the model name from the grammar instruction (MODEL: field)
+        base_model = _extract_base_model_from_query(model_hint, models_dict)
+        if base_model:
+            logger.info(f"Using model hint '{model_hint}' → resolved base model: {base_model}")
+    if not base_model and model_hint:
+        # models_dict may be empty (e.g. called before session state is fully populated).
+        # Use model_hint directly as the model name — it comes from MODEL: <exact_key>
+        # in the expert's grammar instruction, so it is reliable.
+        base_model = model_hint.strip()
+        logger.info(f"models_dict empty; using model_hint directly as base model: {base_model}")
     if not base_model:
         logger.warning("Could not identify base model for source code injection")
         return None

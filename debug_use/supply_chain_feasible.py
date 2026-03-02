@@ -69,15 +69,15 @@ model.JIN  = pyo.Set(data["jin"].keys(), within=pyo.Any, initialize=data["jin"])
 model.JOUT = pyo.Set(data["jout"].keys(), within=pyo.Any, initialize=data["jout"])
 
 # ------------------- static parameters ------------------------------------
-model.unit_price  = pyo.Param(model.MAIN, initialize=data["unit_price"])
-model.h_cost      = pyo.Param(model.MAIN, initialize=data["holding_cost"])
-model.cap         = pyo.Param(model.MAIN2, initialize=data["supply_capacity"])
-model.lt          = pyo.Param(model.ROUTES, initialize=data["lead_time"])
-model.b_cost      = pyo.Param(model.R, initialize=data["demand_cost"])
+model.unit_price  = pyo.Param(model.MAIN, mutable=True, initialize=data["unit_price"])
+model.h_cost      = pyo.Param(model.MAIN, mutable=True, initialize=data["holding_cost"])
+model.cap         = pyo.Param(model.MAIN2, mutable=True, initialize=data["supply_capacity"])
+model.lt          = pyo.Param(model.ROUTES, mutable=True, initialize=data["lead_time"])
+model.b_cost      = pyo.Param(model.R, mutable=True, initialize=data["demand_cost"])
 
 # remap unit_cost keys from (j,k)→idx if needed
 updated_unit_cost_dict = {data['reverse_reorder_mapping'].get(old_key, old_key): value for old_key, value in data['unit_cost'].items()}
-model.u_cost = pyo.Param(model.ROUTES, initialize=updated_unit_cost_dict)
+model.u_cost = pyo.Param(model.ROUTES, mutable=True, initialize=updated_unit_cost_dict)
 
 model.init_inv = pyo.Param(model.MAIN, mutable = True, initialize=data["init_inv"])
 
@@ -106,8 +106,8 @@ def inv_balance(m, t, j):
         return (
             m.I[t+1, j] ==
             m.I[t, j]
-            + sum(m.Rqty[t - m.lt[k, j], k, j]
-                    for k in m.JIN[j] if t - m.lt[k, j] >= 1)
+            + sum(m.Rqty[t - pyo.value(m.lt[k, j]), k, j]
+                    for k in m.JIN[j] if t - pyo.value(m.lt[k, j]) >= 1)
             - sum(m.Rqty[t, j, k] for k in m.JOUT[j])
         )
     else:
@@ -116,8 +116,8 @@ def inv_balance(m, t, j):
         return (
             m.I[t+1, j] ==
             m.I[t, j]
-            + sum(m.Rqty[t - m.lt[k, j], k, j]
-                    for k in m.JIN[j] if t - m.lt[k, j] >= 1)
+            + sum(m.Rqty[t - pyo.value(m.lt[k, j]), k, j]
+                    for k in m.JIN[j] if t - pyo.value(m.lt[k, j]) >= 1)
             - m.Sales[t, j]
         )
 model.inv_bal = pyo.Constraint(model.T0, model.MAIN, rule=inv_balance)
@@ -125,10 +125,10 @@ model.inv_bal = pyo.Constraint(model.T0, model.MAIN, rule=inv_balance)
 def pipe_balance(m, t, j, k):
     if t == 0:
         return m.Tinv[t+1, j, k] == 0
-    if t - m.lt[j, k] >= 1:
+    if t - pyo.value(m.lt[j, k]) >= 1:
         return (
             m.Tinv[t+1, j, k] ==
-            m.Tinv[t, j, k] - m.Rqty[t - m.lt[j, k], j, k] + m.Rqty[t, j, k]
+            m.Tinv[t, j, k] - m.Rqty[t - pyo.value(m.lt[j, k]), j, k] + m.Rqty[t, j, k]
         )
     return (
         m.Tinv[t+1, j, k] ==
@@ -154,8 +154,8 @@ def sales_demand(m, t, r):
 model.sales1 = pyo.Constraint(model.T, model.R, rule=sales_demand)
 
 def sales_stock(m, t, r):
-    avail = m.I[t, r] + sum(m.Rqty[t - m.lt[k, r], k, r]
-                            for k in m.JIN[r] if t - m.lt[k, r] >= 1)
+    avail = m.I[t, r] + sum(m.Rqty[t - pyo.value(m.lt[k, r]), k, r]
+                            for k in m.JIN[r] if t - pyo.value(m.lt[k, r]) >= 1)
     return m.Sales[t, r] <= avail
 model.sales2 = pyo.Constraint(model.T, model.R, rule=sales_stock)
 

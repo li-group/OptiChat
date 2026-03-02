@@ -275,7 +275,7 @@ def save_model_object(model, file_name):
     return local_path_to_object
 
 
-def auto_extract_function_docs(module_path: str) -> str:
+def auto_extract_function_docs(module_path: str, compact: bool = False) -> str:
     """
     Automatically extracts function documentation from docstrings
     for all functions in the specified module path.
@@ -284,6 +284,8 @@ def auto_extract_function_docs(module_path: str) -> str:
     Args:
         module_path (str): Path to the module to extract docs
                            (e.g., 'optichat.tools.shortcut_functions').
+        compact (bool): If True, return only the first line of each docstring
+                        (function name + one-liner). Default False returns full docs.
 
     Returns:
         str: Formatted documentation strings extracted from docstrings.
@@ -304,7 +306,11 @@ def auto_extract_function_docs(module_path: str) -> str:
             # Get docstrings
             docstring = inspect.getdoc(obj)
             if docstring:
-                docs.append(docstring)
+                if compact:
+                    first_line = docstring.splitlines()[0].strip()
+                    docs.append(f"{name}: {first_line}")
+                else:
+                    docs.append(docstring)
         return "\n".join(docs)
     except ImportError as e:
         return f"Error importing module {module_path}: {e}"
