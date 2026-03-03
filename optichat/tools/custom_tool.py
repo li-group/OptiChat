@@ -1,6 +1,6 @@
 from __future__ import annotations
 from typing import Any, Dict, List, Optional, Tuple
-import os, re, json, shutil, tempfile, subprocess
+import os, re, json, time, shutil, tempfile, subprocess
 from loguru import logger
 
 import pyomo.environ as pyo
@@ -896,6 +896,107 @@ def _resolve_param(model: pyo.ConcreteModel, name: str):
     return comp
 
 
+def _compute_feasibility_threshold(
+    robust_df,
+    uncertain_param_names: List[str],
+    con_cols_in_df: List[str],
+) -> Dict[str, Any]:
+    """
+    Estimate per-parameter feasibility thresholds from scenario data.
+
+    For each uncertain parameter, compare the distribution of values across
+    feasible vs infeasible scenarios to estimate where the transition occurs.
+
+    Strategy (univariate per parameter column):
+      - Separate scenario rows into feasible / infeasible based on constraint flags.
+      - Compare value distributions in the two groups.
+      - If infeasible scenarios cluster at higher values → "upper" threshold
+        (crossing above estimated_threshold increases infeasibility risk).
+      - If infeasible scenarios cluster at lower values → "lower" threshold.
+      - Report the overlap zone as the "transition zone": the value range where
+        both feasible and infeasible scenarios co-exist.
+
+    Returns {} if all scenarios share the same feasibility status (nothing to compare).
+    """
+    if not con_cols_in_df:
+        return {}
+
+    con_df = robust_df[con_cols_in_df]
+    feasible_mask = (con_df == 0).all(axis=1)
+
+    if feasible_mask.all() or (~feasible_mask).all():
+        return {}   # no mixed feasibility — nothing to threshold
+
+    results = {}
+    for pname in uncertain_param_names:
+        base_name = pname.split("[")[0]
+
+        # Find matching scenario columns for this parameter
+        if "[" in pname:
+            matching_cols = [c for c in robust_df.columns if c == pname]
+        else:
+            matching_cols = [c for c in robust_df.columns
+                             if c == pname or c.startswith(base_name + "[")]
+
+        if not matching_cols:
+            continue
+
+        col_thresholds = {}
+        for col in matching_cols:
+            feas_vals = robust_df.loc[feasible_mask, col].dropna()
+            infeas_vals = robust_df.loc[~feasible_mask, col].dropna()
+
+            if len(feas_vals) == 0 or len(infeas_vals) == 0:
+                continue
+
+            feas_min, feas_max = float(feas_vals.min()), float(feas_vals.max())
+            infeas_min, infeas_max = float(infeas_vals.min()), float(infeas_vals.max())
+            feas_mean = float(feas_vals.mean())
+            infeas_mean = float(infeas_vals.mean())
+
+            # Direction: which extreme drives infeasibility
+            if infeas_mean > feas_mean:
+                direction = "upper"
+                threshold = round(infeas_min, 4)
+                note = f"above ~{threshold:.4g}: higher infeasibility risk"
+            else:
+                direction = "lower"
+                threshold = round(infeas_max, 4)
+                note = f"below ~{threshold:.4g}: higher infeasibility risk"
+
+            # Transition zone: overlap range where both feasible and infeasible exist
+            overlap_lo = max(feas_min, infeas_min)
+            overlap_hi = min(feas_max, infeas_max)
+            transition_zone = (
+                [round(overlap_lo, 4), round(overlap_hi, 4)]
+                if overlap_lo <= overlap_hi else None
+            )
+
+            col_thresholds[col] = {
+                "feasible": {
+                    "count": int(len(feas_vals)),
+                    "min": round(feas_min, 4),
+                    "max": round(feas_max, 4),
+                    "mean": round(feas_mean, 4),
+                },
+                "infeasible": {
+                    "count": int(len(infeas_vals)),
+                    "min": round(infeas_min, 4),
+                    "max": round(infeas_max, 4),
+                    "mean": round(infeas_mean, 4),
+                },
+                "estimated_threshold": threshold,
+                "direction": direction,
+                "note": note,
+                "transition_zone": transition_zone,
+            }
+
+        if col_thresholds:
+            results[pname] = col_thresholds
+
+    return results
+
+
 def _pre_analyze_params(
     model_data: dict,
     uncertain_param_names: List[str],
@@ -942,7 +1043,7 @@ def robustness_analysis(
     uncertain_param_names: List[str],
     bounds: List,
     tool_context: ToolContext = None,
-    n_scenarios: int = 10,
+    n_scenarios: int = 40,
     dist: str = "uniform",
     bounds_mode: str = "absolute",
     delta_operation: str = "+-",
@@ -960,7 +1061,13 @@ def robustness_analysis(
         In "absolute" mode (default): list of [lb, ub] pairs, e.g. [[12, 18], [10, 20]].
         In "delta" mode: list of single delta values, e.g. [10, 5].
     n_scenarios : int
-        Number of scenarios to sample (default 10).
+        Number of random scenarios to SAMPLE from the uncertainty range (default 40).
+        IMPORTANT: This is NOT the number of perturbation magnitudes.
+        "±10 perturbation" means the sampling RANGE is [current-10, current+10].
+        n_scenarios controls how many random draws are taken from that range.
+        Use at least 40 for a meaningful stress test; 100+ for publication-quality analysis.
+        Never pass n_scenarios=2 just because the user said "±10" — ± defines the range,
+        not the sample count.
     dist : str
         Distribution to use: "uniform" (default) or "normal".
     bounds_mode : str
@@ -1027,8 +1134,9 @@ def robustness_analysis(
     robust_out_dir = os.path.join(os.getcwd(), TMP_ROBUST_FOLDER)
     os.makedirs(robust_out_dir, exist_ok=True)
     safe_version = version.replace("/", "_").replace("\\", "_")
-    csv_out_path = os.path.join(robust_out_dir, f"{safe_version}_robust_results.csv")
-    json_out_path = os.path.join(robust_out_dir, f"{safe_version}_robust_report.json")
+    timestamp = time.strftime("%Y%m%d_%H%M%S")
+    csv_out_path = os.path.join(robust_out_dir, f"{safe_version}_{timestamp}_robust_results.csv")
+    json_out_path = os.path.join(robust_out_dir, f"{safe_version}_{timestamp}_robust_report.json")
 
     # --- Pre-analysis: identify binding/non-binding constraints per uncertain param ---
     pre_analysis = _pre_analyze_params(md.get(version, {}), uncertain_param_names)
@@ -1165,6 +1273,40 @@ def robustness_analysis(
     else:
         feasibility_summary = "No constraint columns found in results."
 
+    # --- Threshold analysis (only when there is a mix of feasible / infeasible scenarios) ---
+    threshold_analysis = _compute_feasibility_threshold(
+        robust_df, uncertain_param_names, con_cols_in_df
+    )
+
+    if threshold_analysis:
+        th_lines = []
+        for pname, col_thresholds in threshold_analysis.items():
+            for col, info in col_thresholds.items():
+                f, inf_ = info["feasible"], info["infeasible"]
+                th_lines.append(f"\nParameter '{col}':")
+                th_lines.append(
+                    f"  Feasible   ({f['count']} scenarios): "
+                    f"[{f['min']:.4g}, {f['max']:.4g}], mean {f['mean']:.4g}"
+                )
+                th_lines.append(
+                    f"  Infeasible ({inf_['count']} scenarios): "
+                    f"[{inf_['min']:.4g}, {inf_['max']:.4g}], mean {inf_['mean']:.4g}"
+                )
+                if info["transition_zone"]:
+                    th_lines.append(
+                        f"  Transition zone: [{info['transition_zone'][0]:.4g}, "
+                        f"{info['transition_zone'][1]:.4g}]"
+                    )
+                th_lines.append(f"  Estimated threshold: {info['note']}")
+        threshold_text = "\n".join(th_lines)
+    elif con_cols_in_df:
+        if n_infeasible == 0:
+            threshold_text = "All scenarios were feasible — system appears robust within the given bounds."
+        else:
+            threshold_text = "All scenarios were infeasible — current solution is already beyond the feasibility boundary."
+    else:
+        threshold_text = "No constraint data available for threshold analysis."
+
     # --- JSON-safe return ---
     js = _json_safe(robust_df)
 
@@ -1191,6 +1333,22 @@ def robustness_analysis(
                 c: int(v) for c, v in violated_cons.items()
             } if con_cols_in_df and len(violated_cons) > 0 else {},
         },
+        "threshold_analysis": {
+            pname: {
+                col: {
+                    "feasible_count": info["feasible"]["count"],
+                    "feasible_range": [info["feasible"]["min"], info["feasible"]["max"]],
+                    "infeasible_count": info["infeasible"]["count"],
+                    "infeasible_range": [info["infeasible"]["min"], info["infeasible"]["max"]],
+                    "estimated_threshold": info["estimated_threshold"],
+                    "direction": info["direction"],
+                    "note": info["note"],
+                    "transition_zone": info["transition_zone"],
+                }
+                for col, info in col_thresholds.items()
+            }
+            for pname, col_thresholds in threshold_analysis.items()
+        },
         "output_files": {
             "results_csv": csv_out_path,
             "scenarios_csv": csv_out_path + ".scenarios.csv",
@@ -1208,6 +1366,7 @@ def robustness_analysis(
             f"=== Pre-Analysis ===\n{pre_analysis_text}\n\n"
             f"=== Dual (Shadow Price) Analysis ===\n{dual_summary or 'No binding constraints found.'}\n\n"
             f"=== Scenario Feasibility Summary ===\n{feasibility_summary}\n\n"
+            f"=== Feasibility Threshold Analysis ===\n{threshold_text}\n\n"
             f"Output saved to: {robust_out_dir}"
         ),
         "data": js,
