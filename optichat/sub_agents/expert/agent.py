@@ -34,6 +34,7 @@ def create_expert_agent(prompt_version=1, tools_version=1):
                                       "interacts with <models>, <models_code>, <models_paper>"),
                          instruction=expert_agent_prompt,
                          output_key=OUTPUT_KEY_EXPERT_AGENT,
+                         disallow_transfer_to_parent=True,
                          before_agent_callback=check_is_expert_agent_used,
                          after_agent_callback=check_expert_agent_runtime,
                          before_model_callback=check_llm_request,

@@ -11,13 +11,16 @@ GUIDELINES
 - Focus on explanations and analysis. Do not verify trivial observations or calculate unnecessary statistics.
 - NEVER do exploratory modifications or extra work beyond what the query requires.
 - Act immediately. Call tools or write code as soon as you know what to do — do not narrate your reasoning before acting.
+- The user understands the problem context but has little optimization background. Avoid jargon and heavy math.
+- Always provide a detailed summary that fully answers the user's query.
 
 TOOL CONVENTIONS
 `get_model_components(versions, component_type, pattern, tool_context)`
+    • Shouldn't use this function, unless the <model_description> is not enough to answer the user's query.
     • Batch types: ["objective","variable"] not separate calls. Max 3 versions, 2 types per call.
     • NEVER call on modified versions ("__" in name) — values are already in GENERATOR_OUTPUT.
 
-`generator_agent`
+`generator_agent` [remaining uses: {EXPERT_AGENT_PYTHON_REPL_FUNC_USES}]
     - Use for ALL code execution tasks.
     - Write a structured instruction in the grammar format below, then call generator_agent with that instruction.
     - generator_agent is a single gpt-5-codex agent that writes and executes code via python_repl in an agentic loop.
@@ -35,15 +38,8 @@ RESOURCES
 <model_description> (full model description: purpose, decisions, parameters, constraints, objective — consult BEFORE calling get_model_components):
     {MODEL_COMPONENTS_INDEX}
 
-CONTEXT TOOLS
-• get_model_components — fast, cached; primary tool for all data retrieval
-• generator_agent — parallel code generation + execution; use for ALL code tasks [uses: {EXPERT_AGENT_PYTHON_REPL_FUNC_USES}]
-
 STRATEGY FOR {ANALYSIS_TYPE}:
 __STRATEGY_PLACEHOLDER__
-
-USER QUERY
-{USER_QUERY}
 """
 
 STRATEGY_FEASIBILITY_RESTORATION = """
@@ -102,8 +98,10 @@ STRATEGY_WHAT_IF = """
    1. Review <model_description> to understand the model structure and constraint definitions.
    2. Describe the change naturally in CHANGES using the exact component name and index.
       (e.g. "demand[3,1]: increase by 10", "price[all vendors, segment 1]: multiply by 2").
-   3. Use `generator_agent` with SHORTCUT_FUNCTIONS listing modify_and_solve. 
-      If the change requires adding/removing constraints, give `generator_agent` instruction on what parameters, variables, or constraints to modify.
+   3. Use `generator_agent` and prioritize using modify_and_solve SHORTCUT_FUNCTION.
+      - To fix a variable to a specific value (e.g., force an arc/flow to zero): use operation="=", delta=<value>.
+        modify_and_solve calls .fix() on variables internally — do NOT add big-M penalty constraints for this purpose.
+      - If needed guide the `generator_agent` to generate code for adding/deactivating constraints.
    4. Explain the delta (change in objective value and key variables) from GENERATOR_OUTPUT.
 """
 

@@ -7,7 +7,8 @@ from optichat.sub_agents.expert.agent import create_expert_agent
 from optichat.sub_agents.illustrator.agent import create_illustrator_agent
 from optichat.tools.callback_tool import (initialize_session_and_start_root_agent,
                                           check_llm_request, check_llm_response,
-                                          handle_illustrator_response, check_root_agent_runtime)
+                                          handle_illustrator_response, check_root_agent_runtime,
+                                          route_to_expert)
 from loguru import logger
 
 
@@ -18,8 +19,9 @@ def create_root_agent(workflow="default"):
 
         root_agent = Agent(name="root_agent",
                            model=gpt_5_mini,
+                           sub_agents=[expert_agent],
                            tools=[
-                               AgentTool(expert_agent),
+                               route_to_expert,
                                AgentTool(illustrator_agent)
                            ],
                            description="first point of contact for all user queries",

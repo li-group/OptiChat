@@ -40,9 +40,6 @@ SOLVE_MODEL SIGNATURE
 
 SOLVER: gurobi
 
-MODEL SOURCE CODE (match these exact Pyomo patterns when writing code)
-__SOURCE_CODE_PLACEHOLDER__
-
 PRE-INJECTED NAMES (DO NOT import — just use directly)
   pyo, value, Constraint, ConstraintList, Var, Param, Objective, ConcreteModel, Set, Expression
   minimize, maximize
@@ -73,6 +70,9 @@ AFTER solve_model() — how to read results
     solved_model = load_model(new_version, models_dictionary)
     for idx in solved_model.Y.index_set():
         print(idx, value(solved_model.Y[idx]))
+
+MODEL SOURCE CODE (match these exact Pyomo patterns when writing code)
+__SOURCE_CODE_PLACEHOLDER__
 
 SHORTCUT FUNCTIONS
 __SHORTCUT_FUNCTIONS_PLACEHOLDER__

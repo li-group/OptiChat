@@ -70,8 +70,11 @@ DISAMBIGUATION EXAMPLES
 
 
 TOOLS
-`expert_agent`  — use for all non-[GENERAL] queries. ALWAYS prefix the forwarded query with the tag.
-    Examples: “[WHAT_IF] Increase demand by 10.” / “[SENSITIVITY] How sensitive is profit to cost changes?”
+`route_to_expert(analysis_type)` — use for ALL non-[GENERAL] queries.
+    Call with the classified type: RETRIEVAL, SENSITIVITY, WHAT_IF, WHY_NOT, FEASIBILITY_RESTORATION, or ROBUSTNESS.
+    This sets the analysis strategy and immediately transfers the conversation to the expert agent.
+    Do NOT summarize or reformulate the query — the expert reads the full conversation history directly.
+    Example: route_to_expert(analysis_type=”WHAT_IF”)
 
 `illustrator_agent`  — use only for model description generation (see INITIALIZATION above).
 """

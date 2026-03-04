@@ -22,7 +22,8 @@ from optichat.config.constants import (IS_SESSION_INITIALIZED, PERSISTENT_STATES
                                        MODEL_FOR_PAPER_GENERATION, USER_QUERY, EXPERT_AGENT_PYTHON_REPL_FUNC_USES,
                                        HAS_INFEASIBILITY_DIAGNOSIS, INFEASIBILITY_DIAGNOSIS,
                                        LLM_CALL_COUNTER, TOOL_CALL_START_TIME, LLM_CALL_START_TIME,
-                                       MODEL_COMPONENTS_CACHE)
+                                       MODEL_COMPONENTS_CACHE, CURRENT_ANALYSIS_TYPE,
+                                       OUTPUT_KEY_EXPERT_AGENT, OUTPUT_KEY_ROOT_AGENT)
 from optichat.tools import timing_tracker
 from optichat.tools.extract_tool import restore_model_object, save_model_object, extract_model_info, _solve_model
 from optichat.tools.rag_tool import init_paper_rag, init_code_rag
@@ -559,20 +560,9 @@ def check_is_expert_agent_used(callback_context: CallbackContext):
             # Record agent start in timing tracker
             timing_tracker.record_agent_start("expert_agent")
 
-        # Parse Analysis Type from User Query (Agent Input)
-        user_query = ""
-        if callback_context.user_content and callback_context.user_content.parts:
-            user_query = callback_context.user_content.parts[0].text or ""
-
-        analysis_type = "GENERAL" # Default
-
-        # Regex to find tags like [WHAT_IF], [RETRIEVAL] at start of query
-        match = re.search(r"^\[(FEASIBILITY_RESTORATION|DIAGNOSING|RETRIEVAL|SENSITIVITY|WHAT_IF|WHY_NOT|ROBUSTNESS)\]", user_query, re.IGNORECASE)
-        if match:
-            analysis_type = match.group(1).upper()
-            logger.info(f"Detected Analysis Type: {analysis_type}")
-
-        callback_context.state["CURRENT_ANALYSIS_TYPE"] = analysis_type
+        # Read analysis type already set by root's after_model_callback (check_llm_response)
+        analysis_type = callback_context.state.get(CURRENT_ANALYSIS_TYPE, "RETRIEVAL")
+        logger.info(f"Expert agent invoked with analysis type: {analysis_type}")
         return None
 
 
@@ -613,7 +603,7 @@ def check_llm_request(callback_context: CallbackContext, llm_request: LlmRequest
                    
     # Dynamic Prompt Injection for Expert Agent
     if agent_name == "expert_agent":
-        analysis_type = callback_context.state.get("CURRENT_ANALYSIS_TYPE", "DIAGNOSING")
+        analysis_type = callback_context.state.get(CURRENT_ANALYSIS_TYPE, "RETRIEVAL")
         logger.info(f"Injecting Dynamic Prompt for {agent_name} with strategy: {analysis_type}")
 
         try:
@@ -1021,7 +1011,50 @@ def check_llm_response(callback_context: CallbackContext, llm_response: LlmRespo
                       f"Contains error '{llm_response.error_message}'. "))
     else:
         logger.warning("[Callback] Inspected LLM response: Empty LlmResponse.")
+
+    # Strip any explanatory text from root's response when it's calling route_to_expert,
+    # so the user never sees root's intermediate reasoning — only the expert's answer appears.
+    if agent_name == "root_agent" and llm_response.content and llm_response.content.parts:
+        has_route_call = any(
+            p.function_call and p.function_call.name == "route_to_expert"
+            for p in llm_response.content.parts
+        )
+        if has_route_call:
+            function_call_parts = [p for p in llm_response.content.parts if p.function_call]
+            stripped_response = LlmResponse(
+                content=types.Content(role="model", parts=function_call_parts)
+            )
+            logger.info("[Root callback] Stripped text from root response — route_to_expert executes silently")
+            return stripped_response
+
     return None
+
+
+def route_to_expert(analysis_type: str, tool_context: ToolContext) -> str:
+    """Classify the current query and immediately transfer control to expert_agent.
+
+    Call this once for every non-[GENERAL] query instead of writing an
+    ANALYSIS_TYPE marker and calling transfer_to_agent separately.
+
+    Args:
+        analysis_type: One of RETRIEVAL, SENSITIVITY, WHAT_IF, WHY_NOT,
+                       FEASIBILITY_RESTORATION, ROBUSTNESS.
+        tool_context: Injected by ADK — do not pass manually.
+
+    Returns:
+        Confirmation string (not shown to user; transfer fires immediately).
+    """
+    valid_types = {"RETRIEVAL", "SENSITIVITY", "WHAT_IF", "WHY_NOT",
+                   "FEASIBILITY_RESTORATION", "ROBUSTNESS"}
+    analysis_type = analysis_type.strip().upper()
+    if analysis_type not in valid_types:
+        return (f"Invalid analysis_type '{analysis_type}'. "
+                f"Must be one of: {', '.join(sorted(valid_types))}")
+    tool_context.state[CURRENT_ANALYSIS_TYPE] = analysis_type
+    logger.info(f"[route_to_expert] CURRENT_ANALYSIS_TYPE set to {analysis_type}")
+    # Trigger ADK transfer to expert_agent via the function response event actions
+    tool_context.actions.transfer_to_agent = "expert_agent"
+    return f"Routing to expert_agent with analysis_type={analysis_type}."
 
 
 def check_tool_usage(tool: BaseTool, args: Dict[str, Any], tool_context: ToolContext):
@@ -1240,6 +1273,14 @@ def check_root_agent_runtime(callback_context: CallbackContext):
     os.makedirs(output_dir, exist_ok=True)
     timing_file = os.path.join(output_dir, f"timing_{timestamp}.json")
     timing_tracker.save_to_file(timing_file)
+
+    # Forward expert's response to root's output key when expert responded directly via transfer
+    expert_output = callback_context.state.get(OUTPUT_KEY_EXPERT_AGENT, "")
+    if expert_output:
+        root_output = callback_context.state.get(OUTPUT_KEY_ROOT_AGENT, "")
+        if not root_output:
+            callback_context.state[OUTPUT_KEY_ROOT_AGENT] = expert_output
+            logger.info("[Root callback] Forwarded expert output to root output key")
 
     return None
 
