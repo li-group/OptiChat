@@ -56,8 +56,8 @@ model.n = Param(model.k, mutable=True, initialize=number_of_ships)
 model.dist = Param(model.j, mutable=True, initialize=dist)
 
 # Variables
-model.z = Var(model.j, model.k, domain=NonNegativeIntegers) #number of times voyage jk is used
-model.y = Var(model.j, model.k, model.i, domain=NonNegativeReals) # number of men transported from port i via voyage jk
+model.z = Var(model.j, model.k, domain=NonNegativeIntegers, doc="number of times voyage jk is used")
+model.y = Var(model.j, model.k, model.i, domain=NonNegativeReals, doc="number of men transported from port i via voyage jk")
 
 # Constraints
 def demand_rule(model, i): #pick up all the men at port i

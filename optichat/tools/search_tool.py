@@ -84,11 +84,15 @@ def get_model_components(version: List[str], component_type: Union[str, List[str
             Can be single: 'objective', 'variable', 'constraint', 'parameter', or '' (empty string for all types)
             Or multiple: ['objective', 'variable'] for bulk extraction (efficient for reducing tool calls)
             Or all: '' or 'all'
-        pattern (str): **BACKUP METHOD** Naming pattern to match against component.
+        pattern (str): **BACKUP METHOD** Naming pattern to match against fully-indexed component names.
+            Component names include their index, e.g. "N[Rx1,3]", "X[A,0]", "demand[2,1]".
             Use this for additional filtering when the output by component_type alone is truncated.
             Supports:
                 - Wildcard patterns: '*' (matches any characters), '?' (matches a single character).
+                  Example: "N[*,3]" matches "N[Rx1,3]", "N[Rx2,3]", "N[Rx3,3]" (all N at second index 3).
+                  Example: "*[*,3]" matches all components whose second index is 3.
                   Example: "x_*" matches "x_1", "x_transport", etc.
+                  NOTE: "*[3]" only matches single-index components like "Balance[3]", NOT "N[Rx1,3]".
                 - Substring matching: Simple text matching (case-insensitive).
                   Example: "transport" matches "transport", "x_transport_A", "transport_cost", etc.
                 - Empty string: "" matches all component names.

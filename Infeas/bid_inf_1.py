@@ -15,10 +15,10 @@ vendors = list(data['bid_data'].keys())
 # JSON keys are strings — convert to int to keep types consistent with model.s
 segments = sorted({int(segment) for vendor_data in data['bid_data'].values() for segment in vendor_data.keys()})
 
-model.v = Set(initialize=vendors)   # vendors
-model.s = Set(initialize=segments)  # segments
+model.v = Set(initialize=vendors, doc="vendors")
+model.s = Set(initialize=segments, doc="segments")
 
-model.req = Param(mutable=True, initialize=data['requirements'])  # requirements
+model.req = Param(mutable=True, initialize=data['requirements'], doc="requirements")
 
 # Build bid_init with int segment keys (matching model.s type)
 bid_init = {}
@@ -30,7 +30,7 @@ for vendor, segment_data in data['bid_data'].items():
         bid_init[(vendor, s, 'q-min')] = values['q-min']
         bid_init[(vendor, s, 'q-max')] = values['q-max']
 
-model.vs = Set(within=model.v * model.s, initialize=[(v, s) for v in vendors for s in segments if (v, s, 'q-max') in bid_init])  # vendor-segment possibilities
+model.vs = Set(within=model.v * model.s, initialize=[(v, s) for v in vendors for s in segments if (v, s, 'q-max') in bid_init], doc="vendor-segment possibilities")
 for (v, s) in model.vs:
     if (v, s + 1) in model.vs:
         bid_init[(v, s + 1, 'setup')] = bid_init[(v, s, 'setup')] + bid_init[(v, s, 'q-max')] * (
@@ -43,9 +43,9 @@ model.qmin  = Param(model.vs, default=0, mutable=True, initialize={vs: bid_init[
 model.qmax  = Param(model.vs, default=0, mutable=True, initialize={vs: bid_init[(*vs, 'q-max')] / 2 for vs in model.vs})
 
 # Variables
-model.c   = Var(within=NonNegativeReals)              # total cost
-model.pl  = Var(model.vs, within=NonNegativeReals)    # purchase level
-model.plb = Var(model.vs, within=Binary)              # purchase decision
+model.c   = Var(within=NonNegativeReals, doc="total cost")
+model.pl  = Var(model.vs, within=NonNegativeReals, doc="purchase level")
+model.plb = Var(model.vs, within=Binary, doc="purchase decision")
 
 # Constraints
 def demand_rule(model):

@@ -52,7 +52,7 @@ def init_paper_rag(paths: List[str], model_name: str):
         if path.endswith(".pdf"):
             pdf_loader = PyPDFLoader(path)
             docs.extend(pdf_loader.load())
-        elif path.endswith(".txt"):
+        elif path.endswith(".txt") or path.endswith(".md"):
             txt_loader = TextLoader(path)
             docs.extend(txt_loader.load())
         else:

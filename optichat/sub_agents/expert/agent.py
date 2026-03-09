@@ -28,7 +28,7 @@ def create_expert_agent(prompt_version=1, tools_version=1):
         raise NotImplementedError(f"Tools version '{tools_version}' is not implemented.")
 
     expert_agent = Agent(name="expert_agent",
-                         model=gpt_5,  # remember to change it back under debugging
+                         model=gpt_4o,  # remember to change it back under debugging
                          tools=expert_agent_tools,
                          description=("Optimization & operations research expert that "
                                       "interacts with <models>, <models_code>, <models_paper>"),

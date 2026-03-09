@@ -763,7 +763,7 @@ def _get_component_index_for_prompt(state: dict) -> Optional[str]:
 
     Priority:
     1. Cache (state key COMPONENT_INDEX_{base_model})
-    2. Generated paper file at tmp/model_objects/generated_papers/{base_model}_description.txt
+    2. Generated paper file at tmp/model_objects/generated_papers/{base_model}_description.md
     3. Fall back to _generate_component_index (programmatic summary)
     """
     user_query = state.get(USER_QUERY, "")
@@ -774,12 +774,12 @@ def _get_component_index_for_prompt(state: dict) -> Optional[str]:
         # models_dictionary may not be loaded yet (e.g. frontend model selection before init).
         # Scan the papers directory to find an available description file.
         papers_dir = os.path.join(os.getcwd(), "tmp", "model_objects", "generated_papers")
-        paper_files = sorted(glob.glob(os.path.join(papers_dir, "*_description.txt")))
+        paper_files = sorted(glob.glob(os.path.join(papers_dir, "*_description.md")))
         if paper_files:
             # Pick the most recently modified paper
             paper_files.sort(key=os.path.getmtime, reverse=True)
-            chosen = os.path.basename(paper_files[0])          # e.g. "recovery_description.txt"
-            base_model = chosen[: chosen.rfind("_description.txt")]
+            chosen = os.path.basename(paper_files[0])          # e.g. "recovery_description.md"
+            base_model = chosen[: chosen.rfind("_description.md")]
             logger.info(f"Inferred base model from papers directory: {base_model}")
         else:
             logger.warning("Could not identify base model for component index injection")
@@ -793,7 +793,7 @@ def _get_component_index_for_prompt(state: dict) -> Optional[str]:
 
     # 2. Try generated paper file
     paper_path = os.path.join(os.getcwd(), "tmp", "model_objects", "generated_papers",
-                              f"{base_model}_description.txt")
+                              f"{base_model}_description.md")
     if os.path.exists(paper_path):
         try:
             with open(paper_path, "r", encoding="utf-8") as f:
@@ -1002,8 +1002,9 @@ def check_llm_response(callback_context: CallbackContext, llm_response: LlmRespo
             logger.info((f"[Callback] Inspecting LLM response from '{agent_name}': "
                          f"{original_text}"))
         elif llm_response.content.parts[0].function_call:
+            fc = llm_response.content.parts[0].function_call
             logger.info((f"[Callback] Inspecting LLM function call from '{agent_name}': "
-                         f"{llm_response.content.parts[0].function_call.name}"))
+                         f"{fc.name} | args: {dict(fc.args)}"))
         else:
             logger.info("[Callback] Inspected LLM response: No text content found.")
     elif llm_response.error_message:
@@ -1021,8 +1022,20 @@ def check_llm_response(callback_context: CallbackContext, llm_response: LlmRespo
         )
         if has_route_call:
             function_call_parts = [p for p in llm_response.content.parts if p.function_call]
+            # Deduplicate: keep only the first route_to_expert call.
+            # OpenAI parallel function calling can emit multiple identical route_to_expert calls
+            # in one response; executing them concurrently corrupts the expert's conversation history.
+            seen_route = False
+            deduplicated_parts = []
+            for p in function_call_parts:
+                if p.function_call and p.function_call.name == "route_to_expert":
+                    if seen_route:
+                        logger.warning("[Root callback] Dropped duplicate route_to_expert call — only one allowed per response")
+                        continue
+                    seen_route = True
+                deduplicated_parts.append(p)
             stripped_response = LlmResponse(
-                content=types.Content(role="model", parts=function_call_parts)
+                content=types.Content(role="model", parts=deduplicated_parts)
             )
             logger.info("[Root callback] Stripped text from root response — route_to_expert executes silently")
             return stripped_response

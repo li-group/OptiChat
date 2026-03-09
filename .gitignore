@@ -47,7 +47,7 @@ ENV/
 *.opt
 
 # Ignore log files
-*.log
+# *.log
 
 # Ignore other GAMS system files
 __gams*
@@ -76,5 +76,3 @@ CLAUDE.md
 /run_auto_tests.sh
 /hybrid_verifier.py
 *.ipynb
-
-# optichat/sub_agents/generator/

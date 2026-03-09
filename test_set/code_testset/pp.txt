@@ -4,12 +4,12 @@ Data Type: dict
 {
   "external_tools": [
     {
-      "type": "WHAT_IF",
+      "type": "WHY_NOT",
       "Q": "What if an additional constraint requires that we start with the production of product A first every week? How would this affect the overall profit obtained?",
       "A": "We used counterfactual reasoning to answer this question. Forcing the model to produce product A first every week would decrease the total profit to $1,671.43, compared to the original profit of $9,443.10 achieved with the optimal schedule. Thus, mandating the production of product A first every week would significantly reduce the profit."
     },
     {
-      "type": "WHAT_IF",
+      "type": "WHY_NOT",
       "Q": "Products E, H, and F have the highest demand amongst all the customers for most of the weeks. What would happen if we enforce the production schedule where we produce these high-demand products during the first three weeks respectively?",
       "A": "We will use counterfactual reasoning to answer this question. When we enforced the constraint to produce the high-demand products E, F, and H during the first 3 weeks of the schedule, the total profit decreased to $9076.4, as compared to the optimal profit of $9443.1 obtained from the optimal schedule. Thus, the model shows that the optimal schedule yields higher profit, indicating its economic efficiency over the adjusted scenario."
     }

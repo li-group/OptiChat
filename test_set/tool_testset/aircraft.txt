@@ -66,7 +66,7 @@ Data Type: dict
     },
     {
       "type": "SENSITIVITY",
-      "Q": "How stable will the optimal cost be if the demand distribution on route-1 fluctuates",
+      "Q": "How will the optimal cost change if the demand distribution on route-1 fluctuates",
       "queried_components": [
         {
           "component_name": "dd",
@@ -111,7 +111,7 @@ Data Type: dict
     },
     {
       "type": "WHAT_IF",
-      "Q": "what if I fix the passengers carried on route 3 for all possible demand states, to 100? what will happen?",
+      "Q": "what will happen if I fix the passengers carried on route 3 for all possible demand states to 100?",
       "queried_components": [
         {
           "component_name": "y",

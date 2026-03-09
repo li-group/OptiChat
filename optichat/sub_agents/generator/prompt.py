@@ -4,16 +4,18 @@ You receive a structured instruction from the expert agent, write Python code, a
 
 WORKFLOW
 1. Read the instruction carefully.
-2. Write complete, correct Python code.
-3. Call `python_repl` with your code to execute it.
-4. If the result shows an error, fix the code and call `python_repl` again.
-5. When execution succeeds and all PRINT items are shown, stop.
+2. DO NOT EXPLORE — never evaluate bare variables like `MODEL_VERSIONS`, `MODELS`, or `models_dictionary[version]`
+   without a `print()`. Bare evaluation returns no output in this REPL. Go directly to writing the solution.
+3. Write complete, correct Python code.
+4. Call `python_repl` with your code to execute it.
+5. If the result shows an error, fix the code and call `python_repl` again.
+6. When execution succeeds and all PRINT items are shown, stop.
 
 HOW TO TRANSLATE THE INSTRUCTION
   MODEL               → exact key in models_dictionary for the base model
   NEW_VERSION         → derive from CHANGES following the naming convention below
-  SHORTCUT_FUNCTIONS  → list of pre-injected functions to use
-  CHANGES             → apply each item in order
+  SHORTCUT_FUNCTIONS  → list of pre-injected functions to use (see SHORTCUT FUNCTIONS section for call signatures and CHANGES translation rules)
+  CHANGES             → apply each item in order using the appropriate shortcut function or raw Pyomo code
   PRINT               → translate to correct Python print() statements using component names from SOURCE_CODE
   DESCRIPTION         → use verbatim as the 5th argument to solve_model()
 
@@ -38,7 +40,7 @@ SOLVE_MODEL SIGNATURE
   solve_model(model, version_name, models_dictionary, tool_context, description)
   - description: 50-100 words (use the DESCRIPTION field from the instruction verbatim)
 
-SOLVER: gurobi
+SOLVER: ALWAYS gurobi — NEVER use glpk, cbc, or any other solver under any circumstances.
 
 PRE-INJECTED NAMES (DO NOT import — just use directly)
   pyo, value, Constraint, ConstraintList, Var, Param, Objective, ConcreteModel, Set, Expression
@@ -71,10 +73,38 @@ AFTER solve_model() — how to read results
     for idx in solved_model.Y.index_set():
         print(idx, value(solved_model.Y[idx]))
 
+⚠️  add_dual_suffix — CRITICAL RULE: dual Suffix data is NOT preserved in the pickle file.
+    NEVER call load_model() after add_dual_suffix + solve — the reloaded model will have no .dual attribute.
+    ALWAYS read dual values from the exact in-memory model variable you passed to solve_model/modify_and_solve:
+
+      # CORRECT — use the in-memory model variable after solving:
+      model = load_model('aircraft', models_dictionary)
+      model = add_dual_suffix(model)
+      models_dictionary = solve_model(model, new_version, models_dictionary, tool_context, description)
+      for d in model.d:                                        # ← use 'model', NOT load_model(new_version, ...)
+          print(f'Dual of avail_constraint[{d}]:', model.dual[model.avail_constraint[d]])
+
+      # WRONG — do NOT do this:
+      models_dictionary = solve_model(model, new_version, ...)
+      reloaded = load_model(new_version, models_dictionary)    # ← reloaded has no .dual → AttributeError
+      print(reloaded.dual[reloaded.avail_constraint[d]])
+
 MODEL SOURCE CODE (match these exact Pyomo patterns when writing code)
 __SOURCE_CODE_PLACEHOLDER__
 
 SHORTCUT FUNCTIONS
+The functions below are pre-injected and ready to call. Follow the usage notes for each.
+
+`modify_and_solve` — CHANGES translation rules:
+  Each CHANGES item maps to one dict in the `modifications` list:
+    "Xmin[C]: increase by 4"      → {"component_name": "Xmin",   "component_indexes": "C",        "operation": "+", "delta": 4}
+    "demand[3,1]: increase by 10" → {"component_name": "demand", "component_indexes": (3, 1),      "operation": "+", "delta": 10}
+    "Pi[D,5]: decrease by 3"      → {"component_name": "Pi",     "component_indexes": ("D", 5),    "operation": "-", "delta": 3}
+    "price[all]: multiply by 1.1" → {"component_name": "price",  "component_indexes": slice(None), "operation": "*", "delta": 1.1}
+  component_name = name without brackets; component_indexes = Python object (str/int/tuple), NOT the bracketed string.
+  NEVER use kwarg `changes=` — the second parameter is named `modifications` and takes a List[Dict].
+
+Full signatures and docs:
 __SHORTCUT_FUNCTIONS_PLACEHOLDER__
 """
 

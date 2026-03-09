@@ -16,10 +16,10 @@ from google.genai import types
 
 from optichat.config.constants import MODELS_DICTIONARY, MODEL_VERSIONS, GENERATOR_OUTPUT
 from optichat.sub_agents.generator.prompt import get_coder_prompt
-from optichat.config.llm_cfg import GPT_5_CODEX, GPT_5_CODEX_MAX_TOKENS
+from optichat.config.llm_cfg import *
 
 # Raw model ID for the OpenAI responses API (strip LiteLLM "openai/" prefix)
-_CODEX_MODEL_ID = GPT_5_CODEX.removeprefix("openai/")  # "gpt-5-codex"
+_CODEX_MODEL_ID = GPT_4o.removeprefix("openai/")  # "gpt-5-codex"
 
 _PYTHON_REPL_TOOL = {
     "type": "function",
@@ -157,8 +157,8 @@ class CoderAgent(BaseAgent):
             instructions=system_instruction,
             input=user_instruction,
             tools=[_PYTHON_REPL_TOOL],
-            reasoning={"effort": "low"},
-            max_output_tokens=GPT_5_CODEX_MAX_TOKENS,
+            # reasoning={"effort": "low"},
+            max_output_tokens=GPT_4o_MAX_TOKENS,
         )
 
         # Agentic tool-call loop
@@ -202,8 +202,8 @@ class CoderAgent(BaseAgent):
                 previous_response_id=response.id,
                 input=tool_outputs,
                 tools=[_PYTHON_REPL_TOOL],
-                reasoning={"effort": "low"},
-                max_output_tokens=GPT_5_CODEX_MAX_TOKENS,
+                # reasoning={"effort": "low"},
+                max_output_tokens=GPT_4o_MAX_TOKENS,
             )
 
         # Collect final text from the last response

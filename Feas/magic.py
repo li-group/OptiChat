@@ -14,8 +14,8 @@ model = ConcreteModel()
 
 
 # Sets
-model.t = Set(initialize=data["sets"]["Demand_Block"])  # demand blocks
-model.g = Set(initialize=data["sets"]["Generators"])  # generators
+model.t = Set(initialize=data["sets"]["Demand_Block"], doc="demand blocks")
+model.g = Set(initialize=data["sets"]["Generators"], doc="generators")
 pre_t = data["sets"]["predecessors"]
 
 
@@ -40,9 +40,9 @@ model.start = Param(model.g, mutable=True,initialize={g: gen_data[g]['start'] fo
 model.number = Param(model.g, mutable=True, initialize={g: gen_data[g]['number'] for g in model.g})
 
 # Variables
-model.x = Var(model.g, model.t, within=NonNegativeReals)  # generator output (1000mw)
-model.n = Var(model.g, model.t, within=NonNegativeIntegers)  # number of generators in use
-model.s = Var(model.g, model.t, within=NonNegativeReals)  # number of generators started up
+model.x = Var(model.g, model.t, within=NonNegativeReals, doc="generator output (1000mw)")
+model.n = Var(model.g, model.t, within=NonNegativeIntegers, doc="number of generators in use")
+model.s = Var(model.g, model.t, within=NonNegativeReals, doc="number of generators started up")
 
 # Objective
 def cost_rule(model):

@@ -88,15 +88,15 @@ model.op = Param(model.p, default=0, mutable=True, initialize=op_values)
 model.d = Param(model.cf, mutable=True, initialize=demand_values, doc='demand')
 
 # Define the decision variables
-model.z = Var(model.cr, model.p, domain=NonNegativeReals) #process level'
-model.x = Var(model.cf, domain=NonNegativeReals)#final sales
-model.u = Var(model.cr, domain=NonNegativeReals)#purchase of crude oil
-model.ui = Var(model.cr, model.ci, domain=NonNegativeReals)#purchases of intermediate materials
-model.w = Var(model.cr, model.ci, model.cf, domain=NonNegativeReals)#blending process level
-model.phi = Var(domain=Reals)#total income
-model.phir = Var(domain=Reals)#revenue from final product sales
-model.phip = Var(domain=Reals)#input material cost
-model.phiw = Var(domain=Reals)#operating cost
+model.z = Var(model.cr, model.p, domain=NonNegativeReals, doc="process level")
+model.x = Var(model.cf, domain=NonNegativeReals, doc="final sales")
+model.u = Var(model.cr, domain=NonNegativeReals, doc="purchase of crude oil")
+model.ui = Var(model.cr, model.ci, domain=NonNegativeReals, doc="purchases of intermediate materials")
+model.w = Var(model.cr, model.ci, model.cf, domain=NonNegativeReals, doc="blending process level")
+model.phi = Var(domain=Reals, doc="total income")
+model.phir = Var(domain=Reals, doc="revenue from final product sales")
+model.phip = Var(domain=Reals, doc="input material cost")
+model.phiw = Var(domain=Reals, doc="operating cost")
 
 
 # Objective function

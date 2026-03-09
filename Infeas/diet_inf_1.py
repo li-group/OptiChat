@@ -25,8 +25,8 @@ nutritive_values = data['nutritive_values']
 
 
 # Sets
-model.n = Set(initialize=list(data['nutrient_requirements'].keys()), doc='nutrients')  # Nutrients list from nutrient_requirements
-model.f = Set(initialize=list(data['nutritive_values'].keys()), doc='foods')  # Foods list from nutritive_values
+model.n = Set(initialize=list(data['nutrient_requirements'].keys()), doc='nutrients')
+model.f = Set(initialize=list(data['nutritive_values'].keys()), doc='foods')
 
 
 # Importing required values dynamically from the JSON file

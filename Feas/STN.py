@@ -102,40 +102,40 @@ TIME = np.array(TIME)
 model = ConcreteModel()
 
 # W[i,j,t] 1 if task i starts in unit j at time t
-model.W = Var(TASKS, UNITS, TIME, domain=Boolean)
+model.W = Var(TASKS, UNITS, TIME, domain=Boolean, doc="binary assignment: 1 if task i starts in unit j at time t")
 
 # B[i,j,t,] size of batch assigned to task i in unit j at time t
-model.B = Var(TASKS, UNITS, TIME, domain=NonNegativeReals)
+model.B = Var(TASKS, UNITS, TIME, domain=NonNegativeReals, doc="size of batch assigned to task i in unit j at time t")
 
 # S[s,t] inventory of state s at time t
-model.S = Var(list(STATES.keys()), TIME, domain=NonNegativeReals)
+model.S = Var(list(STATES.keys()), TIME, domain=NonNegativeReals, doc="inventory level of state s at time t")
 
 # Q[j,t] inventory of unit j at time t
-model.Q = Var(UNITS, TIME, domain=NonNegativeReals)
+model.Q = Var(UNITS, TIME, domain=NonNegativeReals, doc="inventory of unit j at time t")
 
 # store pamameters
-model.rho = Param(list(rho.keys()), mutable=True, initialize=rho)
-model.rho_ = Param(list(rho_.keys()), mutable=True, initialize=rho_)
-model.C = Param(list(C.keys()), mutable=True, initialize=C)
-model.Bmax = Param(list(Bmax.keys()), mutable=True, initialize=Bmax)
-model.Bmin = Param(list(Bmin.keys()), mutable=True, initialize=Bmin)
-model.Pi = Param(list(Pi.keys()), mutable=True, initialize=Pi)
+model.rho = Param(list(rho.keys()), mutable=True, initialize=rho, doc="input fraction of material consumed from state s when task i is performed")
+model.rho_ = Param(list(rho_.keys()), mutable=True, initialize=rho_, doc="output fraction of material produced to state s when task i completes")
+model.C = Param(list(C.keys()), mutable=True, initialize=C, doc="maximum storage capacity for state s")
+model.Bmax = Param(list(Bmax.keys()), mutable=True, initialize=Bmax, doc="maximum batch size for task i in unit j")
+model.Bmin = Param(list(Bmin.keys()), mutable=True, initialize=Bmin, doc="minimum batch size for task i in unit j")
+model.Pi = Param(list(Pi.keys()), mutable=True, initialize=Pi, doc="external material entrance (positive) or exit (negative) for state s at time t")
 
 # Objective function
 
 # project value
-model.Value = Var(domain=NonNegativeReals)
-model.valuec = Constraint(expr = model.Value == sum([STATES[s]['price']*model.S[s,H] for s in STATES]))
+model.Value = Var(domain=NonNegativeReals, doc="total revenue from product inventories at end of planning horizon")
+model.valuec = Constraint(expr = model.Value == sum([STATES[s]['price']*model.S[s,H] for s in STATES]), doc="defines Value as the price-weighted sum of final product inventories at the end of the horizon")
 
 # project cost
-model.Cost = Var(domain=NonNegativeReals)
+model.Cost = Var(domain=NonNegativeReals, doc="total production cost including fixed startup and variable batch processing costs")
 model.costc = Constraint(expr = model.Cost == sum([UNIT_TASKS[(j,i)]['Cost']*model.W[i,j,t] +
-        UNIT_TASKS[(j,i)]['vCost']*model.B[i,j,t] for i in TASKS for j in K[i] for t in TIME])) 
+        UNIT_TASKS[(j,i)]['vCost']*model.B[i,j,t] for i in TASKS for j in K[i] for t in TIME]), doc="defines Cost as the sum of fixed task-startup costs and variable batch-size costs across all tasks, units, and time periods")
 
 model.obj = Objective(expr = model.Value - model.Cost, sense = maximize)
 
 # Constraints
-model.cons = ConstraintList()
+model.cons = ConstraintList(doc="constraint list covering unit assignment, state mass balances, and unit batch capacity limits")
 
 # units assignment
 for j in UNITS:
@@ -146,9 +146,9 @@ for j in UNITS:
                 if tprime >= (t-p[i]+1-UNIT_TASKS[(j,i)]['Tclean']) and tprime <= t:
                     lhs += model.W[i,j,tprime]
         model.cons.add(lhs <= 1)
-    
+
 # state capacity limits
-model.sc = Constraint(list(STATES.keys()), TIME, rule = lambda model, s, t: model.S[s,t] <= model.C[s])
+model.sc = Constraint(list(STATES.keys()), TIME, rule = lambda model, s, t: model.S[s,t] <= model.C[s], doc="state storage capacity limit: inventory of state s at time t cannot exceed its maximum capacity")
 
 # state mass balances
 for s in STATES.keys():

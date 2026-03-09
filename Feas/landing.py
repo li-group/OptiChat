@@ -16,8 +16,8 @@ data = globals().get("data", {})
 # Define sets
 model.N_aircraft = pyo.Param(initialize=data['parameters']['Number_of_aircraft'], doc="number of aircraft in approach")
 model.K_runway = pyo.Param(initialize=data['parameters']['Number_of_runway'], doc="Number of runway")
-model.N = pyo.RangeSet(model.N_aircraft)  # aircraft set
-model.K = pyo.RangeSet(model.K_runway)  # Runway Set
+model.N = pyo.RangeSet(model.N_aircraft, doc="aircraft set")
+model.K = pyo.RangeSet(model.K_runway, doc="Runway Set")
 
 model.c_plus = pyo.Param(model.N, initialize={i: 10 * i for i in range(1, model.N_aircraft + 1)},
                          doc="Cost of late landing for each aircraft", mutable=True)

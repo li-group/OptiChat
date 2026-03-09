@@ -537,7 +537,7 @@ Total components:
 
 def save_synthetic_paper(description: str, model_name: str) -> str:
     """
-    Save generated model description as a .txt file (synthetic paper).
+    Save generated model description as a .md file (synthetic paper).
 
     Creates a timestamped markdown file that can be used by paper_rag.
 
@@ -551,14 +551,14 @@ def save_synthetic_paper(description: str, model_name: str) -> str:
     Example:
         >>> path = save_synthetic_paper(description, "supply_chain")
         >>> print(path)
-        "/path/to/tmp/model_objects/generated_papers/supply_chain_description.txt"
+        "/path/to/tmp/model_objects/generated_papers/supply_chain_description.md"
     """
     # Create generated_papers directory
     papers_dir = os.path.join(TMP_MODEL_OBJECT_FOLDER, "generated_papers")
     os.makedirs(papers_dir, exist_ok=True)
 
     # Create filename
-    filename = f"{model_name}_description.txt"
+    filename = f"{model_name}_description.md"
     file_path = os.path.join(papers_dir, filename)
 
     # Add metadata header
@@ -586,6 +586,68 @@ in the relevant domain who may not have formal optimization training.*
 
     logger.info(f"✓ Saved synthetic paper to: {file_path}")
     return os.path.abspath(file_path)
+
+
+def _compact_index_set(index_set, n_examples: int = 10) -> dict:
+    """
+    Convert a full flat list of index tuples into a compact representation.
+
+    For dense index sets (total >= 50% of cartesian product):
+        {"dims": [[unique dim-0 values], [unique dim-1 values], ...],
+         "examples": [first n_examples tuples],
+         "total_size": N}
+
+    For sparse index sets (total < 50% of cartesian product):
+        {"sparse": true,
+         "examples": [first n_examples tuples],
+         "total_size": N}
+    """
+    if not index_set:
+        return {"total_size": 0}
+
+    # Normalise: scalar indices → 1-tuples so everything is iterable
+    normalised = []
+    for entry in index_set:
+        normalised.append(entry if isinstance(entry, list) else [entry])
+
+    total_size = len(normalised)
+    n_dims = len(normalised[0])
+
+    examples = [e if len(e) > 1 else e[0] for e in normalised[:n_examples]]
+
+    if n_dims == 1:
+        # 1-D: no sparsity concept — just show unique values + examples
+        unique_vals = list(dict.fromkeys(e[0] for e in normalised))
+        return {"dims": [unique_vals], "examples": examples, "total_size": total_size}
+
+    # Multi-dimensional: compute per-dimension unique values
+    dim_unique = []
+    for d in range(n_dims):
+        seen = dict.fromkeys(e[d] for e in normalised)
+        dim_unique.append(list(seen.keys()))
+
+    cartesian_size = 1
+    for uv in dim_unique:
+        cartesian_size *= len(uv)
+
+    is_sparse = total_size < 0.5 * cartesian_size
+    if is_sparse:
+        return {"sparse": True, "examples": examples, "total_size": total_size}
+    else:
+        return {"dims": dim_unique, "examples": examples, "total_size": total_size}
+
+
+def _compact_index_sets_in_dict(d: dict) -> dict:
+    """Recursively walk a serializable dict and replace index_set lists with compact form."""
+    result = {}
+    for k, v in d.items():
+        if k == "index_set" and isinstance(v, list):
+            result[k] = _compact_index_set(v)
+        elif isinstance(v, dict):
+            result[k] = _compact_index_sets_in_dict(v)
+        else:
+            result[k] = v
+    return result
 
 
 def _make_serializable(obj):
@@ -675,20 +737,26 @@ def get_model_info_for_description(request: str, tool_context: ToolContext) -> s
         pkl_path = model_components.get("local_path_to_object")
         sol_status = model_components.get("obj", {}).get("sol_status", "unknown")
 
+        # For infeasible models, pass tc_for_json = infeasibleOrUnbounded so pyomo2json
+        # skips obj() evaluation (which requires initialized variable values).
+        # The original pkl has all doc strings intact; only the objective evaluation is skipped.
+        tc_for_json = TerminationCondition.optimal
+        if sol_status in ("infeasible", "infeasibleOrUnbounded"):
+            tc_for_json = TerminationCondition.infeasibleOrUnbounded
+            logger.info(f"[ILLUSTRATOR_TOOL] Infeasible model — using tc_for_json=infeasibleOrUnbounded to skip obj() evaluation")
+
         formatted_components = None
         if pkl_path:
             try:
                 from extractor import pyomo2json
                 pyomo_model, _ = restore_model_object(pkl_path)
-                tc = (TerminationCondition.infeasible
-                      if sol_status == "infeasible"
-                      else TerminationCondition.optimal)
-                raw_dict = pyomo2json(pyomo_model, termination_condition=tc)
+                raw_dict = pyomo2json(pyomo_model, termination_condition=tc_for_json)
                 serializable_dict = _make_serializable(raw_dict)
+                serializable_dict = _compact_index_sets_in_dict(serializable_dict)
                 serializable_dict["model_name"] = model_name
-                serializable_dict["sol_status"] = sol_status
+                serializable_dict["sol_status"] = sol_status  # always report original model status
                 formatted_components = json.dumps(serializable_dict, indent=2)
-                logger.info(f"[ILLUSTRATOR_TOOL] pyomo2json produced {len(formatted_components)} chars")
+                logger.info(f"[ILLUSTRATOR_TOOL] pyomo2json produced {len(formatted_components)} chars (after index_set compaction)")
             except Exception as e:
                 logger.warning(f"[ILLUSTRATOR_TOOL] pyomo2json failed ({e}), falling back to hierarchical format")
 

@@ -8,13 +8,30 @@ func_item     : "  - " cname
 changes_block : "CHANGES:" change_item+
 change_item   : "  - " /[^\n]+/
 
-print_block   : "PRINT:" print_item+
+print_block   : "PRINT:" print_item+    ← REQUIRED: always include; tells the generator what to output
 print_item    : "  - " /[^\n]+/
 
 description_line : "DESCRIPTION:" /[^\n]+/
 
 model_name    : /[a-zA-Z_][a-zA-Z0-9_]*/
 cname         : /[a-zA-Z_][a-zA-Z0-9_]*/
+"""
+
+# ---------------------------------------------------------------------------
+# PRINT guidance — what to include per task type
+# ---------------------------------------------------------------------------
+
+PRINT_GUIDANCE = """\
+PRINT BLOCK RULES (apply to every generator_agent call):
+  • PRINT is REQUIRED — the generator produces no useful output without it.
+  • SENSITIVITY  : "dual value of <constraint>[idx] for each <idx>"
+                   Use the constraint that directly limits the queried parameter
+                   (see <model_description> Part 2c: Constraint–Parameter mapping, RHS driven by: <param>).
+                   Example: if query is about `aa[d]` and Part 2c shows `avail_constraint[d]` is RHS-driven by `aa`,
+                   write: "dual value of avail_constraint[d] for each aircraft type d"
+  • WHAT_IF      : objective value + values of the decision variables most affected by the change.
+  • WHY_NOT      : objective value + forced variable value + competing variables that show the trade-off.
+  • FEASIBILITY  : objective value + values of the relaxed/restored variables.
 """
 
 # ---------------------------------------------------------------------------
@@ -40,7 +57,8 @@ CHANGES:
   - add dual suffix to the model
 PRINT:
   - dual value of supply_constraint[i] for each supply node i
-DESCRIPTION: Sensitivity analysis on supply capacity constraints; add dual suffix and re-solve to compute shadow prices showing marginal cost of one additional supply unit."""
+  - objective value
+DESCRIPTION: Sensitivity analysis on supply capacity; add dual suffix and re-solve to compute shadow prices showing marginal cost of one additional supply unit at each node."""
 
 EXAMPLE_WHY_NOT = """\
 MODEL: diet
@@ -67,6 +85,7 @@ def get_grammar_reference() -> str:
     return (
         "INSTRUCTION GRAMMAR (Lark EBNF):\n"
         f"{CODE_INSTRUCTION_GRAMMAR}\n"
+        f"{PRINT_GUIDANCE}\n"
         "EXAMPLES:\n\n"
         f"# WHAT_IF\n{EXAMPLE_WHAT_IF}\n\n"
         f"# SENSITIVITY\n{EXAMPLE_SENSITIVITY}\n\n"

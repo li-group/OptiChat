@@ -75,39 +75,40 @@ horizon = 10
 model = pe.ConcreteModel()
 
 #define sets
-model.I = pe.Set(initialize = I) #tasks
-model.R = pe.Set(initialize = R) #resources
-model.T = pe.Set(initialize = range(horizon+1)) #time points
-model.T1 = pe.Set(initialize = range(1,horizon+1)) #exclude time point 0, which is only for initialization
-model.Ir = pe.Set(model.R, initialize = {r: net.neighbors(r) for r in model.R}) #tasks associated with each resource r
+model.I = pe.Set(initialize = I, doc="tasks")
+model.R = pe.Set(initialize = R, doc="resources")
+model.T = pe.Set(initialize = range(horizon+1), doc="time points")
+model.T1 = pe.Set(initialize = range(1,horizon+1), doc="exclude time point 0, which is only for initialization")
+model.Ir = pe.Set(model.R, initialize = {r: net.neighbors(r) for r in model.R}, doc="tasks associated with each resource r")
 
 #define parameters
 max_tau = max([net.nodes[i]["tau"] for i in I]) #maximum tau in the system
 idx = [(i,r,theta) for i in I for r in R for theta in range(max_tau + 1) if r in net.neighbors(i) and theta <= net.nodes[i]["tau"]] #indices for mu and nu
-model.idx = pe.Set(dimen=3, initialize = idx) #indices for mu and nu
-model.mu = pe.Param(model.idx, mutable=True, initialize = {idx: net.edges[(idx[0],idx[1])]["mu"][idx[2]] for idx in model.idx}) #mu parameter
-model.nu = pe.Param(model.idx, mutable=True, initialize = {idx: net.edges[(idx[0],idx[1])]["nu"][idx[2]] for idx in model.idx}) #nu parameter
-model.tau = pe.Param(model.I, initialize = {i: net.nodes[i]["tau"] for i in model.I}) #tau (task durations)
-model.Vmax = pe.Param(model.I, mutable=True, initialize = {i: net.nodes[i]["Vmax"] for i in model.I}) #Vmax (max batch size)
-model.Vmin = pe.Param(model.I, mutable=True, initialize = {i: net.nodes[i]["Vmin"] for i in model.I}) #Vmin (min batch size)
-model.X0 = pe.Param(model.R, mutable=True, initialize = {r: net.nodes[r]["X0"] for r in model.R}) #X0 (initial resource inventory)
-model.Xmax = pe.Param(model.R, mutable=True, initialize = {r: net.nodes[r]["Xmax"] for r in model.R}) #Xmax (maximum resource inventory)
-model.Xmin = pe.Param(model.R, mutable=True, initialize = {r: net.nodes[r]["Xmin"] for r in model.R}) #Xmin (minimum resource inventory)
-model.Pi = pe.Param(model.R, model.T1, mutable=True, initialize = { #Pi (external entrance/exit)
+model.idx = pe.Set(dimen=3, initialize = idx, doc="indices for mu and nu")
+model.mu = pe.Param(model.idx, mutable=True, initialize = {idx: net.edges[(idx[0],idx[1])]["mu"][idx[2]] for idx in model.idx}, doc="mu parameter")
+model.nu = pe.Param(model.idx, mutable=True, initialize = {idx: net.edges[(idx[0],idx[1])]["nu"][idx[2]] for idx in model.idx}, doc="nu parameter")
+model.tau = pe.Param(model.I, initialize = {i: net.nodes[i]["tau"] for i in model.I}, doc="tau (task durations)")
+model.Vmax = pe.Param(model.I, mutable=True, initialize = {i: net.nodes[i]["Vmax"] for i in model.I}, doc="Vmax (max batch size)")
+model.Vmin = pe.Param(model.I, mutable=True, initialize = {i: net.nodes[i]["Vmin"] for i in model.I}, doc="Vmin (min batch size)")
+model.X0 = pe.Param(model.R, mutable=True, initialize = {r: net.nodes[r]["X0"] for r in model.R}, doc="X0 (initial resource inventory)")
+model.Xmax = pe.Param(model.R, mutable=True, initialize = {r: net.nodes[r]["Xmax"] for r in model.R}, doc="Xmax (maximum resource inventory)")
+model.Xmin = pe.Param(model.R, mutable=True, initialize = {r: net.nodes[r]["Xmin"] for r in model.R}, doc="Xmin (minimum resource inventory)")
+model.Pi = pe.Param(model.R, model.T1, mutable=True, initialize = {
     (r,t): -10 #the demand (exit) for products is 50 units at t = horizon
         if r in Rprod and t > horizon/2 else
             10 if r in Rreact and t > horizon/2 else #receive (entrance) 10 units of raw materials for the second half of the timeline
                 0
     for r in model.R for t in model.T1
     }
+, doc="Pi (external entrance/exit)"
 )
 
 #variables
-model.X = pe.Var(model.R, model.T, domain=pe.NonNegativeReals) #resource inventory level
+model.X = pe.Var(model.R, model.T, domain=pe.NonNegativeReals, doc="resource inventory level")
 for r in model.R:
     model.X[r,0].fix(model.X0[r]) #set initial inventory levels
-model.N = pe.Var(model.I, model.T1, domain=pe.Binary) #task triggering
-model.E = pe.Var(model.I, model.T1, domain=pe.NonNegativeReals) #task batch size
+model.N = pe.Var(model.I, model.T1, domain=pe.Binary, doc="task triggering")
+model.E = pe.Var(model.I, model.T1, domain=pe.NonNegativeReals, doc="task batch size")
 
 #constraints
 model.Balance = pe.ConstraintList()
