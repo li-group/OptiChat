@@ -27,25 +27,43 @@ def load_metadata():
 
 metadata = load_metadata()
 
+# Fetch session state early so we know which models belong to the current session.
+# MODEL_VERSIONS contains only the models loaded from the most recent config upload.
+def fetch_current_model_versions() -> list:
+    if "user_id" not in st.session_state or "session_id" not in st.session_state:
+        return []
+    try:
+        url = f"{API_BASE_URL}/apps/{APP_NAME}/users/{st.session_state.user_id}/sessions/{st.session_state.session_id}"
+        response = requests.get(url)
+        if response.status_code == 200:
+            state = response.json().get("state", {})
+            return state.get("MODEL_VERSIONS", [])
+    except Exception:
+        pass
+    return []
+
+current_model_versions = fetch_current_model_versions()
+
 selected_models = []
 
 if metadata:
     st.sidebar.subheader("Select Model")
-    
+
     selected_models = []
-    
+
     all_dates = sorted(list(metadata.keys()), reverse=True)
-    
+
     for date in all_dates:
         with st.sidebar.expander(f"📅 {date}", expanded=False):
             base_models_data = metadata[date]
-            
+
             for base_model_name in sorted(base_models_data.keys()):
                 st.markdown(f"**📓 {base_model_name}**")
-                
 
+                # Auto-check only models from the current session upload; nothing pre-checked on cold start.
+                is_current = (base_model_name in current_model_versions) if current_model_versions else False
                 base_key = f"chk_{date}_{base_model_name}_base"
-                if st.checkbox(f"{base_model_name} (Base)", key=base_key):
+                if st.checkbox(f"{base_model_name} (Base)", key=base_key, value=is_current):
                     selected_models.append(base_model_name)
                 
                 model_info = base_models_data[base_model_name]

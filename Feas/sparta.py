@@ -43,4 +43,4 @@ model.bal = Constraint(model.t, rule=bal_rule, doc='troop balance - stock balanc
 
 def min_req_rule(mod, i):
     return mod.e[i] >= mod.req[i]
-model.min_req = Constraint(model.t, rule=min_req_rule)
+model.min_req = Constraint(model.t, rule=min_req_rule, doc='minimum troop requirement')

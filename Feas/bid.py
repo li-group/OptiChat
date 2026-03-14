@@ -37,10 +37,10 @@ for (v, s) in model.vs:
                     bid_init[(v, s, 'price')] - bid_init[(v, s + 1, 'price')])
 
 # Bid data parameters
-model.setup = Param(model.vs, default=0, mutable=True, initialize={vs: bid_init[(*vs, 'setup')] for vs in model.vs})
-model.price = Param(model.vs, default=0, mutable=True, initialize={vs: bid_init[(*vs, 'price')] for vs in model.vs})
-model.qmin  = Param(model.vs, default=0, mutable=True, initialize={vs: bid_init[(*vs, 'q-min')] for vs in model.vs})
-model.qmax  = Param(model.vs, default=0, mutable=True, initialize={vs: bid_init[(*vs, 'q-max')] for vs in model.vs})
+model.setup = Param(model.vs, default=0, mutable=True, initialize={vs: bid_init[(*vs, 'setup')] for vs in model.vs}, doc="setup cost for selecting a vendor-segment deal")
+model.price = Param(model.vs, default=0, mutable=True, initialize={vs: bid_init[(*vs, 'price')] for vs in model.vs}, doc="unit purchase price for a vendor-segment deal")
+model.qmin  = Param(model.vs, default=0, mutable=True, initialize={vs: bid_init[(*vs, 'q-min')] for vs in model.vs}, doc="minimum purchase quantity if a deal is chosen")
+model.qmax  = Param(model.vs, default=0, mutable=True, initialize={vs: bid_init[(*vs, 'q-max')] for vs in model.vs}, doc="maximum purchase quantity for a vendor-segment deal")
 
 # Variables
 model.c   = Var(within=NonNegativeReals, doc="total cost")
@@ -50,19 +50,19 @@ model.plb = Var(model.vs, within=Binary, doc="purchase decision")
 # Constraints
 def demand_rule(model):
     return model.req == sum(model.pl[vs] for vs in model.vs)
-model.demand = Constraint(rule=demand_rule)
+model.demand = Constraint(rule=demand_rule, doc="total purchased quantity must meet requirement")
 
 def costdef_rule(model):
     return model.c == sum(model.price[vs] * model.pl[vs] + model.setup[vs] * model.plb[vs] for vs in model.vs)
-model.costdef = Constraint(rule=costdef_rule)
+model.costdef = Constraint(rule=costdef_rule, doc="total cost definition")
 
 def minpl_rule(model, v, s):
     return model.pl[v, s] >= model.qmin[v, s] * model.plb[v, s]
-model.minpl = Constraint(model.vs, rule=minpl_rule)
+model.minpl = Constraint(model.vs, rule=minpl_rule, doc="minimum purchase level when a deal is selected")
 
 def maxpl_rule(model, v, s):
     return model.pl[v, s] <= model.qmax[v, s] * model.plb[v, s]
-model.maxpl = Constraint(model.vs, rule=maxpl_rule)
+model.maxpl = Constraint(model.vs, rule=maxpl_rule, doc="maximum purchase level for each deal")
 
 def oneonly_rule(model, v):
     # at most one deal per vendor — skip if vendor has no valid segments
@@ -70,7 +70,7 @@ def oneonly_rule(model, v):
     if not terms:
         return Constraint.Skip
     return sum(terms) <= 1
-model.oneonly = Constraint(model.v, rule=oneonly_rule)
+model.oneonly = Constraint(model.v, rule=oneonly_rule, doc="at most one accepted deal per vendor")
 
 # Objective
 model.obj = Objective(expr=model.c, sense=minimize)

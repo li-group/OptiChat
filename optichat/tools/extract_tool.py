@@ -220,7 +220,29 @@ def extract_model_objective(model, termination_condition):
     return objective_info
 
 
+def extract_model_set(model):
+    """
+    Extract sets from a Pyomo model.
+    Information includes component_type, members (list of set elements), and doc string.
+    """
+    set_info = {}
+    for s in model.component_objects(pe.Set, active=True):
+        try:
+            members = sorted(list(s), key=lambda x: str(x))
+        except Exception:
+            members = []
+        doc = getattr(s, 'doc', None) or ""
+        set_info[s.name] = {
+            "component_type": "set",
+            "members": members,
+            "doc": doc,
+        }
+    return set_info
+
+
 def extract_model_info(model, termination_condition='unknown'):
+    # sets
+    set_info = extract_model_set(model)
     # parameters
     param_info = extract_model_param(model, termination_condition)
     # variables
@@ -230,7 +252,7 @@ def extract_model_info(model, termination_condition='unknown'):
     # objective
     objective_info = extract_model_objective(model, termination_condition)
     # combine all info
-    info = {**param_info, **var_info, **constraint_info, **objective_info}
+    info = {**set_info, **param_info, **var_info, **constraint_info, **objective_info}
     return info
 
 

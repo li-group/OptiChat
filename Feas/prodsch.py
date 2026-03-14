@@ -122,7 +122,7 @@ def lssb_rule(model, l, q, s):
         return model.ss[l, q, s] <= model.ssb[l, q, s]
 model.lssb = Constraint(model.l, model.q, model.s, rule=lssb_rule, doc='ss - ssb linkage')
 
-model.pup = Constraint(rule=lambda model: model.p['spring'] <= 0.8*len(model.s)*max(model.pr['motor',l] for l in model.l))
+model.pup = Constraint(rule=lambda model: model.p['spring'] <= 0.8*len(model.s)*max(model.pr['motor',l] for l in model.l), doc='spring production upper bound')
 
 # Objective
 model.obj = Objective(expr=sum(model.delt[q]*(model.dpc[q] + model.isc[q] + model.wfc[q]) for q in model.q), sense=minimize)

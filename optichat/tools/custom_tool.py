@@ -1037,64 +1037,203 @@ def _pre_analyze_params(
 
     return results
 
+# =========================
+# Slack-Based Robustness Analysis
+# =========================
+
+def _compute_slack_analysis(
+    model: pyo.ConcreteModel,
+    uncertain_params: list,
+    uncertain_param_names: List[str],
+    tol: float = 1e-6,
+) -> Dict[str, Any]:
+    """
+    For each uncertain parameter, compute how much it can move before hitting a constraint
+    boundary, evaluated at the current fixed solution (no re-solve needed).
+
+    Method
+    ------
+    For every active constraint, perturb the param once and measure changes in both the
+    constraint body AND its bounds:
+
+      body_sens = ∂(body)/∂param
+      ub_sens   = ∂(upper)/∂param   (0 if param not in upper bound)
+      lb_sens   = ∂(lower)/∂param   (0 if param not in lower bound)
+
+    Slack sensitivity for each side:
+      d(ub_slack)/d(param) = ub_sens - body_sens   (upper side:  ub - body)
+      d(lb_slack)/d(param) = body_sens - lb_sens   (lower side:  body - lb)
+
+    If slack_sens < 0: increasing param tightens this side →
+        max_allowable_increase = slack / |slack_sens|
+    If slack_sens > 0: decreasing param tightens this side →
+        max_allowable_decrease = slack / slack_sens
+
+    This correctly handles parameters that appear only in a bound (e.g. cap in sum_x ≤ cap)
+    where body_sens = 0 but ub_sens = 1, so slack_sens = 1 > 0 → reports max_decrease.
+    """
+    results: Dict[str, Any] = {}
+
+    # Expand IndexedParams into individual ParamData entries so pyo.value() and
+    # set_value() always operate on a single scalar ParamData.
+    expanded: List[tuple] = []
+    for pname, param in zip(uncertain_param_names, uncertain_params):
+        if isinstance(param, pyo.Param) and param.is_indexed():
+            for k in param.keys():
+                idx_str = ",".join(map(str, k)) if isinstance(k, tuple) else str(k)
+                expanded.append((f"{pname}[{idx_str}]", param[k]))
+        elif isinstance(param, pyo.Param):
+            # Scalar (non-indexed) Param component
+            expanded.append((pname, next(iter(param.values()))))
+        else:
+            # Already a ParamData
+            expanded.append((pname, param))
+
+    for pname, param in expanded:
+        current_value = pyo.value(param, exception=False)
+        if current_value is None:
+            results[pname] = {"error": "Cannot read current value of parameter."}
+            continue
+        current_value = float(current_value)
+        h = max(abs(current_value) * 1e-5, 1e-7)
+
+        binding_constraints = []
+        non_binding_constraints = []
+
+        for con in model.component_data_objects(pyo.Constraint, active=True, descend_into=True):
+            body_before = pyo.value(con.body, exception=False)
+            if body_before is None:
+                continue
+
+            ub_before = pyo.value(con.upper, exception=False) if con.has_ub() else None
+            lb_before = pyo.value(con.lower, exception=False) if con.has_lb() else None
+
+            # Single perturbation: read body and bounds after
+            try:
+                param.set_value(current_value + h)
+                body_after = pyo.value(con.body, exception=False)
+                ub_after = pyo.value(con.upper, exception=False) if con.has_ub() else None
+                lb_after = pyo.value(con.lower, exception=False) if con.has_lb() else None
+            except Exception:
+                body_after = ub_after = lb_after = None
+            finally:
+                param.set_value(current_value)
+
+            if body_after is None:
+                continue
+
+            body_sens = (body_after - body_before) / h
+            ub_sens = ((ub_after - ub_before) / h) if (ub_after is not None and ub_before is not None) else 0.0
+            lb_sens = ((lb_after - lb_before) / h) if (lb_after is not None and lb_before is not None) else 0.0
+
+            # Build constraint key
+            comp = con.parent_component()
+            if comp.is_indexed():
+                idx = con.index()
+                idx_str = ",".join(map(str, idx)) if isinstance(idx, tuple) else str(idx)
+                con_key = f"{comp.name}[{idx_str}]"
+            else:
+                con_key = comp.name
+
+            # Evaluate each active bound side
+            sides = []
+            if con.has_ub() and ub_before is not None:
+                slack = float(ub_before) - float(body_before)
+                slack_sens = ub_sens - body_sens   # d(ub - body)/d(param)
+                sides.append((slack, slack_sens, "upper"))
+            if con.has_lb() and lb_before is not None:
+                slack = float(body_before) - float(lb_before)
+                slack_sens = body_sens - lb_sens   # d(body - lb)/d(param)
+                sides.append((slack, slack_sens, "lower"))
+
+            for slack, slack_sens, bound_type in sides:
+                if abs(slack_sens) < 1e-10:
+                    continue  # param does not affect this constraint's slack
+
+                if slack <= tol:
+                    binding_constraints.append({
+                        "constraint": con_key,
+                        "slack": 0.0,
+                        "bound_type": bound_type,
+                    })
+                elif slack_sens < 0:
+                    # Increasing param tightens → max allowable increase
+                    max_change = slack / abs(slack_sens)
+                    room_pct = (max_change / abs(current_value) * 100.0) if abs(current_value) > 1e-10 else float("inf")
+                    non_binding_constraints.append({
+                        "constraint": con_key,
+                        "slack": round(slack, 6),
+                        "slack_sensitivity": round(slack_sens, 6),
+                        "direction": "increase",
+                        "max_allowable_change": round(max_change, 6),
+                        "room_pct": round(room_pct, 2),
+                        "bound_type": bound_type,
+                    })
+                else:
+                    # Decreasing param tightens → max allowable decrease
+                    max_change = slack / slack_sens
+                    room_pct = (max_change / abs(current_value) * 100.0) if abs(current_value) > 1e-10 else float("inf")
+                    non_binding_constraints.append({
+                        "constraint": con_key,
+                        "slack": round(slack, 6),
+                        "slack_sensitivity": round(slack_sens, 6),
+                        "direction": "decrease",
+                        "max_allowable_change": round(max_change, 6),
+                        "room_pct": round(room_pct, 2),
+                        "bound_type": bound_type,
+                    })
+
+        tightest = (
+            min(non_binding_constraints, key=lambda c: c["max_allowable_change"])
+            if non_binding_constraints else None
+        )
+
+        results[pname] = {
+            "current_value": current_value,
+            "binding_constraints": binding_constraints,
+            "non_binding_constraints": non_binding_constraints,
+            "has_any_binding": len(binding_constraints) > 0,
+            "overall_max_change": tightest["max_allowable_change"] if tightest else None,
+            "overall_room_pct": tightest["room_pct"] if tightest else None,
+            "overall_direction": tightest["direction"] if tightest else None,
+            "tightest_constraint": tightest["constraint"] if tightest else None,
+        }
+
+    return results
+
 
 def robustness_analysis(
     version: str,
     uncertain_param_names: List[str],
-    bounds: List,
     tool_context: ToolContext = None,
-    n_scenarios: int = 40,
-    dist: str = "uniform",
-    bounds_mode: str = "absolute",
-    delta_operation: str = "+-",
+    tol: float = 1e-6,
 ) -> Dict[str, Any]:
     """
-    Generate scenarios and run robustness analysis on a FEASIBLE base model `version`.
+    Slack-based robustness analysis on a FEASIBLE base model `version`.
+
+    Instead of sampling random scenarios, this computes exactly how much each uncertain
+    parameter can increase before violating a constraint, given the current fixed solution.
+
+    For a constraint Ax ≤ b with slack = b - Ax:
+      - If binding (slack = 0): parameter is already at the limit, no room.
+      - If not binding: max_allowable_increase = slack / sensitivity
+                        room_pct = max_allowable_increase / current_param_value * 100%
+    where sensitivity = ∂(constraint body)/∂(parameter), estimated numerically.
 
     Parameters
     ----------
     version : str
         The base model version name.
     uncertain_param_names : list of str
-        Exact parameter names as strings, e.g. ["demand[1,1]", "demand[2,1]"] or ["cost"].
-    bounds : list
-        In "absolute" mode (default): list of [lb, ub] pairs, e.g. [[12, 18], [10, 20]].
-        In "delta" mode: list of single delta values, e.g. [10, 5].
-    n_scenarios : int
-        Number of random scenarios to SAMPLE from the uncertainty range (default 40).
-        IMPORTANT: This is NOT the number of perturbation magnitudes.
-        "±10 perturbation" means the sampling RANGE is [current-10, current+10].
-        n_scenarios controls how many random draws are taken from that range.
-        Use at least 40 for a meaningful stress test; 100+ for publication-quality analysis.
-        Never pass n_scenarios=2 just because the user said "±10" — ± defines the range,
-        not the sample count.
-    dist : str
-        Distribution to use: "uniform" (default) or "normal".
-    bounds_mode : str
-        "absolute" (default): bounds are [lb, ub] pairs.
-        "delta": bounds are perturbations applied to current param values via delta_operation.
-    delta_operation : str
-        Only used when bounds_mode="delta". How to compute [lb, ub] from the current value:
-          "+-"  symmetric additive:    [current - delta, current + delta]
-          "+"   upper additive:        [current, current + delta]
-          "-"   lower additive:        [current - delta, current]
-          "*"   multiplicative (frac): [current * (1 - delta), current * (1 + delta)]
+        Exact parameter names, e.g. ["demand[1,1]", "cost"].
+    tol : float
+        Tolerance for classifying a constraint as binding (default 1e-6).
 
     Returns
     -------
     dict
-        JSON-safe payload with status, result summary, and data (DataFrame records).
+        JSON-safe payload with status, pre-analysis, shadow prices, and slack results.
     """
-    # --- Input validation ---
-    if len(uncertain_param_names) != len(bounds):
-        return {
-            "status": "error",
-            "result": (
-                f"'uncertain_param_names' has {len(uncertain_param_names)} entries but "
-                f"'bounds' has {len(bounds)}. They must be the same length."
-            ),
-        }
-
     state = tool_context.state
     md = state[MODELS_DICTIONARY].copy()
 
@@ -1111,13 +1250,13 @@ def robustness_analysis(
 
     base_model = load_model(version, md)
 
-    # --- Resolve string param names -> Pyomo objects ---
+    # Resolve string param names → Pyomo objects
     try:
         uncertain_params = [_resolve_param(base_model, name) for name in uncertain_param_names]
     except ValueError as e:
         return {"status": "error", "result": str(e)}
 
-    # --- Check mutability (immutable Params return raw Python values, not ParamData) ---
+    # Mutability check (required for numerical perturbation)
     for name, param in zip(uncertain_param_names, uncertain_params):
         comp = param.parent_component() if isinstance(param, ParamData) else param
         if not getattr(comp, "_mutable", False):
@@ -1125,20 +1264,12 @@ def robustness_analysis(
                 "status": "error",
                 "result": (
                     f"Parameter '{name}' is not mutable. "
-                    "Robustness analysis requires mutable=True parameters. "
+                    "Slack-based robustness analysis requires mutable=True parameters. "
                     "Redefine the parameter with mutable=True in the model source."
                 ),
             }
 
-    # --- Output paths ---
-    robust_out_dir = os.path.join(os.getcwd(), TMP_ROBUST_FOLDER)
-    os.makedirs(robust_out_dir, exist_ok=True)
-    safe_version = version.replace("/", "_").replace("\\", "_")
-    timestamp = time.strftime("%Y%m%d_%H%M%S")
-    csv_out_path = os.path.join(robust_out_dir, f"{safe_version}_{timestamp}_robust_results.csv")
-    json_out_path = os.path.join(robust_out_dir, f"{safe_version}_{timestamp}_robust_report.json")
-
-    # --- Pre-analysis: identify binding/non-binding constraints per uncertain param ---
+    # Pre-analysis: identify binding/non-binding constraints from cached model data
     pre_analysis = _pre_analyze_params(md.get(version, {}), uncertain_param_names)
 
     pre_lines = []
@@ -1157,463 +1288,389 @@ def robustness_analysis(
         pre_lines.append(f"  In objective: {info['in_objective']}")
     pre_analysis_text = "\n".join(pre_lines) or "No pre-analysis available."
 
-    # --- Dual (shadow price) analysis on binding constraints ---
-    has_binding = any(info["binding_constraint_keys"] for info in pre_analysis.values())
-    dual_summary = ""
-    dual_values_by_param: Dict[str, Dict] = {}
+    # Slack-based analysis
+    slack_results = _compute_slack_analysis(base_model, uncertain_params, uncertain_param_names, tol)
 
-    if has_binding:
-        base_model = add_dual_suffix(base_model)
-        if hasattr(base_model, "dual"):
-            SolverFactory("gurobi").solve(base_model, tee=False, load_solutions=True)
-            all_duals: Dict[str, Any] = {}
-            for con_data, dual_val in base_model.dual.items():
-                try:
-                    all_duals[pyo.name(con_data)] = dual_val
-                except Exception:
-                    pass
+    # Format for LLM
+    slack_lines = []
+    for pname, info in slack_results.items():
+        if "error" in info:
+            slack_lines.append(f"\nParameter '{pname}': ERROR — {info['error']}")
+            continue
 
-            dual_lines = []
-            for pname, info in pre_analysis.items():
-                if not info["binding_constraint_keys"]:
-                    continue
-                param_duals: Dict[str, Any] = {}
-                dual_lines.append(f"\nParameter '{pname}' — shadow prices on binding constraints:")
-                for con_key in info["binding_constraint_keys"]:
-                    val = all_duals.get(con_key)
-                    param_duals[con_key] = val
-                    label = f"{val:.6g}" if val is not None else "(not available)"
-                    dual_lines.append(f"  {con_key}: {label}")
-                dual_values_by_param[pname] = param_duals
-            dual_summary = "\n".join(dual_lines) or "No dual values populated."
-        else:
-            dual_summary = "Dual analysis skipped (model has integer/binary variables)."
+        slack_lines.append(f"\nParameter '{pname}' (current value = {info['current_value']:.6g}):")
 
-    # --- Delta mode: convert perturbations to absolute [lb, ub] using current param values ---
-    if bounds_mode == "delta":
-        _valid_ops = ("+-", "+", "-", "*")
-        if delta_operation not in _valid_ops:
-            return {"status": "error", "result": f"Unknown delta_operation '{delta_operation}'. Use one of {_valid_ops}."}
+        if info["binding_constraints"]:
+            slack_lines.append("  BINDING constraints (already at limit, no room):")
+            for c in info["binding_constraints"]:
+                slack_lines.append(f"    - {c['constraint']}: slack = 0 ({c['bound_type']} bound)")
 
-        def _delta_to_bounds(current: float, delta: float, op: str):
-            if op == "+-":
-                return current - delta, current + delta
-            elif op == "+":
-                return current, current + delta
-            elif op == "-":
-                return current - delta, current
-            elif op == "*":
-                return current * (1 - delta), current * (1 + delta)
-
-        abs_bounds = []
-        for name, param, d in zip(uncertain_param_names, uncertain_params, bounds):
-            delta = float(d[0]) if isinstance(d, (list, tuple)) else float(d)
-            if isinstance(param, ParamData):
-                # Single indexed entry — one scalar value
-                current = pyo.value(param)
-                if current is None:
-                    return {"status": "error", "result": f"Cannot read current value of '{name}' for delta mode."}
-                lb, ub = _delta_to_bounds(current, delta, delta_operation)
-                abs_bounds.append([lb, ub])
-            else:
-                # Whole IndexedParam — compute per-index bounds as a dict
-                bounds_dict = {}
-                for k in param.keys():
-                    current = pyo.value(param[k])
-                    if current is None:
-                        return {"status": "error", "result": f"Cannot read current value of '{name}[{k}]' for delta mode."}
-                    bounds_dict[k] = _delta_to_bounds(current, delta, delta_operation)
-                abs_bounds.append(bounds_dict)
-        bounds = abs_bounds
-
-    # --- Convert bounds to tuples; dicts (per-index) are passed through as-is ---
-    bounds_tuples = [b if isinstance(b, dict) else (float(b[0]), float(b[1])) for b in bounds]
-
-    # --- Robustness analysis ---
-    if not hasattr(robust_core, "run_robustness"):
-        raise RuntimeError(
-            "robust_analysis.robustness_analysis has no supported entrypoint. "
-            "Missing run_robustness function."
-        )
-
-    robust_function = getattr(robust_core, "run_robustness")
-    robust_df = robust_function(
-        model=base_model,
-        uncertain_params=uncertain_params,
-        bounds=bounds_tuples,
-        n_scenarios=n_scenarios,
-        dist=dist,
-        out_path=csv_out_path,
-    )
-
-    # --- Pre-compute violation summary so the LLM doesn't have to crunch raw data ---
-    # Constraint columns are everything after 'objective' in the result DataFrame.
-    try:
-        obj_idx = list(robust_df.columns).index("objective")
-        con_cols_in_df = list(robust_df.columns[obj_idx + 1:])
-    except ValueError:
-        con_cols_in_df = []
-
-    if con_cols_in_df:
-        con_df = robust_df[con_cols_in_df]
-        feasible_mask = (con_df == 0).all(axis=1)
-        n_feasible = int(feasible_mask.sum())
-        n_infeasible = n_scenarios - n_feasible
-        violation_counts = con_df.sum().astype(int)
-        violated_cons = violation_counts[violation_counts > 0]
-        if len(violated_cons) > 0:
-            viol_lines = "\n".join(f"  - {c}: violated in {v} scenario(s)" for c, v in violated_cons.items())
-            viol_summary = f"{len(violated_cons)} constraint(s) had violations:\n{viol_lines}"
-        else:
-            viol_summary = "No constraint violations detected across all scenarios."
-        feasibility_summary = (
-            f"{n_feasible}/{n_scenarios} scenarios feasible, {n_infeasible} infeasible.\n"
-            f"{viol_summary}"
-        )
-    else:
-        feasibility_summary = "No constraint columns found in results."
-
-    # --- Threshold analysis (only when there is a mix of feasible / infeasible scenarios) ---
-    threshold_analysis = _compute_feasibility_threshold(
-        robust_df, uncertain_param_names, con_cols_in_df
-    )
-
-    if threshold_analysis:
-        th_lines = []
-        for pname, col_thresholds in threshold_analysis.items():
-            for col, info in col_thresholds.items():
-                f, inf_ = info["feasible"], info["infeasible"]
-                th_lines.append(f"\nParameter '{col}':")
-                th_lines.append(
-                    f"  Feasible   ({f['count']} scenarios): "
-                    f"[{f['min']:.4g}, {f['max']:.4g}], mean {f['mean']:.4g}"
+        if info["non_binding_constraints"]:
+            slack_lines.append("  Non-binding constraints (room available):")
+            for c in sorted(info["non_binding_constraints"], key=lambda x: x["max_allowable_change"]):
+                verb = "increase" if c["direction"] == "increase" else "decrease"
+                slack_lines.append(
+                    f"    - {c['constraint']}: slack = {c['slack']:.4g}, "
+                    f"param can {verb} by up to {c['max_allowable_change']:.4g} "
+                    f"({c['room_pct']:.1f}% of current value)"
                 )
-                th_lines.append(
-                    f"  Infeasible ({inf_['count']} scenarios): "
-                    f"[{inf_['min']:.4g}, {inf_['max']:.4g}], mean {inf_['mean']:.4g}"
-                )
-                if info["transition_zone"]:
-                    th_lines.append(
-                        f"  Transition zone: [{info['transition_zone'][0]:.4g}, "
-                        f"{info['transition_zone'][1]:.4g}]"
-                    )
-                th_lines.append(f"  Estimated threshold: {info['note']}")
-        threshold_text = "\n".join(th_lines)
-    elif con_cols_in_df:
-        if n_infeasible == 0:
-            threshold_text = "All scenarios were feasible — system appears robust within the given bounds."
-        else:
-            threshold_text = "All scenarios were infeasible — current solution is already beyond the feasibility boundary."
-    else:
-        threshold_text = "No constraint data available for threshold analysis."
 
-    # --- JSON-safe return ---
-    js = _json_safe(robust_df)
+        if info["tightest_constraint"]:
+            verb = "increase" if info["overall_direction"] == "increase" else "decrease"
+            slack_lines.append(
+                f"  => Overall: param can {verb} by at most {info['overall_max_change']:.4g} "
+                f"({info['overall_room_pct']:.1f}% room), "
+                f"tightest constraint: {info['tightest_constraint']}"
+            )
+        elif not info["binding_constraints"] and not info["non_binding_constraints"]:
+            slack_lines.append("  No active constraints found for this parameter.")
 
-    # --- Save structured JSON report ---
-    report = {
-        "version": version,
-        "dist": dist,
-        "n_scenarios": n_scenarios,
-        "uncertain_params": uncertain_param_names,
-        "pre_analysis": {
-            pname: {
-                "binding_constraints": info["binding_constraint_keys"],
-                "nonbinding_constraints": info["nonbinding_constraint_keys"],
-                "in_objective": info["in_objective"],
-                "shadow_prices": dual_values_by_param.get(pname, {}),
-            }
-            for pname, info in pre_analysis.items()
-        },
-        "robustness": {
-            "n_feasible": n_feasible if con_cols_in_df else None,
-            "n_infeasible": n_infeasible if con_cols_in_df else None,
-            "feasibility_rate": round(n_feasible / n_scenarios, 4) if con_cols_in_df else None,
-            "violated_constraints": {
-                c: int(v) for c, v in violated_cons.items()
-            } if con_cols_in_df and len(violated_cons) > 0 else {},
-        },
-        "threshold_analysis": {
-            pname: {
-                col: {
-                    "feasible_count": info["feasible"]["count"],
-                    "feasible_range": [info["feasible"]["min"], info["feasible"]["max"]],
-                    "infeasible_count": info["infeasible"]["count"],
-                    "infeasible_range": [info["infeasible"]["min"], info["infeasible"]["max"]],
-                    "estimated_threshold": info["estimated_threshold"],
-                    "direction": info["direction"],
-                    "note": info["note"],
-                    "transition_zone": info["transition_zone"],
-                }
-                for col, info in col_thresholds.items()
-            }
-            for pname, col_thresholds in threshold_analysis.items()
-        },
-        "output_files": {
-            "results_csv": csv_out_path,
-            "scenarios_csv": csv_out_path + ".scenarios.csv",
-            "report_json": json_out_path,
-        },
-    }
-    with open(json_out_path, "w") as f:
-        json.dump(report, f, indent=2, default=str)
+    slack_text = "\n".join(slack_lines) or "No slack analysis results."
 
     return {
         "status": "success",
         "result": (
-            f"Robustness analysis ({dist}, {n_scenarios} scenarios) completed for '{version}'.\n"
+            f"Slack-based robustness analysis completed for '{version}'.\n"
             f"Uncertain params: {uncertain_param_names}\n\n"
             f"=== Pre-Analysis ===\n{pre_analysis_text}\n\n"
-            f"=== Dual (Shadow Price) Analysis ===\n{dual_summary or 'No binding constraints found.'}\n\n"
-            f"=== Scenario Feasibility Summary ===\n{feasibility_summary}\n\n"
-            f"=== Feasibility Threshold Analysis ===\n{threshold_text}\n\n"
-            f"Output saved to: {robust_out_dir}"
+            f"=== Slack-Based Robustness Analysis ===\n{slack_text}"
         ),
-        "data": js,
+        "data": _json_safe(slack_results),
     }
 
-
-
-# Feasibility Restoration
-
-# def feasibility_restoration(
+# ================================
+# Legacy Robustness Analysis
+# ================================
+# def robustness_analysis(
 #     version: str,
-#     recommendation: Dict[str, Any],
-#     slack_penalty: float,
-#     tool_context: ToolContext,
-# ) -> str:
+#     uncertain_param_names: List[str],
+#     bounds: List,
+#     tool_context: ToolContext = None,
+#     n_scenarios: int = 40,
+#     dist: str = "uniform",
+#     bounds_mode: str = "absolute",
+#     delta_operation: str = "+-",
+# ) -> Dict[str, Any]:
 #     """
-#     Brief: Apply a single IIS-based restoration by adding penalized slack to the target constraint; update registry and re-solve.
-
-#     Operations:
-#       1) Identify the active objective and compute penalty sign (min/max).
-#       2) Locate target constraint by name; deactivate it and add a relaxed copy with nonnegative slack.
-#       3) Add penalty term to the objective; append restoration record; re-solve and persist registry.
-
-#     Returns:
-#       "Feedback from internal tools:\\n..." (plain text).
+#     Generate scenarios and run robustness analysis on a FEASIBLE base model `version`.
+# 
+#     Parameters
+#     ----------
+#     version : str
+#         The base model version name.
+#     uncertain_param_names : list of str
+#         Exact parameter names as strings, e.g. ["demand[1,1]", "demand[2,1]"] or ["cost"].
+#     bounds : list
+#         In "absolute" mode (default): list of [lb, ub] pairs, e.g. [[12, 18], [10, 20]].
+#         In "delta" mode: list of single delta values, e.g. [10, 5].
+#     n_scenarios : int
+#         Number of random scenarios to SAMPLE from the uncertainty range (default 40).
+#         IMPORTANT: This is NOT the number of perturbation magnitudes.
+#         "±10 perturbation" means the sampling RANGE is [current-10, current+10].
+#         n_scenarios controls how many random draws are taken from that range.
+#         Use at least 40 for a meaningful stress test; 100+ for publication-quality analysis.
+#         Never pass n_scenarios=2 just because the user said "±10" — ± defines the range,
+#         not the sample count.
+#     dist : str
+#         Distribution to use: "uniform" (default) or "normal".
+#     bounds_mode : str
+#         "absolute" (default): bounds are [lb, ub] pairs.
+#         "delta": bounds are perturbations applied to current param values via delta_operation.
+#     delta_operation : str
+#         Only used when bounds_mode="delta". How to compute [lb, ub] from the current value:
+#           "+-"  symmetric additive:    [current - delta, current + delta]
+#           "+"   upper additive:        [current, current + delta]
+#           "-"   lower additive:        [current - delta, current]
+#           "*"   multiplicative (frac): [current * (1 - delta), current * (1 + delta)]
+# 
+#     Returns
+#     -------
+#     dict
+#         JSON-safe payload with status, result summary, and data (DataFrame records).
 #     """
-#     if tool_context is None:
-#         return "Feedback from internal tools: \nMissing tool_context."
-
+#     # --- Input validation ---
+#     if len(uncertain_param_names) != len(bounds):
+#         return {
+#             "status": "error",
+#             "result": (
+#                 f"'uncertain_param_names' has {len(uncertain_param_names)} entries but "
+#                 f"'bounds' has {len(bounds)}. They must be the same length."
+#             ),
+#         }
+# 
 #     state = tool_context.state
+#     md = state[MODELS_DICTIONARY].copy()
+# 
+#     # Feasibility guard
+#     status_in_obj = md.get(version, {}).get("obj", {}).get("sol_status", "unknown")
+#     if (
+#         status_in_obj in [TerminationCondition.infeasible, TerminationCondition.infeasibleOrUnbounded]
+#         or (isinstance(status_in_obj, str) and status_in_obj.lower() in {"infeasible", "infeasibleorunbounded"})
+#     ):
+#         return {
+#             "status": "error",
+#             "result": f"Base model version '{version}' is not feasible; robustness analysis aborted.",
+#         }
+# 
+#     base_model = load_model(version, md)
+# 
+#     # --- Resolve string param names -> Pyomo objects ---
 #     try:
-#         models_dictionary = state["MODELS_DICTIONARY"]
-#     except KeyError:
-#         return "Feedback from internal tools: \nMODELS_DICTIONARY not found in tool_context.state."
-
-#     # Read solver configuration from state
-#     solver_name = state.get("SOLVER_NAME", "gurobi")
-#     solver_options = state.get("SOLVER_OPTIONS", None)
-#     tee = bool(state.get("SOLVE_TEE", False))
-
-#     # Load the current, live model instance from the registry
-#     model = load_model(version, models_dictionary)
-
-#     # Active objective
-#     try:
-#         obj = next(model.component_data_objects(pyo.Objective, active=True))
-#     except StopIteration:
-#         return "Feedback from internal tools: \nNo active objective to penalize."
-
-#     is_min = (obj.sense == pyo.minimize)
-#     penalty_sign = 1.0 if is_min else -1.0
-
-#     if recommendation.get("type") != "constraint_slack":
-#         return "Feedback from internal tools: \nUnsupported recommendation type."
-
-#     con_map = {c.name: c for c in model.component_data_objects(pyo.Constraint, active=True)}
-#     tname = recommendation.get("target")
-#     if tname not in con_map:
-#         return "Feedback from internal tools: \nConstraint not found: " + str(tname)
-
-#     c = con_map[tname]
-#     safe = str(tname).replace("[", "_").replace("]", "").replace(",", "_").replace(" ", "_")
-
-#     created = []
-#     if c.equality():
-#         s_pos = pyo.Var(domain=pyo.NonNegativeReals)
-#         s_neg = pyo.Var(domain=pyo.NonNegativeReals)
-#         name_spos = unique_component_name(model, f"fr_spos_{safe}")
-#         name_sneg = unique_component_name(model, f"fr_sneg_{safe}")
-#         model.add_component(name_spos, s_pos)
-#         model.add_component(name_sneg, s_neg)
-#         new_con = pyo.Constraint(expr=(c.body == pyo.value(c.lower) + s_pos - s_neg))
-#         name_rel = unique_component_name(model, f"fr_relaxed_{safe}")
-#         model.add_component(name_rel, new_con)
-#         obj.set_value(obj.expr + penalty_sign * slack_penalty * (s_pos + s_neg))
-#         created = [name_spos, name_sneg, name_rel]
-#     elif c.has_ub():
-#         s = pyo.Var(domain=pyo.NonNegativeReals)
-#         name_s = unique_component_name(model, f"fr_s_{safe}")
-#         model.add_component(name_s, s)
-#         new_con = pyo.Constraint(expr=(c.body <= pyo.value(c.upper) + s))
-#         name_rel = unique_component_name(model, f"fr_relaxed_{safe}")
-#         model.add_component(name_rel, new_con)
-#         obj.set_value(obj.expr + penalty_sign * slack_penalty * s)
-#         created = [name_s, name_rel]
-#     elif c.has_lb():
-#         s = pyo.Var(domain=pyo.NonNegativeReals)
-#         name_s = unique_component_name(model, f"fr_s_{safe}")
-#         model.add_component(name_s, s)
-#         new_con = pyo.Constraint(expr=(c.body >= pyo.value(c.lower) - s))
-#         name_rel = unique_component_name(model, f"fr_relaxed_{safe}")
-#         model.add_component(name_rel, new_con)
-#         obj.set_value(obj.expr + penalty_sign * slack_penalty * s)
-#         created = [name_s, name_rel]
-#     else:
-#         return "Feedback from internal tools: \nConstraint has no bound to relax."
-
-#     c.deactivate()
-
-#     entry = {"type": "constraint_slack", "target": tname, "created": created}
-#     append_repairs_applied(version, models_dictionary, entry)
-
-#     # Re-solve (same model instance) and persist registry
-#     models_dictionary = solve_model(
-#         model, version, models_dictionary,
-#         solver_name=solver_name, solver_options=solver_options, tee=tee
-#     )
-#     state["MODELS_DICTIONARY"] = models_dictionary
-
-#     return "Feedback from internal tools: \n" + f"Applied restoration: added penalized slack to '{tname}'. Created: {', '.join(created)}."
-
-
-# Iterative Infeasibility Restoration
-
-# def iterative_feasibility_restoration(
-#     version: str,
-#     max_iterations: int,
-#     slack_penalty: float,
-#     tool_context: ToolContext
-# ) -> str:
-#     """
-#     Brief: Iteratively diagnose infeasibility, apply the first IIS-based restoration, and repeat until feasible or capped.
-
-#     Operations:
-#       1) Read registry and config from application state.
-#       2) Loop: solve → IIS (robust CLI first, fallback Pyomo IIS) → record IIS → apply first recommendation (penalized slack) → continue.
-#       3) Persist registry after each step and return a per-iteration summary string.
-
-#     Returns:
-#       "Feedback from internal tools:\\n..." (plain text summary).
-#     """
-#     if tool_context is None:
-#         return "Feedback from internal tools: \nMissing tool_context."
-
-#     state = tool_context.state
-#     try:
-#         models_dictionary = state["MODELS_DICTIONARY"]
-#     except KeyError:
-#         return "Feedback from internal tools: \nMODELS_DICTIONARY not found in tool_context.state."
-
-#     solver_name = state.get("SOLVER_NAME", "gurobi")
-#     solver_options = state.get("SOLVER_OPTIONS", None)
-#     tee = bool(state.get("SOLVE_TEE", False))
-#     save_iis_dir = state.get("IIS_SAVE_DIR", os.path.join("tmp", "iis", version))
-
-#     # Ensure save dir (best-effort)
-#     try:
-#         os.makedirs(save_iis_dir, exist_ok=True)
-#     except Exception:
-#         save_iis_dir = None
-
-#     # Load model once; modifications (slacks) are applied to this same instance
-#     model = load_model(version, models_dictionary)
-
-#     iteration_summaries: List[str] = []
-#     for it in range(1, max_iterations + 1):
-#         # Solve & update registry
-#         models_dictionary = solve_model(
-#             model, version, models_dictionary,
-#             solver_name=solver_name, solver_options=solver_options, tee=tee
-#         )
-#         info = models_dictionary.get(version, {}).get("obj", {})
-#         status = str(info.get("sol_status", "unknown")).lower()
-#         objval = info.get("value", "unknown")
-
-#         feasible_like = ("optimal" in status) or ("feasible" in status and "infeasible" not in status)
-#         if feasible_like:
-#             iteration_summaries.append(f"Iteration {it}: Model is feasible. Objective={objval}")
-#             state["MODELS_DICTIONARY"] = models_dictionary
-#             header = "Iterative restoration summary:"
-#             return "Feedback from internal tools: \n" + "\n".join([header] + iteration_summaries)
-
-#         # IIS (robust path, then fallback)
-#         with tempfile.TemporaryDirectory() as td:
-#             lp_path = os.path.join(td, f"iter_{it}.lp")
-#             write_lp_with_symbolic_names(model, lp_path)
-
-#             iis_path = run_gurobi_cli_iis(lp_path, workdir=td)
-#             if iis_path is None or not os.path.exists(iis_path):
-#                 iis_path = os.path.join(td, f"iis_iter_{it}.ilp")
-#                 try:
-#                     write_iis(model, iis_path, solver=solver_name)
-#                 except Exception as e:
-#                     iis_record = {
-#                         "supported": False,
-#                         "summary": f"Iteration {it}: IIS could not be generated: {e}",
-#                         "constraints": [],
-#                         "artifact_path": None,
-#                         "solve": {"status": status, "objective_value": objval},
-#                         "iteration": it,
-#                     }
-#                     append_iis_history(version, models_dictionary, iis_record)
-#                     iteration_summaries.append(iis_record["summary"])
-#                     state["MODELS_DICTIONARY"] = models_dictionary
-#                     header = "Iterative restoration summary:"
-#                     return "Feedback from internal tools: \n" + "\n".join([header] + iteration_summaries)
-
-#             parsed = iis2json(iis_path)
-#             constraints = parsed.get("constraints", [])
-#             artifact_copy = None
-#             if save_iis_dir:
-#                 try:
-#                     artifact_copy = os.path.join(save_iis_dir, f"iis_iter_{it}.ilp")
-#                     shutil.copyfile(iis_path, artifact_copy)
-#                 except Exception:
-#                     artifact_copy = None
-
-#             iis_record = {
-#                 "supported": True,
-#                 "summary": f"Iteration {it}: IIS has {len(constraints)} constraint(s).",
-#                 "constraints": constraints,
-#                 "artifact_path": artifact_copy,
-#                 "solve": {"status": status, "objective_value": objval},
-#                 "iteration": it,
+#         uncertain_params = [_resolve_param(base_model, name) for name in uncertain_param_names]
+#     except ValueError as e:
+#         return {"status": "error", "result": str(e)}
+# 
+#     # --- Check mutability (immutable Params return raw Python values, not ParamData) ---
+#     for name, param in zip(uncertain_param_names, uncertain_params):
+#         comp = param.parent_component() if isinstance(param, ParamData) else param
+#         if not getattr(comp, "_mutable", False):
+#             return {
+#                 "status": "error",
+#                 "result": (
+#                     f"Parameter '{name}' is not mutable. "
+#                     "Robustness analysis requires mutable=True parameters. "
+#                     "Redefine the parameter with mutable=True in the model source."
+#                 ),
 #             }
-#             append_iis_history(version, models_dictionary, iis_record)
-
-#         if not constraints:
-#             iteration_summaries.append(f"Iteration {it}: No IIS recommendations were produced.")
-#             state["MODELS_DICTIONARY"] = models_dictionary
-#             header = "Iterative restoration summary:"
-#             return "Feedback from internal tools: \n" + "\n".join([header] + iteration_summaries)
-
-#         # Apply first recommendation using the same in-memory model
-#         first = {"type": "constraint_slack", "target": constraints[0]}
-#         fr_msg = feasibility_restoration(
-#             version=version,
-#             recommendation=first,
-#             slack_penalty=slack_penalty,
-#             tool_context=tool_context,
+# 
+#     # --- Output paths ---
+#     robust_out_dir = os.path.join(os.getcwd(), TMP_ROBUST_FOLDER)
+#     os.makedirs(robust_out_dir, exist_ok=True)
+#     safe_version = version.replace("/", "_").replace("\\", "_")
+#     timestamp = time.strftime("%Y%m%d_%H%M%S")
+#     csv_out_path = os.path.join(robust_out_dir, f"{safe_version}_{timestamp}_robust_results.csv")
+#     json_out_path = os.path.join(robust_out_dir, f"{safe_version}_{timestamp}_robust_report.json")
+# 
+#     # --- Pre-analysis: identify binding/non-binding constraints per uncertain param ---
+#     pre_analysis = _pre_analyze_params(md.get(version, {}), uncertain_param_names)
+# 
+#     pre_lines = []
+#     for pname, info in pre_analysis.items():
+#         pre_lines.append(f"\nParameter '{pname}':")
+#         if info["binding_constraint_keys"]:
+#             shown = info["binding_constraint_keys"][:5]
+#             suffix = f" (+{len(info['binding_constraint_keys'])-5} more)" if len(info["binding_constraint_keys"]) > 5 else ""
+#             pre_lines.append(f"  Binding constraints: {', '.join(shown)}{suffix}")
+#         if info["nonbinding_constraint_keys"]:
+#             shown = info["nonbinding_constraint_keys"][:5]
+#             suffix = f" (+{len(info['nonbinding_constraint_keys'])-5} more)" if len(info["nonbinding_constraint_keys"]) > 5 else ""
+#             pre_lines.append(f"  Non-binding constraints: {', '.join(shown)}{suffix}")
+#         if not info["binding_constraint_keys"] and not info["nonbinding_constraint_keys"]:
+#             pre_lines.append("  Not found in any active constraint.")
+#         pre_lines.append(f"  In objective: {info['in_objective']}")
+#     pre_analysis_text = "\n".join(pre_lines) or "No pre-analysis available."
+# 
+#     # --- Dual (shadow price) analysis on binding constraints ---
+#     has_binding = any(info["binding_constraint_keys"] for info in pre_analysis.values())
+#     dual_summary = ""
+#     dual_values_by_param: Dict[str, Dict] = {}
+# 
+#     if has_binding:
+#         base_model = add_dual_suffix(base_model)
+#         if hasattr(base_model, "dual"):
+#             SolverFactory("gurobi").solve(base_model, tee=False, load_solutions=True)
+#             all_duals: Dict[str, Any] = {}
+#             for con_data, dual_val in base_model.dual.items():
+#                 try:
+#                     all_duals[pyo.name(con_data)] = dual_val
+#                 except Exception:
+#                     pass
+# 
+#             dual_lines = []
+#             for pname, info in pre_analysis.items():
+#                 if not info["binding_constraint_keys"]:
+#                     continue
+#                 param_duals: Dict[str, Any] = {}
+#                 dual_lines.append(f"\nParameter '{pname}' — shadow prices on binding constraints:")
+#                 for con_key in info["binding_constraint_keys"]:
+#                     val = all_duals.get(con_key)
+#                     param_duals[con_key] = val
+#                     label = f"{val:.6g}" if val is not None else "(not available)"
+#                     dual_lines.append(f"  {con_key}: {label}")
+#                 dual_values_by_param[pname] = param_duals
+#             dual_summary = "\n".join(dual_lines) or "No dual values populated."
+#         else:
+#             dual_summary = "Dual analysis skipped (model has integer/binary variables)."
+# 
+#     # --- Delta mode: convert perturbations to absolute [lb, ub] using current param values ---
+#     if bounds_mode == "delta":
+#         _valid_ops = ("+-", "+", "-", "*")
+#         if delta_operation not in _valid_ops:
+#             return {"status": "error", "result": f"Unknown delta_operation '{delta_operation}'. Use one of {_valid_ops}."}
+# 
+#         def _delta_to_bounds(current: float, delta: float, op: str):
+#             if op == "+-":
+#                 return current - delta, current + delta
+#             elif op == "+":
+#                 return current, current + delta
+#             elif op == "-":
+#                 return current - delta, current
+#             elif op == "*":
+#                 return current * (1 - delta), current * (1 + delta)
+# 
+#         abs_bounds = []
+#         for name, param, d in zip(uncertain_param_names, uncertain_params, bounds):
+#             delta = float(d[0]) if isinstance(d, (list, tuple)) else float(d)
+#             if isinstance(param, ParamData):
+#                 # Single indexed entry — one scalar value
+#                 current = pyo.value(param)
+#                 if current is None:
+#                     return {"status": "error", "result": f"Cannot read current value of '{name}' for delta mode."}
+#                 lb, ub = _delta_to_bounds(current, delta, delta_operation)
+#                 abs_bounds.append([lb, ub])
+#             else:
+#                 # Whole IndexedParam — compute per-index bounds as a dict
+#                 bounds_dict = {}
+#                 for k in param.keys():
+#                     current = pyo.value(param[k])
+#                     if current is None:
+#                         return {"status": "error", "result": f"Cannot read current value of '{name}[{k}]' for delta mode."}
+#                     bounds_dict[k] = _delta_to_bounds(current, delta, delta_operation)
+#                 abs_bounds.append(bounds_dict)
+#         bounds = abs_bounds
+# 
+#     # --- Convert bounds to tuples; dicts (per-index) are passed through as-is ---
+#     bounds_tuples = [b if isinstance(b, dict) else (float(b[0]), float(b[1])) for b in bounds]
+# 
+#     # --- Robustness analysis ---
+#     if not hasattr(robust_core, "run_robustness"):
+#         raise RuntimeError(
+#             "robust_analysis.robustness_analysis has no supported entrypoint. "
+#             "Missing run_robustness function."
 #         )
-
-#         # Keep last line of FR message for compact summary
-#         iteration_summaries.append(
-#             f"Iteration {it}: Applied restoration on '{constraints[0]}'. {fr_msg.splitlines()[-1]}"
-#         )
-
-#     # Loop exhausted → last attempt and summary
-#     models_dictionary = solve_model(
-#         model, version, models_dictionary,
-#         solver_name=solver_name, solver_options=solver_options, tee=tee
+# 
+#     robust_function = getattr(robust_core, "run_robustness")
+#     robust_df = robust_function(
+#         model=base_model,
+#         uncertain_params=uncertain_params,
+#         bounds=bounds_tuples,
+#         n_scenarios=n_scenarios,
+#         dist=dist,
+#         out_path=csv_out_path,
 #     )
-#     info = models_dictionary.get(version, {}).get("obj", {})
-#     status = str(info.get("sol_status", "unknown"))
-#     iteration_summaries.append("Maximum iterations reached without achieving feasibility.")
-#     iteration_summaries.append(f"Last status: {status}")
-#     state["MODELS_DICTIONARY"] = models_dictionary
-
-#     header = "Iterative restoration summary:"
-#     return "Feedback from internal tools: \n" + "\n".join([header] + iteration_summaries)
+# 
+#     # --- Pre-compute violation summary so the LLM doesn't have to crunch raw data ---
+#     # Constraint columns are everything after 'objective' in the result DataFrame.
+#     try:
+#         obj_idx = list(robust_df.columns).index("objective")
+#         con_cols_in_df = list(robust_df.columns[obj_idx + 1:])
+#     except ValueError:
+#         con_cols_in_df = []
+# 
+#     if con_cols_in_df:
+#         con_df = robust_df[con_cols_in_df]
+#         feasible_mask = (con_df == 0).all(axis=1)
+#         n_feasible = int(feasible_mask.sum())
+#         n_infeasible = n_scenarios - n_feasible
+#         violation_counts = con_df.sum().astype(int)
+#         violated_cons = violation_counts[violation_counts > 0]
+#         if len(violated_cons) > 0:
+#             viol_lines = "\n".join(f"  - {c}: violated in {v} scenario(s)" for c, v in violated_cons.items())
+#             viol_summary = f"{len(violated_cons)} constraint(s) had violations:\n{viol_lines}"
+#         else:
+#             viol_summary = "No constraint violations detected across all scenarios."
+#         feasibility_summary = (
+#             f"{n_feasible}/{n_scenarios} scenarios feasible, {n_infeasible} infeasible.\n"
+#             f"{viol_summary}"
+#         )
+#     else:
+#         feasibility_summary = "No constraint columns found in results."
+# 
+#     # --- Threshold analysis (only when there is a mix of feasible / infeasible scenarios) ---
+#     threshold_analysis = _compute_feasibility_threshold(
+#         robust_df, uncertain_param_names, con_cols_in_df
+#     )
+# 
+#     if threshold_analysis:
+#         th_lines = []
+#         for pname, col_thresholds in threshold_analysis.items():
+#             for col, info in col_thresholds.items():
+#                 f, inf_ = info["feasible"], info["infeasible"]
+#                 th_lines.append(f"\nParameter '{col}':")
+#                 th_lines.append(
+#                     f"  Feasible   ({f['count']} scenarios): "
+#                     f"[{f['min']:.4g}, {f['max']:.4g}], mean {f['mean']:.4g}"
+#                 )
+#                 th_lines.append(
+#                     f"  Infeasible ({inf_['count']} scenarios): "
+#                     f"[{inf_['min']:.4g}, {inf_['max']:.4g}], mean {inf_['mean']:.4g}"
+#                 )
+#                 if info["transition_zone"]:
+#                     th_lines.append(
+#                         f"  Transition zone: [{info['transition_zone'][0]:.4g}, "
+#                         f"{info['transition_zone'][1]:.4g}]"
+#                     )
+#                 th_lines.append(f"  Estimated threshold: {info['note']}")
+#         threshold_text = "\n".join(th_lines)
+#     elif con_cols_in_df:
+#         if n_infeasible == 0:
+#             threshold_text = "All scenarios were feasible — system appears robust within the given bounds."
+#         else:
+#             threshold_text = "All scenarios were infeasible — current solution is already beyond the feasibility boundary."
+#     else:
+#         threshold_text = "No constraint data available for threshold analysis."
+# 
+#     # --- JSON-safe return ---
+#     js = _json_safe(robust_df)
+# 
+#     # --- Save structured JSON report ---
+#     report = {
+#         "version": version,
+#         "dist": dist,
+#         "n_scenarios": n_scenarios,
+#         "uncertain_params": uncertain_param_names,
+#         "pre_analysis": {
+#             pname: {
+#                 "binding_constraints": info["binding_constraint_keys"],
+#                 "nonbinding_constraints": info["nonbinding_constraint_keys"],
+#                 "in_objective": info["in_objective"],
+#                 "shadow_prices": dual_values_by_param.get(pname, {}),
+#             }
+#             for pname, info in pre_analysis.items()
+#         },
+#         "robustness": {
+#             "n_feasible": n_feasible if con_cols_in_df else None,
+#             "n_infeasible": n_infeasible if con_cols_in_df else None,
+#             "feasibility_rate": round(n_feasible / n_scenarios, 4) if con_cols_in_df else None,
+#             "violated_constraints": {
+#                 c: int(v) for c, v in violated_cons.items()
+#             } if con_cols_in_df and len(violated_cons) > 0 else {},
+#         },
+#         "threshold_analysis": {
+#             pname: {
+#                 col: {
+#                     "feasible_count": info["feasible"]["count"],
+#                     "feasible_range": [info["feasible"]["min"], info["feasible"]["max"]],
+#                     "infeasible_count": info["infeasible"]["count"],
+#                     "infeasible_range": [info["infeasible"]["min"], info["infeasible"]["max"]],
+#                     "estimated_threshold": info["estimated_threshold"],
+#                     "direction": info["direction"],
+#                     "note": info["note"],
+#                     "transition_zone": info["transition_zone"],
+#                 }
+#                 for col, info in col_thresholds.items()
+#             }
+#             for pname, col_thresholds in threshold_analysis.items()
+#         },
+#         "output_files": {
+#             "results_csv": csv_out_path,
+#             "scenarios_csv": csv_out_path + ".scenarios.csv",
+#             "report_json": json_out_path,
+#         },
+#     }
+#     with open(json_out_path, "w") as f:
+#         json.dump(report, f, indent=2, default=str)
+# 
+#     return {
+#         "status": "success",
+#         "result": (
+#             f"Robustness analysis ({dist}, {n_scenarios} scenarios) completed for '{version}'.\n"
+#             f"Uncertain params: {uncertain_param_names}\n\n"
+#             f"=== Pre-Analysis ===\n{pre_analysis_text}\n\n"
+#             f"=== Dual (Shadow Price) Analysis ===\n{dual_summary or 'No binding constraints found.'}\n\n"
+#             f"=== Scenario Feasibility Summary ===\n{feasibility_summary}\n\n"
+#             f"=== Feasibility Threshold Analysis ===\n{threshold_text}\n\n"
+#             f"Output saved to: {robust_out_dir}"
+#         ),
+#         "data": js,
+#     }

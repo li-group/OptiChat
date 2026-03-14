@@ -64,7 +64,7 @@ def reactant_constraints(model, r, prod):
         return reactant_expression >= (1 - model.y[prod])
     else:
         return pyo.Constraint.Skip
-model.reaction_cons = pyo.Constraint(model.R, model.C, rule=reactant_constraints)
+model.reaction_cons = pyo.Constraint(model.R, model.C, rule=reactant_constraints, doc='required reactants must be present to synthesize a product')
 
 avail_c = data["parameters"]["avail_c"]
 unavail_c = data["parameters"]["unavail_c"]
@@ -77,7 +77,7 @@ def material_constraints(model, c):
         return model.y[c] == 0
     else:
         return pyo.Constraint.Skip
-model.material_cons = pyo.Constraint(model.C, rule=material_constraints)
+model.material_cons = pyo.Constraint(model.C, rule=material_constraints, doc='fixes availability of raw materials and unavailable chemicals')
 
 # Define objective function
 model.obj = pyo.Objective(expr=model.y[6], sense=pyo.minimize, doc='verify acetone production feasibility')

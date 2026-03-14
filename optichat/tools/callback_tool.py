@@ -19,7 +19,10 @@ from optichat.config.constants import (IS_SESSION_INITIALIZED, PERSISTENT_STATES
                                        IS_MODELS_DICTIONARY_AVAILABLE,
                                        IS_MODELS_CODE_AVAILABLE, IS_MODELS_PAPER_AVAILABLE,
                                        SYNTHETIC_PAPER_GENERATED, NEED_SYNTHETIC_PAPER,
-                                       MODEL_FOR_PAPER_GENERATION, USER_QUERY, EXPERT_AGENT_PYTHON_REPL_FUNC_USES,
+                                       MODEL_FOR_PAPER_GENERATION, USER_QUERY,
+                                       CURRENT_SELECTED_MODEL, CURRENT_SELECTED_MODEL_INFO,
+                                       ANALYSIS_PROMPT_CONTENT,
+                                       EXPERT_AGENT_PYTHON_REPL_FUNC_USES,
                                        HAS_INFEASIBILITY_DIAGNOSIS, INFEASIBILITY_DIAGNOSIS,
                                        LLM_CALL_COUNTER, TOOL_CALL_START_TIME, LLM_CALL_START_TIME,
                                        MODEL_COMPONENTS_CACHE, CURRENT_ANALYSIS_TYPE,
@@ -30,6 +33,7 @@ from optichat.tools.rag_tool import init_paper_rag, init_code_rag
 from optichat.tools.metadata_store import (load_metadata, save_metadata, save_model_data,
                                            add_model_to_metadata)
 from optichat.sub_agents.expert.prompt import get_expert_agent_prompt
+from optichat.sub_agents.root.prompt import ANALYSIS_CONTENT_FEASIBLE, ANALYSIS_CONTENT_INFEASIBLE
 import re
 
 
@@ -73,6 +77,54 @@ def format_models_metadata_for_prompt(historical_metadata: dict) -> str:
                 formatted_lines.append(mod_line)
 
     return "\n".join(formatted_lines)
+
+
+def _resolve_model_status(model_name: str, historical_metadata: dict) -> str:
+    """Look up the solution_status for a single model name from historical_metadata."""
+    for date_data in historical_metadata.values():
+        if model_name in date_data:
+            return date_data[model_name].get("solution_status", "unknown")
+        for base_data in date_data.values():
+            modified = base_data.get("modified_models", {})
+            if model_name in modified:
+                return modified[model_name].get("solution_status", "unknown")
+    return "unknown"
+
+
+def _update_selected_model_state(model_names, historical_metadata: dict, state: dict) -> None:
+    """
+    Update all three model-selection state keys from a single call:
+      - CURRENT_SELECTED_MODEL       : list of selected model names
+      - CURRENT_SELECTED_MODEL_INFO  : display string with one line per model + status
+      - ANALYSIS_PROMPT_CONTENT      : prompt block driven by the primary (first) model's status
+
+    model_names may be a list or a single string (converted to a one-element list).
+    """
+    if isinstance(model_names, str):
+        model_names = [model_names] if model_names else []
+
+    if not model_names:
+        state[CURRENT_SELECTED_MODEL] = []
+        state[CURRENT_SELECTED_MODEL_INFO] = "(none)"
+        state[ANALYSIS_PROMPT_CONTENT] = ANALYSIS_CONTENT_FEASIBLE
+        return
+
+    # Resolve status for every selected model
+    statuses = {name: _resolve_model_status(name, historical_metadata) for name in model_names}
+
+    state[CURRENT_SELECTED_MODEL] = model_names
+
+    # Build multi-model display string
+    info_lines = [f"- {name} (solution status: {statuses[name]})" for name in model_names]
+    state[CURRENT_SELECTED_MODEL_INFO] = "\n".join(info_lines)
+
+    # ANALYSIS_PROMPT_CONTENT is driven by the PRIMARY (first) model's status
+    primary_status = statuses[model_names[0]]
+    state[ANALYSIS_PROMPT_CONTENT] = (
+        ANALYSIS_CONTENT_INFEASIBLE if primary_status.startswith("infeasible")
+        else ANALYSIS_CONTENT_FEASIBLE
+    )
+    logger.info(f"Selected model state updated: {model_names} (primary status: {primary_status})")
 
 
 def initialize_session_and_start_root_agent(callback_context: CallbackContext):
@@ -142,6 +194,12 @@ def initialize_session(callback_context: CallbackContext):
         callback_context.state["MODELS_METADATA_FORMATTED"] = formatted_metadata
         callback_context.state[IS_MODELS_DICTIONARY_AVAILABLE] = is_model_dictionary_available
 
+        # Set default selected models to all base models loaded in this session
+        if current_model_versions:
+            _update_selected_model_state(
+                current_model_versions, historical_metadata, callback_context.state
+            )
+
         # Initialize code RAG if provided
         is_models_code_available = _init_models_code(cfg)
         callback_context.state[IS_MODELS_CODE_AVAILABLE] = is_models_code_available
@@ -195,6 +253,16 @@ def initialize_session(callback_context: CallbackContext):
     callback_context.user_content.parts = parts_wo_json
     # reset temporary states for every query
     callback_context.state.update(TEMPORARY_STATES)
+
+    # Parse [Using model: ...] prefix → update all model-selection state keys and strip from query
+    selected_model_match = re.match(r'^\[Using model:\s*([^\]]+)\]\s*', user_query)
+    if selected_model_match:
+        model_names = [m.strip() for m in selected_model_match.group(1).split(",") if m.strip()]
+        _update_selected_model_state(
+            model_names, callback_context.state.get(HISTORICAL_MODELS_METADATA, {}), callback_context.state
+        )
+        user_query = user_query[selected_model_match.end():]
+
     callback_context.state[USER_QUERY] = user_query
 
     # Clear model components cache for new query
@@ -596,7 +664,7 @@ def check_llm_request(callback_context: CallbackContext, llm_request: LlmRequest
         original_instruction.parts.append(types.Part(text="")) # Add an empty part if none exist
 
     original_text = original_instruction.parts[0].text or ""
-    show_first_n_chars = 100
+    show_first_n_chars = 0
     logger.info((f"[Callback] Inspecting LLM request from '{agent_name}': "
                  f"{original_text[:show_first_n_chars]}"
                  f"\n... (showing only the first {show_first_n_chars} characters)"))
@@ -614,11 +682,15 @@ def check_llm_request(callback_context: CallbackContext, llm_request: LlmRequest
             diagnosis_report = None
             cached_model_name = None  # Track the model name for diagnosis status
             if analysis_type == "FEASIBILITY_RESTORATION":
-                user_query = callback_context.state.get(USER_QUERY, "")
-                models_dictionary = callback_context.state.get(MODELS_DICTIONARY, {})
-
-                # Identify which model the user is asking about
-                base_model_name = _extract_base_model_from_query(user_query, models_dictionary)
+                # Prefer state-tracked model selection (primary = first); fall back to query-text extraction
+                selected = callback_context.state.get(CURRENT_SELECTED_MODEL, [])
+                base_model_name = (selected[0] if isinstance(selected, list) and selected else selected or "")
+                if base_model_name and "__" in base_model_name:
+                    base_model_name = base_model_name.split("__")[0]
+                if not base_model_name:
+                    user_query = callback_context.state.get(USER_QUERY, "")
+                    models_dictionary = callback_context.state.get(MODELS_DICTIONARY, {})
+                    base_model_name = _extract_base_model_from_query(user_query, models_dictionary)
 
                 if base_model_name:
                     logger.info(f"Identified base model for diagnosis report: {base_model_name}")
@@ -766,10 +838,17 @@ def _get_component_index_for_prompt(state: dict) -> Optional[str]:
     2. Generated paper file at tmp/model_objects/generated_papers/{base_model}_description.md
     3. Fall back to _generate_component_index (programmatic summary)
     """
-    user_query = state.get(USER_QUERY, "")
-    models_dict = state.get(MODELS_DICTIONARY, {})
+    # Prefer the state-tracked selection (primary = first); fall back to query-text extraction
+    selected = state.get(CURRENT_SELECTED_MODEL, [])
+    base_model = (selected[0] if isinstance(selected, list) and selected else selected or "")
+    if base_model and "__" in base_model:
+        base_model = base_model.split("__")[0]  # strip modified suffix to get base name
 
-    base_model = _extract_base_model_from_query(user_query, models_dict)
+    models_dict = state.get(MODELS_DICTIONARY, {})
+    if not base_model:
+        user_query = state.get(USER_QUERY, "")
+        base_model = _extract_base_model_from_query(user_query, models_dict)
+
     if not base_model:
         # models_dictionary may not be loaded yet (e.g. frontend model selection before init).
         # Scan the papers directory to find an available description file.
@@ -830,12 +909,18 @@ def _get_source_code_for_prompt(state: dict, model_hint: str = None) -> Optional
         format_source_for_prompt
     )
 
-    # 1. Identify base model
-    user_query = state.get(USER_QUERY, "")
+    # 1. Identify base model — prefer state-tracked selection (primary = first)
+    selected = state.get(CURRENT_SELECTED_MODEL, [])
+    base_model = (selected[0] if isinstance(selected, list) and selected else selected or "")
+    if base_model and "__" in base_model:
+        base_model = base_model.split("__")[0]  # strip modified suffix to get base name
+
     models_dict = state.get(MODELS_DICTIONARY, {})
     historical_metadata = state.get(HISTORICAL_MODELS_METADATA, {})
+    if not base_model:
+        user_query = state.get(USER_QUERY, "")
+        base_model = _extract_base_model_from_query(user_query, models_dict)
 
-    base_model = _extract_base_model_from_query(user_query, models_dict)
     if not base_model and model_hint:
         # Fall back to the model name from the grammar instruction (MODEL: field)
         base_model = _extract_base_model_from_query(model_hint, models_dict)
@@ -944,34 +1029,35 @@ def _format_diagnosis_for_prompt(diagnosis_data: dict) -> str:
     sections.append("")
 
     # Add model name
-    if "model_name" in diagnosis_data:
-        sections.append(f"**Model:** {diagnosis_data['model_name']}")
+    if "source_model_name" in diagnosis_data:
+        sections.append(f"**Model:** {diagnosis_data['source_model_name']}")
 
-    # Add diagnosis summary
-    if "diagnosis_summary" in diagnosis_data:
-        sections.append(f"**Summary:** {diagnosis_data['diagnosis_summary']}")
+    # Add diagnosis status and resolution info
+    if "diagnosis_status" in diagnosis_data:
+        sections.append(f"**Diagnosis Status:** {diagnosis_data['diagnosis_status']}")
+    if "resolution_round" in diagnosis_data:
+        sections.append(f"**Resolution Round:** {diagnosis_data['resolution_round']}")
+    if "solution_status" in diagnosis_data:
+        sections.append(f"**Solution Status after relaxation:** {diagnosis_data['solution_status']}")
+    if "objective_value" in diagnosis_data:
+        sections.append(f"**Objective Value after relaxation:** {diagnosis_data['objective_value']}")
 
-    # Add conflicting constraints
-    if "conflicting_constraints" in diagnosis_data:
-        sections.append("\n**Conflicting Constraints:**")
-        for constraint in diagnosis_data["conflicting_constraints"]:
+    # Add violated constraints
+    if "violated_constraints" in diagnosis_data and diagnosis_data["violated_constraints"]:
+        sections.append("\n**Violated Constraints (IIS):**")
+        for constraint in diagnosis_data["violated_constraints"]:
             sections.append(f"  - {constraint}")
 
-    # Add recommended relaxations
-    if "recommended_relaxations" in diagnosis_data:
-        sections.append("\n**Recommended Relaxations:**")
-        for relaxation in diagnosis_data["recommended_relaxations"]:
-            sections.append(f"  - {relaxation}")
+    # Add slack values
+    if "slack_values" in diagnosis_data and diagnosis_data["slack_values"]:
+        sections.append("\n**Slack Values (required relaxation per constraint):**")
+        for constraint, slack in diagnosis_data["slack_values"].items():
+            sections.append(f"  - {constraint}: {slack}")
 
-    # Add any elastic analysis results
-    if "elastic_analysis" in diagnosis_data:
-        sections.append("\n**Elastic Analysis Results:**")
-        elastic = diagnosis_data["elastic_analysis"]
-        if isinstance(elastic, dict):
-            for key, value in elastic.items():
-                sections.append(f"  - {key}: {value}")
-        else:
-            sections.append(f"  {elastic}")
+    # Add full diagnosis text
+    if "full_diagnosis_text" in diagnosis_data and diagnosis_data["full_diagnosis_text"]:
+        sections.append("\n**Full Diagnosis:**")
+        sections.append(diagnosis_data["full_diagnosis_text"])
 
     sections.append("")
     sections.append("**IMPORTANT:** Use this diagnosis to guide your feasibility restoration approach.")
@@ -1013,8 +1099,6 @@ def check_llm_response(callback_context: CallbackContext, llm_response: LlmRespo
     else:
         logger.warning("[Callback] Inspected LLM response: Empty LlmResponse.")
 
-    # Strip any explanatory text from root's response when it's calling route_to_expert,
-    # so the user never sees root's intermediate reasoning — only the expert's answer appears.
     if agent_name == "root_agent" and llm_response.content and llm_response.content.parts:
         has_route_call = any(
             p.function_call and p.function_call.name == "route_to_expert"
@@ -1022,9 +1106,6 @@ def check_llm_response(callback_context: CallbackContext, llm_response: LlmRespo
         )
         if has_route_call:
             function_call_parts = [p for p in llm_response.content.parts if p.function_call]
-            # Deduplicate: keep only the first route_to_expert call.
-            # OpenAI parallel function calling can emit multiple identical route_to_expert calls
-            # in one response; executing them concurrently corrupts the expert's conversation history.
             seen_route = False
             deduplicated_parts = []
             for p in function_call_parts:
@@ -1037,7 +1118,6 @@ def check_llm_response(callback_context: CallbackContext, llm_response: LlmRespo
             stripped_response = LlmResponse(
                 content=types.Content(role="model", parts=deduplicated_parts)
             )
-            logger.info("[Root callback] Stripped text from root response — route_to_expert executes silently")
             return stripped_response
 
     return None

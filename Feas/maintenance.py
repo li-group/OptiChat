@@ -9,10 +9,10 @@ data = globals().get("data", {})
 model = pyo.ConcreteModel()
 
 # Define sets
-model.L = pyo.Set(initialize=data['sets']['Sections'])
-model.I = pyo.Set(initialize=data['sets']['Event_Types'])
-model.J = pyo.Set(initialize=data['sets']['Part_Numbers'])
-model.T = pyo.Set(initialize=data['sets']['Months'])
+model.L = pyo.Set(initialize=data['sets']['Sections'], doc="plant sections")
+model.I = pyo.Set(initialize=data['sets']['Event_Types'], doc="maintenance event types")
+model.J = pyo.Set(initialize=data['sets']['Part_Numbers'], doc="part numbers")
+model.T = pyo.Set(initialize=data['sets']['Months'], doc="planning months")
 model.K = pyo.Set(initialize=[tuple(k) for k in data['sets']['Section_Parts']], domain=model.L*model.J, 
                               doc="The Parts in Each Section")
 
@@ -20,11 +20,11 @@ model.K = pyo.Set(initialize=[tuple(k) for k in data['sets']['Section_Parts']], 
 # Define parameters
 model.f = pyo.Param(model.K, model.I, initialize={
     eval(k): v for k, v in data['parameters']['Minimum_Maintenance_Periods'].items()
-}, doc="Minimum Maintenance Periods for Each Event and Part", mutable=True)
+}, doc="maximum allowed periods between successive maintenance events for each section-part and event type", mutable=True)
 
 model.c = pyo.Param(model.K, model.I, initialize={
     eval(k): v for k, v in data['parameters']['Event_Cost'].items()
-}, doc="Event Cost (INR)", mutable=True)
+}, doc="maintenance event cost for each section-part and event type (INR)", mutable=True)
 
 
 model.w = pyo.Param(initialize=data['parameters']['Pullback_Window'], doc="Pullback Window (for event consolidation)", mutable=True)

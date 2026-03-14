@@ -15,21 +15,21 @@ Data Type: dict
     },
     {
       "type": "RETRIEVAL",
-      "Q": "What is the maximum power output that the type 2 generator can reach?",
+      "Q": "how much cost should I pay optimally based on the current model",
       "queried_components": [
         {
-          "component_name": "maxpow",
-          "component_indexes": "type-2"
+          "component_name": "obj",
+          "component_indexes": null
         }
       ]
     },
     {
       "type": "RETRIEVAL",
-      "Q": "how much cost should I pay optimally based on the current model",
+      "Q": "What is the maximum power output that the type 2 generator can reach?",
       "queried_components": [
         {
-          "component_name": "cost",
-          "component_indexes": null
+          "component_name": "maxpow",
+          "component_indexes": "type-2"
         }
       ]
     }

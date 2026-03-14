@@ -17,6 +17,8 @@ GUIDELINES
 TOOL CONVENTIONS
 `get_model_components(version, component_type, pattern, tool_context)`
     • Batch types: ["objective","variable"] not separate calls. Max 3 versions, 2 types per call.
+    • Valid component_type values: 'objective', 'variable', 'constraint', 'parameter', 'set', '' (all).
+      Use 'set' to retrieve Pyomo Set members (e.g., cities, time periods, products, routes).
     • NEVER call on modified versions ("__" in name) — values are already in GENERATOR_OUTPUT.
     • pattern matches against fully-indexed component names (e.g. "N[Rx1,3]", "X[A,0]"). Use wildcards for both name and index parts:
         - "N" or "N[*]"       → all entries of variable N
@@ -24,11 +26,14 @@ TOOL CONVENTIONS
         - "*[*,3]"            → all components with second index 3
         - "demand[*,1]"       → all demand entries for segment 1
       NEVER use bare index patterns like "*[3]" — these only match single-index components (e.g. Balance[3]), not tuple-indexed ones (e.g. N[Rx1,3]).
+      CRITICAL: Wildcards only work inside index brackets. "J*" or "demand*" are INVALID and return empty results.
+        To fetch all entries of a component, use the exact name: "J" or "J[*]", NOT "J*".
+        To find component names, consult <model_description> first — do NOT guess with wildcards on the name part.
 
 `generator_agent` [remaining uses: {EXPERT_AGENT_PYTHON_REPL_FUNC_USES}]
     - Use for ALL code execution tasks.
     - Write a structured instruction in the grammar format below, then call generator_agent with that instruction.
-    - generator_agent is a single gpt-5-codex agent that writes and executes code via python_repl in an agentic loop.
+    - The instruction needs to include the component name you're going to change.
     - GENERATOR_OUTPUT contains the execution log (code + stdout result per iteration) and a final response.
     - Do NOT call get_model_components on modified models — their values are already in GENERATOR_OUTPUT.
 
@@ -82,7 +87,8 @@ STRATEGY_RETRIEVAL = """
 
    ACTION GUIDELINES:
    1. Review <model_description> to confirm the relationship between component name and it's natural language name.
-   2. Prioritize `get_model_components` to fetch exact values, bounds, and definitions of variables, constraints, or parameters.
+   2. Prioritize `get_model_components` to fetch exact values, bounds, and definitions of variables, constraints, parameters, or sets.
+      - To retrieve set members (e.g., "What cities are in the model?"), use component_type='set' and the exact set name.
    3. DO NOT run any solve_model or modification steps.
 """
 
@@ -145,33 +151,28 @@ STRATEGY_WHY_NOT = """
 """
 
 STRATEGY_ROBUSTNESS = """
-   This is a ROBUSTNESS query. The user wants to evaluate how robust the baseline solution is
-   under uncertainty in specific parameters.
+   This is a ROBUSTNESS query. The user wants to know how much a specific parameter can change
+   before the current baseline solution becomes infeasible — evaluated exactly at the current solution
 
    ACTION GUIDELINES:
-   1. Review <model_description> to confirm the relationship between component name and it's natural language name.
+   1. Review <model_description> to confirm the relationship between component name and its natural language name.
       Identify which Params the user explicitly named as uncertain. Do NOT substitute other params.
+      Parameters must be mutable (mutable=True) to be analyzed — check <model_description>.
    2. Call `robustness_analysis` with:
       - `version`: the base model version name
       - `uncertain_param_names`: list of exact Param names the user specified — NOT Var. Verify in <model_description>.
-      - `bounds`: list of perturbation values, one per param (e.g. [10, 5])
-      - `bounds_mode`: "delta" — bounds are perturbations applied to each param's current value
-      - `delta_operation`: "+-" for symmetric perturbation (default). Use "+-" unless user specifies otherwise.
-          "+-"  → [current - delta, current + delta]  ← symmetric; samples both above AND below current
-          "+"   → [current, current + delta]
-          "-"   → [current - delta, current]
-          "*"   → [current*(1-delta), current*(1+delta)]  (fractional, e.g. 0.1 = ±10%)
-      - `n_scenarios`: use at least 20 for reliable coverage; increase if user wants more
-      - `dist`: "uniform" (default) or "normal"
-   3. Interpret the DataFrame results with these sections:
-      - **What was tested**: params perturbed, distribution, bounds, scenario count.
-      - **Feasibility Results**: "X out of N feasible" (feasible = all constraint columns == 0).
-      - **Violated Constraints**: sum violations per constraint; group by family; one line for constraints with zero violations.
-      - **Threshold Analysis**: per uncertain param, approximate boundary value separating feasible/infeasible scenarios.
-      - **Objective Analysis**: min/max/mean objective. Note: values reflect parameter-in-objective effects only; re-solve needed for true optimality.
-      - **Recommendations**: suggest a buffer re-optimization, robust formulation, or quick patch with trade-offs.
-      - **If ALL scenarios are feasible**: verify you tested the correct parameters (ones that appear in constraint
-        expressions, not just the objective), and consider increasing n_scenarios or the delta magnitude.
+   3. Interpret the tool output with these sections:
+      - **Pre-Analysis**: which constraints each parameter appears in, and whether they are binding or non-binding.
+      - **Slack Results** (per parameter, per constraint):
+          • Binding: "Parameter X is already at the [upper/lower] bound of constraint Y — no room to change."
+          • Non-binding (direction = increase): "X can increase by up to max_allowable_change (room_pct% headroom) before constraint Y becomes binding."
+          • Non-binding (direction = decrease): "X can decrease by at most max_allowable_change (room_pct% headroom) before constraint Y becomes binding."
+      - **Overall Assessment**: report the tightest constraint (smallest room) as the binding limitation.
+        State the overall max allowable change and room_pct for each parameter.
+      - **Recommendations**: if room_pct is low (< 20%), flag the parameter as a robustness risk.
+   4. If the tool returns "No active constraints found" for a parameter:
+      - The parameter likely only appears in the objective, not in any constraint body or bound.
+      - Report this: changes to this parameter do not threaten feasibility, but do affect the objective value.
 """
 
 

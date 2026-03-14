@@ -45,8 +45,8 @@ model.bal = Constraint(model.t, rule=bal_rule, doc='troop balance - stock balanc
 
 def min_req_rule(mod, i):
     return mod.e[i] >= mod.req[i]
-model.min_req = Constraint(model.t, rule=min_req_rule)
+model.min_req = Constraint(model.t, rule=min_req_rule, doc='minimum troop requirement')
 
 def man_avail_rule(mod, i):
     return sum(mod.x[i,j] for j in mod.l) <= mod.man_avail[i]
-model.man_avail_con = Constraint(model.t, rule=man_avail_rule)
+model.man_avail_con = Constraint(model.t, rule=man_avail_rule, doc='recruitment availability limit')

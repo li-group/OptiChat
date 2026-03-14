@@ -11,7 +11,7 @@ Use the `get_model_info_for_description` tool (call with `request='generate'`) t
 FOR FEASIBLE MODELS ({HAS_INFEASIBILITY_DIAGNOSIS} = False):
 - Brief introduction: what problem is being solved, who uses it, what it achieves.
 - Decisions (variables): what is being chosen by the solver.
-- Known data (parameters): what is fixed as input.
+- Known data (parameters and sets): what is fixed as input.
 - Constraints: what rules the decisions must satisfy.
 - Objective: what is minimized or maximized.
 - Optimal solution summary: key variable values and the objective value.

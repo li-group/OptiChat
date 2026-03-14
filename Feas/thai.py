@@ -41,19 +41,19 @@ def voyage_capability_filter(model, j, k):
 model = ConcreteModel()
 
 # Sets
-model.i = Set(initialize=ports)
-model.j = Set(initialize=voyages)
-model.k = Set(initialize=ship_classes)
-model.a = Set(within=model.j*model.i, initialize=assignment)
-model.sc = Set(within=model.i*model.k, initialize=ship_capability)
-model.vc = Set(initialize=model.j*model.k, filter=voyage_capability_filter)
+model.i = Set(initialize=ports, doc="ports where men must be evacuated")
+model.j = Set(initialize=voyages, doc="candidate voyages")
+model.k = Set(initialize=ship_classes, doc="ship classes")
+model.a = Set(within=model.j*model.i, initialize=assignment, doc="voyage-port assignments")
+model.sc = Set(within=model.i*model.k, initialize=ship_capability, doc="ship classes capable of serving each port")
+model.vc = Set(initialize=model.j*model.k, filter=voyage_capability_filter, doc="feasible voyage and ship-class combinations")
 
 
 # Parameters
-model.d = Param(model.i, mutable=True, initialize=number_of_men)
-model.shipcap = Param(model.k, mutable=True, initialize=ship_capacity)
-model.n = Param(model.k, mutable=True, initialize=number_of_ships)
-model.dist = Param(model.j, mutable=True, initialize=dist)
+model.d = Param(model.i, mutable=True, initialize=number_of_men, doc="number of men to evacuate from each port")
+model.shipcap = Param(model.k, mutable=True, initialize=ship_capacity, doc="capacity of each ship class")
+model.n = Param(model.k, mutable=True, initialize=number_of_ships, doc="number of available ships in each class")
+model.dist = Param(model.j, mutable=True, initialize=dist, doc="distance associated with each voyage")
 
 # Variables
 model.z = Var(model.j, model.k, domain=NonNegativeIntegers, doc="number of times voyage jk is used")
@@ -62,18 +62,18 @@ model.y = Var(model.j, model.k, model.i, domain=NonNegativeReals, doc="number of
 # Constraints
 def demand_rule(model, i): #pick up all the men at port i
     return sum(model.y[j,k,i] for j, k in model.vc if (j,i) in model.a) >= model.d[i]
-model.demand = Constraint(model.i, rule=demand_rule)
+model.demand = Constraint(model.i, rule=demand_rule, doc="evacuation demand satisfaction at each port")
 
 def voycap_rule(model, j, k):#observe variable capacity of voyage jk
     if (j, k) in model.vc:
         return sum(model.y[j,k,i] for i in model.i if (j,i) in model.a) <= model.shipcap[k]*model.z[j,k]
     else:
         return Constraint.Skip
-model.voycap = Constraint(model.j, model.k, rule=voycap_rule)
+model.voycap = Constraint(model.j, model.k, rule=voycap_rule, doc="voyage capacity limit by ship class")
 
 def shiplim_rule(model, k): #observe limit of class k
     return sum(model.z[j,k] for j in model.j if (j, k) in model.vc) <= model.n[k]
-model.shiplim = Constraint(model.k, rule=shiplim_rule)
+model.shiplim = Constraint(model.k, rule=shiplim_rule, doc="availability limit on ships by class")
 
 # Objective
 model.obj = Objective(expr=(

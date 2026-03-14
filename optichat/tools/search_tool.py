@@ -30,6 +30,50 @@ def wildcard_to_regex(pattern: str) -> str:
     return f'^{regex_pattern}$'
 
 
+def normalize_component_pattern(pattern: str) -> str:
+    """
+    Normalize quoted index tokens so both `a['cabbage',*]` and `a[cabbage,*]`
+    match the same stored Pyomo component names.
+
+    Quotes are stripped only when they behave as token delimiters, which keeps
+    apostrophes inside unquoted words intact.
+    """
+    if not pattern:
+        return pattern
+
+    def previous_non_space(idx: int):
+        j = idx - 1
+        while j >= 0 and pattern[j].isspace():
+            j -= 1
+        return pattern[j] if j >= 0 else None
+
+    def next_non_space(idx: int):
+        j = idx + 1
+        while j < len(pattern) and pattern[j].isspace():
+            j += 1
+        return pattern[j] if j < len(pattern) else None
+
+    normalized = []
+    active_quote = None
+
+    for i, ch in enumerate(pattern):
+        if active_quote is not None:
+            if ch == active_quote and next_non_space(i) in (None, ",", "]"):
+                active_quote = None
+                continue
+            normalized.append(ch)
+            continue
+
+        if ch in {"'", '"'} and previous_non_space(i) in (None, "[", ","):
+            if next_non_space(i) is not None:
+                active_quote = ch
+                continue
+
+        normalized.append(ch)
+
+    return "".join(normalized)
+
+
 def get_all_versions_from_metadata(metadata: Dict[str, Any]) -> set:
     """Extract all model versions from the tree-based metadata structure."""
     versions = set()
@@ -81,7 +125,7 @@ def get_model_components(version: List[str], component_type: Union[str, List[str
     Args:
         version (List[str]): Model version(s) to search. Must be provided. Maximum 3 versions allowed.
         component_type (Union[str, List[str]]): **PRIMARY METHOD** Type(s) of components to match against component.
-            Can be single: 'objective', 'variable', 'constraint', 'parameter', or '' (empty string for all types)
+            Can be single: 'objective', 'variable', 'constraint', 'parameter', 'set', or '' (empty string for all types)
             Or multiple: ['objective', 'variable'] for bulk extraction (efficient for reducing tool calls)
             Or all: '' or 'all'
         pattern (str): **BACKUP METHOD** Naming pattern to match against fully-indexed component names.
@@ -102,6 +146,8 @@ def get_model_components(version: List[str], component_type: Union[str, List[str
         "status": "success" or "error"
         "result": the information about the model components that match the specified version, component_type and pattern
     """
+    pattern = normalize_component_pattern(pattern)
+
     # Generate cache key
     cache_key = _generate_cache_key(version, component_type, pattern)
 
@@ -136,7 +182,7 @@ def get_model_components(version: List[str], component_type: Union[str, List[str
     if pattern == "" and len(component_types) == 0:
         is_valid = False
         result += "**ERROR** At least one of [pattern, component_type] must be non-empty"
-    valid_component_types = ['objective', 'variable', 'constraint', 'parameter', '', 'all']
+    valid_component_types = ['objective', 'variable', 'constraint', 'parameter', 'set', '', 'all']
     for ct in component_types:
         if ct not in valid_component_types:
             is_valid = False
