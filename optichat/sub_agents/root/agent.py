@@ -18,7 +18,7 @@ def create_root_agent(workflow="default"):
         illustrator_agent = create_illustrator_agent()
 
         root_agent = Agent(name="root_agent",
-                           model=gpt_4o,
+                           model=gpt_5_mini,
                            sub_agents=[expert_agent],
                            tools=[
                                route_to_expert,

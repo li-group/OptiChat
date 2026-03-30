@@ -62,32 +62,25 @@ ANALYSIS_CONTENT_FEASIBLE = """
             "How much does the objective improve per unit increase in capacity?" /
             "What is the marginal impact of a small increase in labor cost?" /
             "If the Boston-Chicago arc cost changes slightly, how does the objective move?"
-
+                                                                                             
 [WHAT_IF]
-  When: User wants to change PROBLEM DATA — costs, demands, capacities, resource availabilities — and compute the new outcome.
-        This includes data modeled as a forced variable rather than a Param (e.g., marking a resource as unavailable by fixing a binary variable).
-  Key test: Is the change to something the OPTIMIZER IS GIVEN as input, not something it decides freely?
-  Includes: exogenous outages, availability changes, policy restrictions, required service levels,
-            parameter edits, and scenario changes imposed from outside the optimizer.
+  When: User wants to change a PARAMETER (input data the optimizer is given):
+        costs, demands, capacities, bounds, resource availabilities, prices.  
+  Key test: Is the thing being changed fixed BEFORE the optimizer runs?   
+  Note: "What if we add a constraint on a parameter" → still WHAT_IF. 
   Examples: "Increase demand[1] by 20% — what happens to profit?" / "Set capacity to 500." /
             "What if chemical 5 is not available?" / "What if worker 2 is absent tomorrow?" /
-            "What if plant A is unavailable?" / "Cap shipments on arc A-B at 0."
 
 [WHY_NOT]
-  When: User questions or forces something in the OUTPUT — a routing, assignment, or quantity that
-        appears in the solution because the optimizer produced it.
-  Key test: Is the user asking why the SOLUTION looks a certain way, or forcing the solution to look
-            different? If so, WHY_NOT. If the target is INPUT DATA (cost, demand, capacity,
-            availability) — that is [WHAT_IF], not WHY_NOT.
-  Includes: "force", "insist", "require", "must choose", "must assign", "must ship", "must open" when
-            the target is a decision the optimizer normally chooses.
-            Also includes: "why cannot [decision variable] be [value/pattern]" — phrased as a question
-            about why the SOLUTION cannot exhibit a certain pattern (e.g., equal values, a specific assignment).
+  When: User questions or forces a DECISION VARIABLE (something the optimizer decides):                    
+        assignments, schedules, production quantities, routes, facility locations.
+  Key test: Is the thing being changed something the optimizer CHOOSES freely?  
+  Note: "What if we add a constraint that forces a decision" → still WHY_NOT.
   Examples: "Why doesn't the solution send goods from DC1 to Store_A?" /
             "If we insist DC1 ships to Store_A, what changes?" /
             "Why didn't the model assign worker 2 to shift 3?" /
             "Force facility A to open." / "Require worker 2 to be assigned to shift 3." /
-            "Why cannot the reorder quantities be equal across stages?" 
+            "Why cannot the reorder quantities be equal across stages?"
 
 [ROBUSTNESS]
   When: User wants to know how much a specific parameter can change before the CURRENT SOLUTION becomes
@@ -106,8 +99,9 @@ CLASSIFICATION RULES
                                Practical test: "why the solution choose X?" — where X is a decision variable or optimizer-chosen pattern.
                                Contrarily [RETRIEVAL] only asks for the current value of X: "what is the current value of X?"
 - [WHAT_IF] vs [WHY_NOT]:      Classify by the OBJECT OF INTERVENTION, not the wording.
-                               If the change targets data that is GIVEN BEFORE SOLVING → [WHAT_IF], even if internally implemented as a fixed variable.
-                               If the change targets a decision that the optimizer was FREE TO DECIDE → [WHY_NOT].
+                               If the change targets a PARAMETER (data given before solving, e.g., cost, demand, capacity) → [WHAT_IF].
+                               [WHAT_IF] cannot modify decision variables — only parameters.
+                               If the change targets a DECISION VARIABLE (something the optimizer was free to choose, e.g., routes, assignments, quantities) → [WHY_NOT].
 - [SENSITIVITY] vs [WHAT_IF]:  If no specific value is given and the user asks about direction or local rate of change → [SENSITIVITY].
                                If a concrete value or magnitude is given and the model must be re-solved → [WHAT_IF].
 - [SENSITIVITY] vs [ROBUSTNESS]: Classify by WHAT the user is tracking, not the wording.
@@ -119,11 +113,12 @@ DECISION INSTRUCTION
 Ask in order — stop at the first match:
 1. User only wants to READ the current solution or model structure?            → [RETRIEVAL]
 2. Is the user forcing/explaining an optimizer-made DECISION in the solution?  → [WHY_NOT]
-3. Is the user changing INPUT DATA / EXTERNAL CONDITIONS given to the model?
+3. Is the user changing a PARAMETER (cost, demand, capacity — data given before solving)?
    a. One concrete scenario or specific value/category to apply                → [WHAT_IF]
    b. Asks how much the parameter can change before the current solution
       hits a constraint boundary (headroom / slack check)                      → [ROBUSTNESS]
    c. No concrete scenario; asks for marginal/local direction or rate          → [SENSITIVITY]
+   Note: If the user tries to set a decision variable directly, treat it as [WHY_NOT], not [WHAT_IF].
 4. None of the above?                                                          → [GENERAL]
 """
 

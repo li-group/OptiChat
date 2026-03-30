@@ -66,6 +66,8 @@ tmp/
 
 # Ignore kb
 chroma_langchain_db/
+/converted_models/
+/test_configs/converted_testset/
 
 # Ignore tool function
 generate_pickle.py

@@ -117,34 +117,33 @@ STRATEGY_SENSITIVITY = """
 """
 
 STRATEGY_WHAT_IF = """
-   This is a WHAT-IF query. The user wants to simulate a scenario by modifying the model.
+   This is a WHAT-IF query. The user wants to simulate a scenario by modifying PARAMETERS only.
    You need to find out the effect of a provided change to specific [parameters] on the objective value.
-   DO NOT do modification on decision variables, only do modification on parameters.
 
    ACTION GUIDELINES:
-   1. Review <model_description> to confirm the relationship between component name and it's natural language name.
+   1. Review <model_description> to confirm the relationship between component name and its natural language name.
    2. Identify the correct component to modify:
-      - ONLY modify **Params** (mutable parameters). NEVER modify a **Var** (decision variable) — Vars are solver outputs, not inputs.
-      - If the user describes a change to "demand", "flow-out", "capacity", "cost", or any external input, find the corresponding Param in <model_description>.
+      - If the user describes a change to "demand", "capacity", "cost", or any external input, find the corresponding Param in <model_description>.
       - Common mistake: confusing a variable that tracks inventory/flow (e.g. X, flow) with the *parameter* that drives external demand (e.g. Pi, demand, price). Always check whether the target component is listed as a Param or Var.
-      - Exception: if the user explicitly asks to *force* a decision (e.g. "force arc X to zero"), then fixing a Var with operation="=", delta=<value> is correct.
    3. Describe the change naturally in CHANGES using the exact Param name and index.
       (e.g. "Pi[D,5]: decrease by 3", "demand[3,1]: increase by 10", "price[all vendors, segment 1]: multiply by 2").
    4. Use `generator_agent` and prioritize using modify_and_solve SHORTCUT_FUNCTION.
-      - modify_and_solve calls .fix() on variables internally — do NOT add big-M penalty constraints for this purpose.
+      - You need to provide instruction of what component need to be modified by `modify_and_solve` function to the generator_agent.
       - If needed guide the `generator_agent` to generate code for adding/deactivating constraints.
    5. Explain the delta (change in objective value and key variables) from GENERATOR_OUTPUT.
 """
 
 STRATEGY_WHY_NOT = """
-   This is a WHY-NOT query. The user is asking why a certain outcome did NOT happen.
-   You need to force a specific alternative decision by applying new [parameters], [variables], or [constraints] and compare this specific decision with original optimal decision.
+   This is a WHY-NOT query. The user is asking why a certain DECISION was not made by the optimizer,
+   or wants to force a specific decision variable to a particular value/pattern.
+   You need to fix or constrain a decision variable (Var) to the alternative "X", re-solve, and compare with the original optimal.
 
    ACTION GUIDELINES:
-   1. Review <model_description> to confirm the relationship between component name and it's natural language name.
-   2. Use `generator_agent`, ADD_CONSTRAINT to force the alternative "X".
-      When modifying the parameter that forms the RHS of the violated constraint, not the constraint expression itself.
-      If the new constraint conflicts with an existing one, remind the `generator_agent` to deactivate the existing one.
+   1. Review <model_description> to confirm the relationship between component name and its natural language name.
+      Identify the DECISION VARIABLE (Var) the user wants to force — not a parameter.
+   2. Use `generator_agent` with ADD_CONSTRAINT (or fix the Var directly) to enforce the alternative "X".
+      - Fix a decision variable: use operation="=", delta=<value> on the target Var.
+      - Or add a forcing constraint if the target involves a pattern across multiple variables.
    3. Call `get_model_components` in ONE batched call to retrieve the objective, key variables, and
       constraints relevant to "X". Use the results to explain what prevents "X" from being selected
       (binding constraint, prohibitive cost, or bound), and provide an economic or constraint-based explanation.
@@ -152,26 +151,49 @@ STRATEGY_WHY_NOT = """
 
 STRATEGY_ROBUSTNESS = """
    This is a ROBUSTNESS query. The user wants to know how much a specific parameter can change
-   before the current baseline solution becomes infeasible — evaluated exactly at the current solution
+   before the current baseline solution becomes infeasible.
+
+   The tool automatically routes to one of two analysis modes based on how many constraints the parameter appears in:
+
+   MODE A — Slack-Based (parameter appears in exactly ONE constraint):
+     Computes exactly how much the parameter can shift before that one constraint becomes violated,
+     using slack and numerical sensitivity (∂constraint_body/∂param). No bounds needed from the user.
+
+   MODE B — Scenario-Based (parameter appears in MULTIPLE constraints):
+     Samples random scenarios from an uncertainty range and checks feasibility/objective across them.
+     Bounds (uncertainty range) are auto-inferred at ±50% of current value if not provided by the user.
+     If the user specifies a range or magnitude of uncertainty, pass it explicitly via `bounds`.
 
    ACTION GUIDELINES:
    1. Review <model_description> to confirm the relationship between component name and its natural language name.
-      Identify which Params the user explicitly named as uncertain. Do NOT substitute other params.
-      Parameters must be mutable (mutable=True) to be analyzed — check <model_description>.
+      Identify which Params the user explicitly named as uncertain — NOT Vars. Verify in <model_description>.
+      Parameters must be mutable (mutable=True) to be analyzed.
    2. Call `robustness_analysis` with:
       - `version`: the base model version name
-      - `uncertain_param_names`: list of exact Param names the user specified — NOT Var. Verify in <model_description>.
-   3. Interpret the tool output with these sections:
-      - **Pre-Analysis**: which constraints each parameter appears in, and whether they are binding or non-binding.
-      - **Slack Results** (per parameter, per constraint):
-          • Binding: "Parameter X is already at the [upper/lower] bound of constraint Y — no room to change."
-          • Non-binding (direction = increase): "X can increase by up to max_allowable_change (room_pct% headroom) before constraint Y becomes binding."
-          • Non-binding (direction = decrease): "X can decrease by at most max_allowable_change (room_pct% headroom) before constraint Y becomes binding."
-      - **Overall Assessment**: report the tightest constraint (smallest room) as the binding limitation.
-        State the overall max allowable change and room_pct for each parameter.
-      - **Recommendations**: if room_pct is low (< 20%), flag the parameter as a robustness risk.
+      - `uncertain_param_names`: list of exact Param names the user specified
+      - `bounds` (optional): provide only if the user specifies a concrete uncertainty range or magnitude.
+        Format: [[lb, ub], ...] per parameter (absolute mode), or delta values with bounds_mode="delta".
+        If omitted, bounds are auto-inferred at ±50% for scenario-based routing.
+   3. Interpret the tool output by mode:
+
+      MODE A (Slack-Based) output sections:
+        - **Pre-Analysis**: which constraint the parameter appears in, binding or non-binding.
+        - **Slack Results** (per parameter, per constraint):
+            • Binding: "Parameter X is already at the limit of constraint Y — no room to change."
+            • Non-binding (increase): "X can increase by up to max_allowable_change (room_pct% headroom) before Y becomes binding."
+            • Non-binding (decrease): "X can decrease by at most max_allowable_change (room_pct% headroom) before Y becomes binding."
+        - **Overall Assessment**: report the tightest constraint and overall max allowable change.
+        - **Recommendations**: if room_pct < 20%, flag the parameter as a robustness risk.
+
+      MODE B (Scenario-Based) output sections:
+        - **Auto-Inferred Bounds** (if applicable): report the ±50% bounds that were used.
+        - **Scenario Results**: report the feasibility rate (% of scenarios that remained feasible)
+          and the objective value range across feasible scenarios.
+        - **Overall Assessment**: summarize worst-case violations and which constraints were most frequently stressed.
+        - **Recommendations**: flag if feasibility rate is low (< 80%) or objective variance is high.
+
    4. If the tool returns "No active constraints found" for a parameter:
-      - The parameter likely only appears in the objective, not in any constraint body or bound.
+      - The parameter appears only in the objective, not in any constraint.
       - Report this: changes to this parameter do not threaten feasibility, but do affect the objective value.
 """
 
