@@ -526,6 +526,5 @@ class TestVSSExplainer(unittest.TestCase):
             self.result.prereqs.vss, fresh.vss, delta=TOL
         )
 
-
 if __name__ == "__main__":
     unittest.main(verbosity=2)
