@@ -1,0 +1,190 @@
+39 Var Declarations
+    u_1_1 : Size=1, Index=None
+        Key  : Lower : Value : Upper : Fixed : Stale : Domain
+        None :   0.0 :  None :   1.0 : False :  True : Binary
+    u_1_2 : Size=1, Index=None
+        Key  : Lower : Value : Upper : Fixed : Stale : Domain
+        None :   0.0 :  None :   1.0 : False :  True : Binary
+    u_1_3 : Size=1, Index=None
+        Key  : Lower : Value : Upper : Fixed : Stale : Domain
+        None :   0.0 :  None :   1.0 : False :  True : Binary
+    u_2_1 : Size=1, Index=None
+        Key  : Lower : Value : Upper : Fixed : Stale : Domain
+        None :   0.0 :  None :   1.0 : False :  True : Binary
+    u_2_2 : Size=1, Index=None
+        Key  : Lower : Value : Upper : Fixed : Stale : Domain
+        None :   0.0 :  None :   1.0 : False :  True : Binary
+    u_2_3 : Size=1, Index=None
+        Key  : Lower : Value : Upper : Fixed : Stale : Domain
+        None :   0.0 :  None :   1.0 : False :  True : Binary
+    x_1_1 : Size=1, Index=None
+        Key  : Lower : Value : Upper                   : Fixed : Stale : Domain
+        None :   0.0 :  None : 1.7976931348623157e+308 : False :  True : NonNegativeReals
+    x_1_2 : Size=1, Index=None
+        Key  : Lower : Value : Upper                   : Fixed : Stale : Domain
+        None :   0.0 :  None : 1.7976931348623157e+308 : False :  True : NonNegativeReals
+    x_1_3 : Size=1, Index=None
+        Key  : Lower : Value : Upper                   : Fixed : Stale : Domain
+        None :   0.0 :  None : 1.7976931348623157e+308 : False :  True : NonNegativeReals
+    x_2_1 : Size=1, Index=None
+        Key  : Lower : Value : Upper                   : Fixed : Stale : Domain
+        None :   0.0 :  None : 1.7976931348623157e+308 : False :  True : NonNegativeReals
+    x_2_2 : Size=1, Index=None
+        Key  : Lower : Value : Upper                   : Fixed : Stale : Domain
+        None :   0.0 :  None : 1.7976931348623157e+308 : False :  True : NonNegativeReals
+    x_2_3 : Size=1, Index=None
+        Key  : Lower : Value : Upper                   : Fixed : Stale : Domain
+        None :   0.0 :  None : 1.7976931348623157e+308 : False :  True : NonNegativeReals
+    y_1_1_1 : Size=1, Index=None
+        Key  : Lower : Value : Upper : Fixed : Stale : Domain
+        None :   0.0 :  None :   1.0 : False :  True : Binary
+    y_1_1_2 : Size=1, Index=None
+        Key  : Lower : Value : Upper : Fixed : Stale : Domain
+        None :   0.0 :  None :   1.0 : False :  True : Binary
+    y_1_1_3 : Size=1, Index=None
+        Key  : Lower : Value : Upper : Fixed : Stale : Domain
+        None :   0.0 :  None :   1.0 : False :  True : Binary
+    y_1_2_1 : Size=1, Index=None
+        Key  : Lower : Value : Upper : Fixed : Stale : Domain
+        None :   0.0 :  None :   1.0 : False :  True : Binary
+    y_1_2_2 : Size=1, Index=None
+        Key  : Lower : Value : Upper : Fixed : Stale : Domain
+        None :   0.0 :  None :   1.0 : False :  True : Binary
+    y_1_2_3 : Size=1, Index=None
+        Key  : Lower : Value : Upper : Fixed : Stale : Domain
+        None :   0.0 :  None :   1.0 : False :  True : Binary
+    y_1_3_1 : Size=1, Index=None
+        Key  : Lower : Value : Upper : Fixed : Stale : Domain
+        None :   0.0 :  None :   1.0 : False :  True : Binary
+    y_1_3_2 : Size=1, Index=None
+        Key  : Lower : Value : Upper : Fixed : Stale : Domain
+        None :   0.0 :  None :   1.0 : False :  True : Binary
+    y_1_3_3 : Size=1, Index=None
+        Key  : Lower : Value : Upper : Fixed : Stale : Domain
+        None :   0.0 :  None :   1.0 : False :  True : Binary
+    y_2_1_1 : Size=1, Index=None
+        Key  : Lower : Value : Upper : Fixed : Stale : Domain
+        None :   0.0 :  None :   1.0 : False :  True : Binary
+    y_2_1_2 : Size=1, Index=None
+        Key  : Lower : Value : Upper : Fixed : Stale : Domain
+        None :   0.0 :  None :   1.0 : False :  True : Binary
+    y_2_1_3 : Size=1, Index=None
+        Key  : Lower : Value : Upper : Fixed : Stale : Domain
+        None :   0.0 :  None :   1.0 : False :  True : Binary
+    y_2_2_1 : Size=1, Index=None
+        Key  : Lower : Value : Upper : Fixed : Stale : Domain
+        None :   0.0 :  None :   1.0 : False :  True : Binary
+    y_2_2_2 : Size=1, Index=None
+        Key  : Lower : Value : Upper : Fixed : Stale : Domain
+        None :   0.0 :  None :   1.0 : False :  True : Binary
+    y_2_2_3 : Size=1, Index=None
+        Key  : Lower : Value : Upper : Fixed : Stale : Domain
+        None :   0.0 :  None :   1.0 : False :  True : Binary
+    y_2_3_1 : Size=1, Index=None
+        Key  : Lower : Value : Upper : Fixed : Stale : Domain
+        None :   0.0 :  None :   1.0 : False :  True : Binary
+    y_2_3_2 : Size=1, Index=None
+        Key  : Lower : Value : Upper : Fixed : Stale : Domain
+        None :   0.0 :  None :   1.0 : False :  True : Binary
+    y_2_3_3 : Size=1, Index=None
+        Key  : Lower : Value : Upper : Fixed : Stale : Domain
+        None :   0.0 :  None :   1.0 : False :  True : Binary
+    z_1_1 : Size=1, Index=None
+        Key  : Lower : Value : Upper : Fixed : Stale : Domain
+        None :   0.0 :  None :   1.0 : False :  True : Binary
+    z_1_2 : Size=1, Index=None
+        Key  : Lower : Value : Upper : Fixed : Stale : Domain
+        None :   0.0 :  None :   1.0 : False :  True : Binary
+    z_1_3 : Size=1, Index=None
+        Key  : Lower : Value : Upper : Fixed : Stale : Domain
+        None :   0.0 :  None :   1.0 : False :  True : Binary
+    z_2_1 : Size=1, Index=None
+        Key  : Lower : Value : Upper : Fixed : Stale : Domain
+        None :   0.0 :  None :   1.0 : False :  True : Binary
+    z_2_2 : Size=1, Index=None
+        Key  : Lower : Value : Upper : Fixed : Stale : Domain
+        None :   0.0 :  None :   1.0 : False :  True : Binary
+    z_2_3 : Size=1, Index=None
+        Key  : Lower : Value : Upper : Fixed : Stale : Domain
+        None :   0.0 :  None :   1.0 : False :  True : Binary
+    z_3_1 : Size=1, Index=None
+        Key  : Lower : Value : Upper : Fixed : Stale : Domain
+        None :   0.0 :  None :   1.0 : False :  True : Binary
+    z_3_2 : Size=1, Index=None
+        Key  : Lower : Value : Upper : Fixed : Stale : Domain
+        None :   0.0 :  None :   1.0 : False :  True : Binary
+    z_3_3 : Size=1, Index=None
+        Key  : Lower : Value : Upper : Fixed : Stale : Domain
+        None :   0.0 :  None :   1.0 : False :  True : Binary
+
+1 Objective Declarations
+    objective : Size=1, Index=None, Active=True
+        Key  : Active : Sense    : Expression
+        None :   True : minimize : 9.785539*x_1_1 + 32.156798*u_1_1 + 5.651372*x_2_1 + 28.9572*u_2_1 + 5.81891*x_1_2 + 46.675333*u_1_2 + 9.788008*x_2_2 + 25.639374*u_2_2 + 5.15908*x_1_3 + 41.432168*u_1_3 + 8.354276*x_2_3 + 44.186084*u_2_3 + 6.347467*y_1_1_1 + 5.372922*y_2_1_1 + 909.629111*z_1_1 + 8.599846*y_1_2_1 + 6.324232*y_2_2_1 + 790.134124*z_2_1 + 8.176455*y_1_3_1 + 7.007708*y_2_3_1 + 911.730274*z_3_1 + 9.374383*y_1_1_2 + 6.028372*y_2_1_2 + 636.881749*z_1_2 + 5.860265*y_1_2_2 + 5.552836*y_2_2_2 + 885.265434*z_2_2 + 5.85351*y_1_3_2 + 5.941173*y_2_3_2 + 799.772761*z_3_2 + 7.775249*y_1_1_3 + 9.559324*y_2_1_3 + 517.308309*z_1_3 + 9.022701*y_1_2_3 + 8.108543*y_2_2_3 + 901.618677*z_2_3 + 9.808754*y_1_3_3 + 7.477164*y_2_3_3 + 741.131727*z_3_3
+
+21 Constraint Declarations
+    c_1 : Size=1, Index=None, Active=True
+        Key  : Lower : Body          : Upper : Active
+        None :  -Inf : x_1_1 - u_1_1 :   0.0 :   True
+    c_13 : Size=1, Index=None, Active=True
+        Key  : Lower : Body                      : Upper : Active
+        None :   1.0 : y_1_1_1 + y_2_1_1 + z_1_1 :   1.0 :   True
+    c_14 : Size=1, Index=None, Active=True
+        Key  : Lower : Body                      : Upper : Active
+        None :   1.0 : y_1_1_2 + y_2_1_2 + z_1_2 :   1.0 :   True
+    c_15 : Size=1, Index=None, Active=True
+        Key  : Lower : Body                      : Upper : Active
+        None :   1.0 : y_1_1_3 + y_2_1_3 + z_1_3 :   1.0 :   True
+    c_16 : Size=1, Index=None, Active=True
+        Key  : Lower : Body                      : Upper : Active
+        None :   1.0 : y_1_2_1 + y_2_2_1 + z_2_1 :   1.0 :   True
+    c_17 : Size=1, Index=None, Active=True
+        Key  : Lower : Body                      : Upper : Active
+        None :   1.0 : y_1_2_2 + y_2_2_2 + z_2_2 :   1.0 :   True
+    c_18 : Size=1, Index=None, Active=True
+        Key  : Lower : Body                      : Upper : Active
+        None :   1.0 : y_1_2_3 + y_2_2_3 + z_2_3 :   1.0 :   True
+    c_19 : Size=1, Index=None, Active=True
+        Key  : Lower : Body                      : Upper : Active
+        None :   1.0 : y_1_3_1 + y_2_3_1 + z_3_1 :   1.0 :   True
+    c_2 : Size=1, Index=None, Active=True
+        Key  : Lower : Body          : Upper : Active
+        None :  -Inf : x_1_2 - u_1_2 :   0.0 :   True
+    c_20 : Size=1, Index=None, Active=True
+        Key  : Lower : Body                      : Upper : Active
+        None :   1.0 : y_1_3_2 + y_2_3_2 + z_3_2 :   1.0 :   True
+    c_21 : Size=1, Index=None, Active=True
+        Key  : Lower : Body                      : Upper : Active
+        None :   1.0 : y_1_3_3 + y_2_3_3 + z_3_3 :   1.0 :   True
+    c_3 : Size=1, Index=None, Active=True
+        Key  : Lower : Body          : Upper : Active
+        None :  -Inf : x_1_3 - u_1_3 :   0.0 :   True
+    c_4 : Size=1, Index=None, Active=True
+        Key  : Lower : Body          : Upper : Active
+        None :  -Inf : x_2_1 - u_2_1 :   0.0 :   True
+    c_5 : Size=1, Index=None, Active=True
+        Key  : Lower : Body          : Upper : Active
+        None :  -Inf : x_2_2 - u_2_2 :   0.0 :   True
+    c_6 : Size=1, Index=None, Active=True
+        Key  : Lower : Body          : Upper : Active
+        None :  -Inf : x_2_3 - u_2_3 :   0.0 :   True
+    dem_1_1 : Size=1, Index=None, Active=True
+        Key  : Lower : Body                                                             : Upper : Active
+        None :  -Inf : - x_1_1 + 0.913625*y_1_1_1 + 0.628611*y_1_2_1 + 0.764073*y_1_3_1 :   0.0 :   True
+    dem_1_2 : Size=1, Index=None, Active=True
+        Key  : Lower : Body                                                                    : Upper : Active
+        None :  -Inf : - x_1_1 - x_1_2 + 1.33781*y_1_1_2 + 0.795495*y_1_2_2 + 1.161867*y_1_3_2 :   0.0 :   True
+    dem_1_3 : Size=1, Index=None, Active=True
+        Key  : Lower : Body                                                                             : Upper : Active
+        None :  -Inf : - x_1_1 - x_1_2 - x_1_3 + 1.478721*y_1_1_3 + 0.570284*y_1_2_3 + 0.839165*y_1_3_3 :   0.0 :   True
+    dem_2_1 : Size=1, Index=None, Active=True
+        Key  : Lower : Body                                                             : Upper : Active
+        None :  -Inf : - x_2_1 + 0.913625*y_2_1_1 + 0.628611*y_2_2_1 + 0.764073*y_2_3_1 :   0.0 :   True
+    dem_2_2 : Size=1, Index=None, Active=True
+        Key  : Lower : Body                                                                    : Upper : Active
+        None :  -Inf : - x_2_1 - x_2_2 + 1.33781*y_2_1_2 + 0.795495*y_2_2_2 + 1.161867*y_2_3_2 :   0.0 :   True
+    dem_2_3 : Size=1, Index=None, Active=True
+        Key  : Lower : Body                                                                             : Upper : Active
+        None :  -Inf : - x_2_1 - x_2_2 - x_2_3 + 1.478721*y_2_1_3 + 0.570284*y_2_2_3 + 0.839165*y_2_3_3 :   0.0 :   True
+
+61 Declarations: x_1_1 u_1_1 x_2_1 u_2_1 x_1_2 u_1_2 x_2_2 u_2_2 x_1_3 u_1_3 x_2_3 u_2_3 y_1_1_1 y_2_1_1 z_1_1 y_1_2_1 y_2_2_1 z_2_1 y_1_3_1 y_2_3_1 z_3_1 y_1_1_2 y_2_1_2 z_1_2 y_1_2_2 y_2_2_2 z_2_2 y_1_3_2 y_2_3_2 z_3_2 y_1_1_3 y_2_1_3 z_1_3 y_1_2_3 y_2_2_3 z_2_3 y_1_3_3 y_2_3_3 z_3_3 c_1 c_2 c_3 c_4 c_5 c_6 c_13 c_14 c_15 c_16 c_17 c_18 c_19 c_20 c_21 dem_1_1 dem_2_1 dem_1_2 dem_2_2 dem_1_3 dem_2_3 objective

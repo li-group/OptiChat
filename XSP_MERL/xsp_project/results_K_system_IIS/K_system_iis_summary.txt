@@ -1,0 +1,34 @@
+K-system IIS summary
+====================
+
+K scenarios: ['SCEN2', 'SCEN45', 'SCEN57', 'SCEN68', 'SCEN86']
+|K|: 5
+
+c^T x_star: 205.302821859265
+c^T x_EV: 154.6795607713588
+Delta_0: -50.6232610879062
+C_comp: -50.6232610879062
+sum_K p_s Q_s(x_star): 40.273037895
+K budget RHS: 90.8962989829062
+sum_K p_s Delta_s + C_comp: 0.2715492170937921
+
+IIS contents
+------------
+Number of IIS constraints: 71
+Number of IIS variable bounds: 0
+K_budget rows in IIS: 1
+
+IIS scenario constraint counts:
+  SCEN2: 14
+  SCEN45: 14
+  SCEN57: 13
+  SCEN68: 15
+  SCEN86: 14
+
+IIS scenario bound counts:
+
+Output files:
+  /Users/ahluwala/Documents/GitHub/OptiChat/XSP_MERL/xsp_project/results_K_system_IIS/K_system.lp
+  /Users/ahluwala/Documents/GitHub/OptiChat/XSP_MERL/xsp_project/results_K_system_IIS/K_system_iis.ilp
+  /Users/ahluwala/Documents/GitHub/OptiChat/XSP_MERL/xsp_project/results_K_system_IIS/K_system_iis_constraints.csv
+  /Users/ahluwala/Documents/GitHub/OptiChat/XSP_MERL/xsp_project/results_K_system_IIS/K_system_iis_bounds.csv

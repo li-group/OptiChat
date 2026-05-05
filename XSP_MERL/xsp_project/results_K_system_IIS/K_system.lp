@@ -1,0 +1,990 @@
+\* Source Pyomo model name=K_system_for_IIS *\
+
+min 
+DummyObjective:
++0.0 ONE_VAR_CONSTANT
+
+s.t.
+
+c_u_K_budget_:
++0.031737335 Scenario_SCEN2_y_1_1_1
++0.02686461 Scenario_SCEN2_y_2_1_1
++4.548145555 Scenario_SCEN2_z_1_1
++0.04299923 Scenario_SCEN2_y_1_2_1
++0.03162116 Scenario_SCEN2_y_2_2_1
++3.9506706200000004 Scenario_SCEN2_z_2_1
++0.040882275 Scenario_SCEN2_y_1_3_1
++0.03503854 Scenario_SCEN2_y_2_3_1
++4.55865137 Scenario_SCEN2_z_3_1
++0.046871915 Scenario_SCEN2_y_1_1_2
++0.03014186 Scenario_SCEN2_y_2_1_2
++3.1844087450000003 Scenario_SCEN2_z_1_2
++0.029301325 Scenario_SCEN2_y_1_2_2
++0.02776418 Scenario_SCEN2_y_2_2_2
++4.42632717 Scenario_SCEN2_z_2_2
++0.02926755 Scenario_SCEN2_y_1_3_2
++0.029705865 Scenario_SCEN2_y_2_3_2
++3.9988638049999996 Scenario_SCEN2_z_3_2
++0.038876245 Scenario_SCEN2_y_1_1_3
++0.047796620000000005 Scenario_SCEN2_y_2_1_3
++2.586541545 Scenario_SCEN2_z_1_3
++0.045113505 Scenario_SCEN2_y_1_2_3
++0.040542715 Scenario_SCEN2_y_2_2_3
++4.5080933850000005 Scenario_SCEN2_z_2_3
++0.04904377 Scenario_SCEN2_y_1_3_3
++0.03738582 Scenario_SCEN2_y_2_3_3
++3.705658635 Scenario_SCEN2_z_3_3
++0.031737335 Scenario_SCEN45_y_1_1_1
++0.02686461 Scenario_SCEN45_y_2_1_1
++4.548145555 Scenario_SCEN45_z_1_1
++0.04299923 Scenario_SCEN45_y_1_2_1
++0.03162116 Scenario_SCEN45_y_2_2_1
++3.9506706200000004 Scenario_SCEN45_z_2_1
++0.040882275 Scenario_SCEN45_y_1_3_1
++0.03503854 Scenario_SCEN45_y_2_3_1
++4.55865137 Scenario_SCEN45_z_3_1
++0.046871915 Scenario_SCEN45_y_1_1_2
++0.03014186 Scenario_SCEN45_y_2_1_2
++3.1844087450000003 Scenario_SCEN45_z_1_2
++0.029301325 Scenario_SCEN45_y_1_2_2
++0.02776418 Scenario_SCEN45_y_2_2_2
++4.42632717 Scenario_SCEN45_z_2_2
++0.02926755 Scenario_SCEN45_y_1_3_2
++0.029705865 Scenario_SCEN45_y_2_3_2
++3.9988638049999996 Scenario_SCEN45_z_3_2
++0.038876245 Scenario_SCEN45_y_1_1_3
++0.047796620000000005 Scenario_SCEN45_y_2_1_3
++2.586541545 Scenario_SCEN45_z_1_3
++0.045113505 Scenario_SCEN45_y_1_2_3
++0.040542715 Scenario_SCEN45_y_2_2_3
++4.5080933850000005 Scenario_SCEN45_z_2_3
++0.04904377 Scenario_SCEN45_y_1_3_3
++0.03738582 Scenario_SCEN45_y_2_3_3
++3.705658635 Scenario_SCEN45_z_3_3
++0.031737335 Scenario_SCEN57_y_1_1_1
++0.02686461 Scenario_SCEN57_y_2_1_1
++4.548145555 Scenario_SCEN57_z_1_1
++0.04299923 Scenario_SCEN57_y_1_2_1
++0.03162116 Scenario_SCEN57_y_2_2_1
++3.9506706200000004 Scenario_SCEN57_z_2_1
++0.040882275 Scenario_SCEN57_y_1_3_1
++0.03503854 Scenario_SCEN57_y_2_3_1
++4.55865137 Scenario_SCEN57_z_3_1
++0.046871915 Scenario_SCEN57_y_1_1_2
++0.03014186 Scenario_SCEN57_y_2_1_2
++3.1844087450000003 Scenario_SCEN57_z_1_2
++0.029301325 Scenario_SCEN57_y_1_2_2
++0.02776418 Scenario_SCEN57_y_2_2_2
++4.42632717 Scenario_SCEN57_z_2_2
++0.02926755 Scenario_SCEN57_y_1_3_2
++0.029705865 Scenario_SCEN57_y_2_3_2
++3.9988638049999996 Scenario_SCEN57_z_3_2
++0.038876245 Scenario_SCEN57_y_1_1_3
++0.047796620000000005 Scenario_SCEN57_y_2_1_3
++2.586541545 Scenario_SCEN57_z_1_3
++0.045113505 Scenario_SCEN57_y_1_2_3
++0.040542715 Scenario_SCEN57_y_2_2_3
++4.5080933850000005 Scenario_SCEN57_z_2_3
++0.04904377 Scenario_SCEN57_y_1_3_3
++0.03738582 Scenario_SCEN57_y_2_3_3
++3.705658635 Scenario_SCEN57_z_3_3
++0.031737335 Scenario_SCEN68_y_1_1_1
++0.02686461 Scenario_SCEN68_y_2_1_1
++4.548145555 Scenario_SCEN68_z_1_1
++0.04299923 Scenario_SCEN68_y_1_2_1
++0.03162116 Scenario_SCEN68_y_2_2_1
++3.9506706200000004 Scenario_SCEN68_z_2_1
++0.040882275 Scenario_SCEN68_y_1_3_1
++0.03503854 Scenario_SCEN68_y_2_3_1
++4.55865137 Scenario_SCEN68_z_3_1
++0.046871915 Scenario_SCEN68_y_1_1_2
++0.03014186 Scenario_SCEN68_y_2_1_2
++3.1844087450000003 Scenario_SCEN68_z_1_2
++0.029301325 Scenario_SCEN68_y_1_2_2
++0.02776418 Scenario_SCEN68_y_2_2_2
++4.42632717 Scenario_SCEN68_z_2_2
++0.02926755 Scenario_SCEN68_y_1_3_2
++0.029705865 Scenario_SCEN68_y_2_3_2
++3.9988638049999996 Scenario_SCEN68_z_3_2
++0.038876245 Scenario_SCEN68_y_1_1_3
++0.047796620000000005 Scenario_SCEN68_y_2_1_3
++2.586541545 Scenario_SCEN68_z_1_3
++0.045113505 Scenario_SCEN68_y_1_2_3
++0.040542715 Scenario_SCEN68_y_2_2_3
++4.5080933850000005 Scenario_SCEN68_z_2_3
++0.04904377 Scenario_SCEN68_y_1_3_3
++0.03738582 Scenario_SCEN68_y_2_3_3
++3.705658635 Scenario_SCEN68_z_3_3
++0.031737335 Scenario_SCEN86_y_1_1_1
++0.02686461 Scenario_SCEN86_y_2_1_1
++4.548145555 Scenario_SCEN86_z_1_1
++0.04299923 Scenario_SCEN86_y_1_2_1
++0.03162116 Scenario_SCEN86_y_2_2_1
++3.9506706200000004 Scenario_SCEN86_z_2_1
++0.040882275 Scenario_SCEN86_y_1_3_1
++0.03503854 Scenario_SCEN86_y_2_3_1
++4.55865137 Scenario_SCEN86_z_3_1
++0.046871915 Scenario_SCEN86_y_1_1_2
++0.03014186 Scenario_SCEN86_y_2_1_2
++3.1844087450000003 Scenario_SCEN86_z_1_2
++0.029301325 Scenario_SCEN86_y_1_2_2
++0.02776418 Scenario_SCEN86_y_2_2_2
++4.42632717 Scenario_SCEN86_z_2_2
++0.02926755 Scenario_SCEN86_y_1_3_2
++0.029705865 Scenario_SCEN86_y_2_3_2
++3.9988638049999996 Scenario_SCEN86_z_3_2
++0.038876245 Scenario_SCEN86_y_1_1_3
++0.047796620000000005 Scenario_SCEN86_y_2_1_3
++2.586541545 Scenario_SCEN86_z_1_3
++0.045113505 Scenario_SCEN86_y_1_2_3
++0.040542715 Scenario_SCEN86_y_2_2_3
++4.5080933850000005 Scenario_SCEN86_z_2_3
++0.04904377 Scenario_SCEN86_y_1_3_3
++0.03738582 Scenario_SCEN86_y_2_3_3
++3.705658635 Scenario_SCEN86_z_3_3
+<= 87.02930996362224
+
+c_u_Scenario_SCEN2_c_1_:
++0 ONE_VAR_CONSTANT
+<= 0.018553550000000252
+
+c_u_Scenario_SCEN2_c_2_:
++0 ONE_VAR_CONSTANT
+<= 0.010604974999999017
+
+c_u_Scenario_SCEN2_c_3_:
++0 ONE_VAR_CONSTANT
+<= 0.0
+
+c_u_Scenario_SCEN2_c_4_:
++0 ONE_VAR_CONSTANT
+<= 0.0
+
+c_u_Scenario_SCEN2_c_5_:
++0 ONE_VAR_CONSTANT
+<= 0.9756538150000005
+
+c_u_Scenario_SCEN2_c_6_:
++0 ONE_VAR_CONSTANT
+<= 0.0
+
+c_e_Scenario_SCEN2_c_13_:
++1 Scenario_SCEN2_y_1_1_1
++1 Scenario_SCEN2_y_2_1_1
++1 Scenario_SCEN2_z_1_1
+= 1.0
+
+c_e_Scenario_SCEN2_c_14_:
++1 Scenario_SCEN2_y_1_1_2
++1 Scenario_SCEN2_y_2_1_2
++1 Scenario_SCEN2_z_1_2
+= 1.0
+
+c_e_Scenario_SCEN2_c_15_:
++1 Scenario_SCEN2_y_1_1_3
++1 Scenario_SCEN2_y_2_1_3
++1 Scenario_SCEN2_z_1_3
+= 1.0
+
+c_e_Scenario_SCEN2_c_16_:
++1 Scenario_SCEN2_y_1_2_1
++1 Scenario_SCEN2_y_2_2_1
++1 Scenario_SCEN2_z_2_1
+= 1.0
+
+c_e_Scenario_SCEN2_c_17_:
++1 Scenario_SCEN2_y_1_2_2
++1 Scenario_SCEN2_y_2_2_2
++1 Scenario_SCEN2_z_2_2
+= 1.0
+
+c_e_Scenario_SCEN2_c_18_:
++1 Scenario_SCEN2_y_1_2_3
++1 Scenario_SCEN2_y_2_2_3
++1 Scenario_SCEN2_z_2_3
+= 1.0
+
+c_e_Scenario_SCEN2_c_19_:
++1 Scenario_SCEN2_y_1_3_1
++1 Scenario_SCEN2_y_2_3_1
++1 Scenario_SCEN2_z_3_1
+= 1.0
+
+c_e_Scenario_SCEN2_c_20_:
++1 Scenario_SCEN2_y_1_3_2
++1 Scenario_SCEN2_y_2_3_2
++1 Scenario_SCEN2_z_3_2
+= 1.0
+
+c_e_Scenario_SCEN2_c_21_:
++1 Scenario_SCEN2_y_1_3_3
++1 Scenario_SCEN2_y_2_3_3
++1 Scenario_SCEN2_z_3_3
+= 1.0
+
+c_u_Scenario_SCEN2_dem_1_1_:
++0.584025 Scenario_SCEN2_y_1_1_1
++0.705513 Scenario_SCEN2_y_1_2_1
++0.543886 Scenario_SCEN2_y_1_3_1
+<= 0.9814464499999997
+
+c_u_Scenario_SCEN2_dem_2_1_:
++0.584025 Scenario_SCEN2_y_2_1_1
++0.705513 Scenario_SCEN2_y_2_2_1
++0.543886 Scenario_SCEN2_y_2_3_1
+<= 1.0
+
+c_u_Scenario_SCEN2_dem_1_2_:
++1.41196 Scenario_SCEN2_y_1_1_2
++1.321808 Scenario_SCEN2_y_1_2_2
++1.488116 Scenario_SCEN2_y_1_3_2
+<= 1.9708414750000007
+
+c_u_Scenario_SCEN2_dem_2_2_:
++1.41196 Scenario_SCEN2_y_2_1_2
++1.321808 Scenario_SCEN2_y_2_2_2
++1.488116 Scenario_SCEN2_y_2_3_2
+<= 1.0243461849999995
+
+c_u_Scenario_SCEN2_dem_1_3_:
++1.339515 Scenario_SCEN2_y_1_1_3
++1.180748 Scenario_SCEN2_y_1_2_3
++1.348907 Scenario_SCEN2_y_1_3_3
+<= 1.9708414750000007
+
+c_u_Scenario_SCEN2_dem_2_3_:
++1.339515 Scenario_SCEN2_y_2_1_3
++1.180748 Scenario_SCEN2_y_2_2_3
++1.348907 Scenario_SCEN2_y_2_3_3
+<= 1.0243461849999995
+
+c_u_Scenario_SCEN45_c_1_:
++0 ONE_VAR_CONSTANT
+<= 0.018553550000000252
+
+c_u_Scenario_SCEN45_c_2_:
++0 ONE_VAR_CONSTANT
+<= 0.010604974999999017
+
+c_u_Scenario_SCEN45_c_3_:
++0 ONE_VAR_CONSTANT
+<= 0.0
+
+c_u_Scenario_SCEN45_c_4_:
++0 ONE_VAR_CONSTANT
+<= 0.0
+
+c_u_Scenario_SCEN45_c_5_:
++0 ONE_VAR_CONSTANT
+<= 0.9756538150000005
+
+c_u_Scenario_SCEN45_c_6_:
++0 ONE_VAR_CONSTANT
+<= 0.0
+
+c_e_Scenario_SCEN45_c_13_:
++1 Scenario_SCEN45_y_1_1_1
++1 Scenario_SCEN45_y_2_1_1
++1 Scenario_SCEN45_z_1_1
+= 1.0
+
+c_e_Scenario_SCEN45_c_14_:
++1 Scenario_SCEN45_y_1_1_2
++1 Scenario_SCEN45_y_2_1_2
++1 Scenario_SCEN45_z_1_2
+= 1.0
+
+c_e_Scenario_SCEN45_c_15_:
++1 Scenario_SCEN45_y_1_1_3
++1 Scenario_SCEN45_y_2_1_3
++1 Scenario_SCEN45_z_1_3
+= 1.0
+
+c_e_Scenario_SCEN45_c_16_:
++1 Scenario_SCEN45_y_1_2_1
++1 Scenario_SCEN45_y_2_2_1
++1 Scenario_SCEN45_z_2_1
+= 1.0
+
+c_e_Scenario_SCEN45_c_17_:
++1 Scenario_SCEN45_y_1_2_2
++1 Scenario_SCEN45_y_2_2_2
++1 Scenario_SCEN45_z_2_2
+= 1.0
+
+c_e_Scenario_SCEN45_c_18_:
++1 Scenario_SCEN45_y_1_2_3
++1 Scenario_SCEN45_y_2_2_3
++1 Scenario_SCEN45_z_2_3
+= 1.0
+
+c_e_Scenario_SCEN45_c_19_:
++1 Scenario_SCEN45_y_1_3_1
++1 Scenario_SCEN45_y_2_3_1
++1 Scenario_SCEN45_z_3_1
+= 1.0
+
+c_e_Scenario_SCEN45_c_20_:
++1 Scenario_SCEN45_y_1_3_2
++1 Scenario_SCEN45_y_2_3_2
++1 Scenario_SCEN45_z_3_2
+= 1.0
+
+c_e_Scenario_SCEN45_c_21_:
++1 Scenario_SCEN45_y_1_3_3
++1 Scenario_SCEN45_y_2_3_3
++1 Scenario_SCEN45_z_3_3
+= 1.0
+
+c_u_Scenario_SCEN45_dem_1_1_:
++0.969214 Scenario_SCEN45_y_1_1_1
++0.630325 Scenario_SCEN45_y_1_2_1
++0.647177 Scenario_SCEN45_y_1_3_1
+<= 0.9814464499999997
+
+c_u_Scenario_SCEN45_dem_2_1_:
++0.969214 Scenario_SCEN45_y_2_1_1
++0.630325 Scenario_SCEN45_y_2_2_1
++0.647177 Scenario_SCEN45_y_2_3_1
+<= 1.0
+
+c_u_Scenario_SCEN45_dem_1_2_:
++0.857494 Scenario_SCEN45_y_1_1_2
++1.236806 Scenario_SCEN45_y_1_2_2
++1.128474 Scenario_SCEN45_y_1_3_2
+<= 1.9708414750000007
+
+c_u_Scenario_SCEN45_dem_2_2_:
++0.857494 Scenario_SCEN45_y_2_1_2
++1.236806 Scenario_SCEN45_y_2_2_2
++1.128474 Scenario_SCEN45_y_2_3_2
+<= 1.0243461849999995
+
+c_u_Scenario_SCEN45_dem_1_3_:
++1.440168 Scenario_SCEN45_y_1_1_3
++1.409973 Scenario_SCEN45_y_1_2_3
++1.276495 Scenario_SCEN45_y_1_3_3
+<= 1.9708414750000007
+
+c_u_Scenario_SCEN45_dem_2_3_:
++1.440168 Scenario_SCEN45_y_2_1_3
++1.409973 Scenario_SCEN45_y_2_2_3
++1.276495 Scenario_SCEN45_y_2_3_3
+<= 1.0243461849999995
+
+c_u_Scenario_SCEN57_c_1_:
++0 ONE_VAR_CONSTANT
+<= 0.018553550000000252
+
+c_u_Scenario_SCEN57_c_2_:
++0 ONE_VAR_CONSTANT
+<= 0.010604974999999017
+
+c_u_Scenario_SCEN57_c_3_:
++0 ONE_VAR_CONSTANT
+<= 0.0
+
+c_u_Scenario_SCEN57_c_4_:
++0 ONE_VAR_CONSTANT
+<= 0.0
+
+c_u_Scenario_SCEN57_c_5_:
++0 ONE_VAR_CONSTANT
+<= 0.9756538150000005
+
+c_u_Scenario_SCEN57_c_6_:
++0 ONE_VAR_CONSTANT
+<= 0.0
+
+c_e_Scenario_SCEN57_c_13_:
++1 Scenario_SCEN57_y_1_1_1
++1 Scenario_SCEN57_y_2_1_1
++1 Scenario_SCEN57_z_1_1
+= 1.0
+
+c_e_Scenario_SCEN57_c_14_:
++1 Scenario_SCEN57_y_1_1_2
++1 Scenario_SCEN57_y_2_1_2
++1 Scenario_SCEN57_z_1_2
+= 1.0
+
+c_e_Scenario_SCEN57_c_15_:
++1 Scenario_SCEN57_y_1_1_3
++1 Scenario_SCEN57_y_2_1_3
++1 Scenario_SCEN57_z_1_3
+= 1.0
+
+c_e_Scenario_SCEN57_c_16_:
++1 Scenario_SCEN57_y_1_2_1
++1 Scenario_SCEN57_y_2_2_1
++1 Scenario_SCEN57_z_2_1
+= 1.0
+
+c_e_Scenario_SCEN57_c_17_:
++1 Scenario_SCEN57_y_1_2_2
++1 Scenario_SCEN57_y_2_2_2
++1 Scenario_SCEN57_z_2_2
+= 1.0
+
+c_e_Scenario_SCEN57_c_18_:
++1 Scenario_SCEN57_y_1_2_3
++1 Scenario_SCEN57_y_2_2_3
++1 Scenario_SCEN57_z_2_3
+= 1.0
+
+c_e_Scenario_SCEN57_c_19_:
++1 Scenario_SCEN57_y_1_3_1
++1 Scenario_SCEN57_y_2_3_1
++1 Scenario_SCEN57_z_3_1
+= 1.0
+
+c_e_Scenario_SCEN57_c_20_:
++1 Scenario_SCEN57_y_1_3_2
++1 Scenario_SCEN57_y_2_3_2
++1 Scenario_SCEN57_z_3_2
+= 1.0
+
+c_e_Scenario_SCEN57_c_21_:
++1 Scenario_SCEN57_y_1_3_3
++1 Scenario_SCEN57_y_2_3_3
++1 Scenario_SCEN57_z_3_3
+= 1.0
+
+c_u_Scenario_SCEN57_dem_1_1_:
++0.642568 Scenario_SCEN57_y_1_1_1
++1.022593 Scenario_SCEN57_y_1_2_1
++1.408248 Scenario_SCEN57_y_1_3_1
+<= 0.9814464499999997
+
+c_u_Scenario_SCEN57_dem_2_1_:
++0.642568 Scenario_SCEN57_y_2_1_1
++1.022593 Scenario_SCEN57_y_2_2_1
++1.408248 Scenario_SCEN57_y_2_3_1
+<= 1.0
+
+c_u_Scenario_SCEN57_dem_1_2_:
++0.789244 Scenario_SCEN57_y_1_1_2
++1.151584 Scenario_SCEN57_y_1_2_2
++1.191532 Scenario_SCEN57_y_1_3_2
+<= 1.9708414750000007
+
+c_u_Scenario_SCEN57_dem_2_2_:
++0.789244 Scenario_SCEN57_y_2_1_2
++1.151584 Scenario_SCEN57_y_2_2_2
++1.191532 Scenario_SCEN57_y_2_3_2
+<= 1.0243461849999995
+
+c_u_Scenario_SCEN57_dem_1_3_:
++1.23706 Scenario_SCEN57_y_1_1_3
++1.044006 Scenario_SCEN57_y_1_2_3
++1.277799 Scenario_SCEN57_y_1_3_3
+<= 1.9708414750000007
+
+c_u_Scenario_SCEN57_dem_2_3_:
++1.23706 Scenario_SCEN57_y_2_1_3
++1.044006 Scenario_SCEN57_y_2_2_3
++1.277799 Scenario_SCEN57_y_2_3_3
+<= 1.0243461849999995
+
+c_u_Scenario_SCEN68_c_1_:
++0 ONE_VAR_CONSTANT
+<= 0.018553550000000252
+
+c_u_Scenario_SCEN68_c_2_:
++0 ONE_VAR_CONSTANT
+<= 0.010604974999999017
+
+c_u_Scenario_SCEN68_c_3_:
++0 ONE_VAR_CONSTANT
+<= 0.0
+
+c_u_Scenario_SCEN68_c_4_:
++0 ONE_VAR_CONSTANT
+<= 0.0
+
+c_u_Scenario_SCEN68_c_5_:
++0 ONE_VAR_CONSTANT
+<= 0.9756538150000005
+
+c_u_Scenario_SCEN68_c_6_:
++0 ONE_VAR_CONSTANT
+<= 0.0
+
+c_e_Scenario_SCEN68_c_13_:
++1 Scenario_SCEN68_y_1_1_1
++1 Scenario_SCEN68_y_2_1_1
++1 Scenario_SCEN68_z_1_1
+= 1.0
+
+c_e_Scenario_SCEN68_c_14_:
++1 Scenario_SCEN68_y_1_1_2
++1 Scenario_SCEN68_y_2_1_2
++1 Scenario_SCEN68_z_1_2
+= 1.0
+
+c_e_Scenario_SCEN68_c_15_:
++1 Scenario_SCEN68_y_1_1_3
++1 Scenario_SCEN68_y_2_1_3
++1 Scenario_SCEN68_z_1_3
+= 1.0
+
+c_e_Scenario_SCEN68_c_16_:
++1 Scenario_SCEN68_y_1_2_1
++1 Scenario_SCEN68_y_2_2_1
++1 Scenario_SCEN68_z_2_1
+= 1.0
+
+c_e_Scenario_SCEN68_c_17_:
++1 Scenario_SCEN68_y_1_2_2
++1 Scenario_SCEN68_y_2_2_2
++1 Scenario_SCEN68_z_2_2
+= 1.0
+
+c_e_Scenario_SCEN68_c_18_:
++1 Scenario_SCEN68_y_1_2_3
++1 Scenario_SCEN68_y_2_2_3
++1 Scenario_SCEN68_z_2_3
+= 1.0
+
+c_e_Scenario_SCEN68_c_19_:
++1 Scenario_SCEN68_y_1_3_1
++1 Scenario_SCEN68_y_2_3_1
++1 Scenario_SCEN68_z_3_1
+= 1.0
+
+c_e_Scenario_SCEN68_c_20_:
++1 Scenario_SCEN68_y_1_3_2
++1 Scenario_SCEN68_y_2_3_2
++1 Scenario_SCEN68_z_3_2
+= 1.0
+
+c_e_Scenario_SCEN68_c_21_:
++1 Scenario_SCEN68_y_1_3_3
++1 Scenario_SCEN68_y_2_3_3
++1 Scenario_SCEN68_z_3_3
+= 1.0
+
+c_u_Scenario_SCEN68_dem_1_1_:
++0.938292 Scenario_SCEN68_y_1_1_1
++0.721233 Scenario_SCEN68_y_1_2_1
++0.52291 Scenario_SCEN68_y_1_3_1
+<= 0.9814464499999997
+
+c_u_Scenario_SCEN68_dem_2_1_:
++0.938292 Scenario_SCEN68_y_2_1_1
++0.721233 Scenario_SCEN68_y_2_2_1
++0.52291 Scenario_SCEN68_y_2_3_1
+<= 1.0
+
+c_u_Scenario_SCEN68_dem_1_2_:
++1.13578 Scenario_SCEN68_y_1_1_2
++1.170981 Scenario_SCEN68_y_1_2_2
++1.18485 Scenario_SCEN68_y_1_3_2
+<= 1.9708414750000007
+
+c_u_Scenario_SCEN68_dem_2_2_:
++1.13578 Scenario_SCEN68_y_2_1_2
++1.170981 Scenario_SCEN68_y_2_2_2
++1.18485 Scenario_SCEN68_y_2_3_2
+<= 1.0243461849999995
+
+c_u_Scenario_SCEN68_dem_1_3_:
++1.053241 Scenario_SCEN68_y_1_1_3
++1.168445 Scenario_SCEN68_y_1_2_3
++1.137789 Scenario_SCEN68_y_1_3_3
+<= 1.9708414750000007
+
+c_u_Scenario_SCEN68_dem_2_3_:
++1.053241 Scenario_SCEN68_y_2_1_3
++1.168445 Scenario_SCEN68_y_2_2_3
++1.137789 Scenario_SCEN68_y_2_3_3
+<= 1.0243461849999995
+
+c_u_Scenario_SCEN86_c_1_:
++0 ONE_VAR_CONSTANT
+<= 0.018553550000000252
+
+c_u_Scenario_SCEN86_c_2_:
++0 ONE_VAR_CONSTANT
+<= 0.010604974999999017
+
+c_u_Scenario_SCEN86_c_3_:
++0 ONE_VAR_CONSTANT
+<= 0.0
+
+c_u_Scenario_SCEN86_c_4_:
++0 ONE_VAR_CONSTANT
+<= 0.0
+
+c_u_Scenario_SCEN86_c_5_:
++0 ONE_VAR_CONSTANT
+<= 0.9756538150000005
+
+c_u_Scenario_SCEN86_c_6_:
++0 ONE_VAR_CONSTANT
+<= 0.0
+
+c_e_Scenario_SCEN86_c_13_:
++1 Scenario_SCEN86_y_1_1_1
++1 Scenario_SCEN86_y_2_1_1
++1 Scenario_SCEN86_z_1_1
+= 1.0
+
+c_e_Scenario_SCEN86_c_14_:
++1 Scenario_SCEN86_y_1_1_2
++1 Scenario_SCEN86_y_2_1_2
++1 Scenario_SCEN86_z_1_2
+= 1.0
+
+c_e_Scenario_SCEN86_c_15_:
++1 Scenario_SCEN86_y_1_1_3
++1 Scenario_SCEN86_y_2_1_3
++1 Scenario_SCEN86_z_1_3
+= 1.0
+
+c_e_Scenario_SCEN86_c_16_:
++1 Scenario_SCEN86_y_1_2_1
++1 Scenario_SCEN86_y_2_2_1
++1 Scenario_SCEN86_z_2_1
+= 1.0
+
+c_e_Scenario_SCEN86_c_17_:
++1 Scenario_SCEN86_y_1_2_2
++1 Scenario_SCEN86_y_2_2_2
++1 Scenario_SCEN86_z_2_2
+= 1.0
+
+c_e_Scenario_SCEN86_c_18_:
++1 Scenario_SCEN86_y_1_2_3
++1 Scenario_SCEN86_y_2_2_3
++1 Scenario_SCEN86_z_2_3
+= 1.0
+
+c_e_Scenario_SCEN86_c_19_:
++1 Scenario_SCEN86_y_1_3_1
++1 Scenario_SCEN86_y_2_3_1
++1 Scenario_SCEN86_z_3_1
+= 1.0
+
+c_e_Scenario_SCEN86_c_20_:
++1 Scenario_SCEN86_y_1_3_2
++1 Scenario_SCEN86_y_2_3_2
++1 Scenario_SCEN86_z_3_2
+= 1.0
+
+c_e_Scenario_SCEN86_c_21_:
++1 Scenario_SCEN86_y_1_3_3
++1 Scenario_SCEN86_y_2_3_3
++1 Scenario_SCEN86_z_3_3
+= 1.0
+
+c_u_Scenario_SCEN86_dem_1_1_:
++1.448784 Scenario_SCEN86_y_1_1_1
++0.993878 Scenario_SCEN86_y_1_2_1
++1.461609 Scenario_SCEN86_y_1_3_1
+<= 0.9814464499999997
+
+c_u_Scenario_SCEN86_dem_2_1_:
++1.448784 Scenario_SCEN86_y_2_1_1
++0.993878 Scenario_SCEN86_y_2_2_1
++1.461609 Scenario_SCEN86_y_2_3_1
+<= 1.0
+
+c_u_Scenario_SCEN86_dem_1_2_:
++1.239792 Scenario_SCEN86_y_1_1_2
++1.372352 Scenario_SCEN86_y_1_2_2
++1.109756 Scenario_SCEN86_y_1_3_2
+<= 1.9708414750000007
+
+c_u_Scenario_SCEN86_dem_2_2_:
++1.239792 Scenario_SCEN86_y_2_1_2
++1.372352 Scenario_SCEN86_y_2_2_2
++1.109756 Scenario_SCEN86_y_2_3_2
+<= 1.0243461849999995
+
+c_u_Scenario_SCEN86_dem_1_3_:
++1.452672 Scenario_SCEN86_y_1_1_3
++1.142926 Scenario_SCEN86_y_1_2_3
++1.315069 Scenario_SCEN86_y_1_3_3
+<= 1.9708414750000007
+
+c_u_Scenario_SCEN86_dem_2_3_:
++1.452672 Scenario_SCEN86_y_2_1_3
++1.142926 Scenario_SCEN86_y_2_2_3
++1.315069 Scenario_SCEN86_y_2_3_3
+<= 1.0243461849999995
+
+bounds
+   1 <= ONE_VAR_CONSTANT <= 1
+   0.0 <= Scenario_SCEN2_y_1_1_1 <= 1.0
+   0.0 <= Scenario_SCEN2_y_2_1_1 <= 1.0
+   0.0 <= Scenario_SCEN2_z_1_1 <= 1.0
+   0.0 <= Scenario_SCEN2_y_1_2_1 <= 1.0
+   0.0 <= Scenario_SCEN2_y_2_2_1 <= 1.0
+   0.0 <= Scenario_SCEN2_z_2_1 <= 1.0
+   0.0 <= Scenario_SCEN2_y_1_3_1 <= 1.0
+   0.0 <= Scenario_SCEN2_y_2_3_1 <= 1.0
+   0.0 <= Scenario_SCEN2_z_3_1 <= 1.0
+   0.0 <= Scenario_SCEN2_y_1_1_2 <= 1.0
+   0.0 <= Scenario_SCEN2_y_2_1_2 <= 1.0
+   0.0 <= Scenario_SCEN2_z_1_2 <= 1.0
+   0.0 <= Scenario_SCEN2_y_1_2_2 <= 1.0
+   0.0 <= Scenario_SCEN2_y_2_2_2 <= 1.0
+   0.0 <= Scenario_SCEN2_z_2_2 <= 1.0
+   0.0 <= Scenario_SCEN2_y_1_3_2 <= 1.0
+   0.0 <= Scenario_SCEN2_y_2_3_2 <= 1.0
+   0.0 <= Scenario_SCEN2_z_3_2 <= 1.0
+   0.0 <= Scenario_SCEN2_y_1_1_3 <= 1.0
+   0.0 <= Scenario_SCEN2_y_2_1_3 <= 1.0
+   0.0 <= Scenario_SCEN2_z_1_3 <= 1.0
+   0.0 <= Scenario_SCEN2_y_1_2_3 <= 1.0
+   0.0 <= Scenario_SCEN2_y_2_2_3 <= 1.0
+   0.0 <= Scenario_SCEN2_z_2_3 <= 1.0
+   0.0 <= Scenario_SCEN2_y_1_3_3 <= 1.0
+   0.0 <= Scenario_SCEN2_y_2_3_3 <= 1.0
+   0.0 <= Scenario_SCEN2_z_3_3 <= 1.0
+   0.0 <= Scenario_SCEN45_y_1_1_1 <= 1.0
+   0.0 <= Scenario_SCEN45_y_2_1_1 <= 1.0
+   0.0 <= Scenario_SCEN45_z_1_1 <= 1.0
+   0.0 <= Scenario_SCEN45_y_1_2_1 <= 1.0
+   0.0 <= Scenario_SCEN45_y_2_2_1 <= 1.0
+   0.0 <= Scenario_SCEN45_z_2_1 <= 1.0
+   0.0 <= Scenario_SCEN45_y_1_3_1 <= 1.0
+   0.0 <= Scenario_SCEN45_y_2_3_1 <= 1.0
+   0.0 <= Scenario_SCEN45_z_3_1 <= 1.0
+   0.0 <= Scenario_SCEN45_y_1_1_2 <= 1.0
+   0.0 <= Scenario_SCEN45_y_2_1_2 <= 1.0
+   0.0 <= Scenario_SCEN45_z_1_2 <= 1.0
+   0.0 <= Scenario_SCEN45_y_1_2_2 <= 1.0
+   0.0 <= Scenario_SCEN45_y_2_2_2 <= 1.0
+   0.0 <= Scenario_SCEN45_z_2_2 <= 1.0
+   0.0 <= Scenario_SCEN45_y_1_3_2 <= 1.0
+   0.0 <= Scenario_SCEN45_y_2_3_2 <= 1.0
+   0.0 <= Scenario_SCEN45_z_3_2 <= 1.0
+   0.0 <= Scenario_SCEN45_y_1_1_3 <= 1.0
+   0.0 <= Scenario_SCEN45_y_2_1_3 <= 1.0
+   0.0 <= Scenario_SCEN45_z_1_3 <= 1.0
+   0.0 <= Scenario_SCEN45_y_1_2_3 <= 1.0
+   0.0 <= Scenario_SCEN45_y_2_2_3 <= 1.0
+   0.0 <= Scenario_SCEN45_z_2_3 <= 1.0
+   0.0 <= Scenario_SCEN45_y_1_3_3 <= 1.0
+   0.0 <= Scenario_SCEN45_y_2_3_3 <= 1.0
+   0.0 <= Scenario_SCEN45_z_3_3 <= 1.0
+   0.0 <= Scenario_SCEN57_y_1_1_1 <= 1.0
+   0.0 <= Scenario_SCEN57_y_2_1_1 <= 1.0
+   0.0 <= Scenario_SCEN57_z_1_1 <= 1.0
+   0.0 <= Scenario_SCEN57_y_1_2_1 <= 1.0
+   0.0 <= Scenario_SCEN57_y_2_2_1 <= 1.0
+   0.0 <= Scenario_SCEN57_z_2_1 <= 1.0
+   0.0 <= Scenario_SCEN57_y_1_3_1 <= 1.0
+   0.0 <= Scenario_SCEN57_y_2_3_1 <= 1.0
+   0.0 <= Scenario_SCEN57_z_3_1 <= 1.0
+   0.0 <= Scenario_SCEN57_y_1_1_2 <= 1.0
+   0.0 <= Scenario_SCEN57_y_2_1_2 <= 1.0
+   0.0 <= Scenario_SCEN57_z_1_2 <= 1.0
+   0.0 <= Scenario_SCEN57_y_1_2_2 <= 1.0
+   0.0 <= Scenario_SCEN57_y_2_2_2 <= 1.0
+   0.0 <= Scenario_SCEN57_z_2_2 <= 1.0
+   0.0 <= Scenario_SCEN57_y_1_3_2 <= 1.0
+   0.0 <= Scenario_SCEN57_y_2_3_2 <= 1.0
+   0.0 <= Scenario_SCEN57_z_3_2 <= 1.0
+   0.0 <= Scenario_SCEN57_y_1_1_3 <= 1.0
+   0.0 <= Scenario_SCEN57_y_2_1_3 <= 1.0
+   0.0 <= Scenario_SCEN57_z_1_3 <= 1.0
+   0.0 <= Scenario_SCEN57_y_1_2_3 <= 1.0
+   0.0 <= Scenario_SCEN57_y_2_2_3 <= 1.0
+   0.0 <= Scenario_SCEN57_z_2_3 <= 1.0
+   0.0 <= Scenario_SCEN57_y_1_3_3 <= 1.0
+   0.0 <= Scenario_SCEN57_y_2_3_3 <= 1.0
+   0.0 <= Scenario_SCEN57_z_3_3 <= 1.0
+   0.0 <= Scenario_SCEN68_y_1_1_1 <= 1.0
+   0.0 <= Scenario_SCEN68_y_2_1_1 <= 1.0
+   0.0 <= Scenario_SCEN68_z_1_1 <= 1.0
+   0.0 <= Scenario_SCEN68_y_1_2_1 <= 1.0
+   0.0 <= Scenario_SCEN68_y_2_2_1 <= 1.0
+   0.0 <= Scenario_SCEN68_z_2_1 <= 1.0
+   0.0 <= Scenario_SCEN68_y_1_3_1 <= 1.0
+   0.0 <= Scenario_SCEN68_y_2_3_1 <= 1.0
+   0.0 <= Scenario_SCEN68_z_3_1 <= 1.0
+   0.0 <= Scenario_SCEN68_y_1_1_2 <= 1.0
+   0.0 <= Scenario_SCEN68_y_2_1_2 <= 1.0
+   0.0 <= Scenario_SCEN68_z_1_2 <= 1.0
+   0.0 <= Scenario_SCEN68_y_1_2_2 <= 1.0
+   0.0 <= Scenario_SCEN68_y_2_2_2 <= 1.0
+   0.0 <= Scenario_SCEN68_z_2_2 <= 1.0
+   0.0 <= Scenario_SCEN68_y_1_3_2 <= 1.0
+   0.0 <= Scenario_SCEN68_y_2_3_2 <= 1.0
+   0.0 <= Scenario_SCEN68_z_3_2 <= 1.0
+   0.0 <= Scenario_SCEN68_y_1_1_3 <= 1.0
+   0.0 <= Scenario_SCEN68_y_2_1_3 <= 1.0
+   0.0 <= Scenario_SCEN68_z_1_3 <= 1.0
+   0.0 <= Scenario_SCEN68_y_1_2_3 <= 1.0
+   0.0 <= Scenario_SCEN68_y_2_2_3 <= 1.0
+   0.0 <= Scenario_SCEN68_z_2_3 <= 1.0
+   0.0 <= Scenario_SCEN68_y_1_3_3 <= 1.0
+   0.0 <= Scenario_SCEN68_y_2_3_3 <= 1.0
+   0.0 <= Scenario_SCEN68_z_3_3 <= 1.0
+   0.0 <= Scenario_SCEN86_y_1_1_1 <= 1.0
+   0.0 <= Scenario_SCEN86_y_2_1_1 <= 1.0
+   0.0 <= Scenario_SCEN86_z_1_1 <= 1.0
+   0.0 <= Scenario_SCEN86_y_1_2_1 <= 1.0
+   0.0 <= Scenario_SCEN86_y_2_2_1 <= 1.0
+   0.0 <= Scenario_SCEN86_z_2_1 <= 1.0
+   0.0 <= Scenario_SCEN86_y_1_3_1 <= 1.0
+   0.0 <= Scenario_SCEN86_y_2_3_1 <= 1.0
+   0.0 <= Scenario_SCEN86_z_3_1 <= 1.0
+   0.0 <= Scenario_SCEN86_y_1_1_2 <= 1.0
+   0.0 <= Scenario_SCEN86_y_2_1_2 <= 1.0
+   0.0 <= Scenario_SCEN86_z_1_2 <= 1.0
+   0.0 <= Scenario_SCEN86_y_1_2_2 <= 1.0
+   0.0 <= Scenario_SCEN86_y_2_2_2 <= 1.0
+   0.0 <= Scenario_SCEN86_z_2_2 <= 1.0
+   0.0 <= Scenario_SCEN86_y_1_3_2 <= 1.0
+   0.0 <= Scenario_SCEN86_y_2_3_2 <= 1.0
+   0.0 <= Scenario_SCEN86_z_3_2 <= 1.0
+   0.0 <= Scenario_SCEN86_y_1_1_3 <= 1.0
+   0.0 <= Scenario_SCEN86_y_2_1_3 <= 1.0
+   0.0 <= Scenario_SCEN86_z_1_3 <= 1.0
+   0.0 <= Scenario_SCEN86_y_1_2_3 <= 1.0
+   0.0 <= Scenario_SCEN86_y_2_2_3 <= 1.0
+   0.0 <= Scenario_SCEN86_z_2_3 <= 1.0
+   0.0 <= Scenario_SCEN86_y_1_3_3 <= 1.0
+   0.0 <= Scenario_SCEN86_y_2_3_3 <= 1.0
+   0.0 <= Scenario_SCEN86_z_3_3 <= 1.0
+binary
+  Scenario_SCEN2_y_1_1_1
+  Scenario_SCEN2_y_2_1_1
+  Scenario_SCEN2_z_1_1
+  Scenario_SCEN2_y_1_2_1
+  Scenario_SCEN2_y_2_2_1
+  Scenario_SCEN2_z_2_1
+  Scenario_SCEN2_y_1_3_1
+  Scenario_SCEN2_y_2_3_1
+  Scenario_SCEN2_z_3_1
+  Scenario_SCEN2_y_1_1_2
+  Scenario_SCEN2_y_2_1_2
+  Scenario_SCEN2_z_1_2
+  Scenario_SCEN2_y_1_2_2
+  Scenario_SCEN2_y_2_2_2
+  Scenario_SCEN2_z_2_2
+  Scenario_SCEN2_y_1_3_2
+  Scenario_SCEN2_y_2_3_2
+  Scenario_SCEN2_z_3_2
+  Scenario_SCEN2_y_1_1_3
+  Scenario_SCEN2_y_2_1_3
+  Scenario_SCEN2_z_1_3
+  Scenario_SCEN2_y_1_2_3
+  Scenario_SCEN2_y_2_2_3
+  Scenario_SCEN2_z_2_3
+  Scenario_SCEN2_y_1_3_3
+  Scenario_SCEN2_y_2_3_3
+  Scenario_SCEN2_z_3_3
+  Scenario_SCEN45_y_1_1_1
+  Scenario_SCEN45_y_2_1_1
+  Scenario_SCEN45_z_1_1
+  Scenario_SCEN45_y_1_2_1
+  Scenario_SCEN45_y_2_2_1
+  Scenario_SCEN45_z_2_1
+  Scenario_SCEN45_y_1_3_1
+  Scenario_SCEN45_y_2_3_1
+  Scenario_SCEN45_z_3_1
+  Scenario_SCEN45_y_1_1_2
+  Scenario_SCEN45_y_2_1_2
+  Scenario_SCEN45_z_1_2
+  Scenario_SCEN45_y_1_2_2
+  Scenario_SCEN45_y_2_2_2
+  Scenario_SCEN45_z_2_2
+  Scenario_SCEN45_y_1_3_2
+  Scenario_SCEN45_y_2_3_2
+  Scenario_SCEN45_z_3_2
+  Scenario_SCEN45_y_1_1_3
+  Scenario_SCEN45_y_2_1_3
+  Scenario_SCEN45_z_1_3
+  Scenario_SCEN45_y_1_2_3
+  Scenario_SCEN45_y_2_2_3
+  Scenario_SCEN45_z_2_3
+  Scenario_SCEN45_y_1_3_3
+  Scenario_SCEN45_y_2_3_3
+  Scenario_SCEN45_z_3_3
+  Scenario_SCEN57_y_1_1_1
+  Scenario_SCEN57_y_2_1_1
+  Scenario_SCEN57_z_1_1
+  Scenario_SCEN57_y_1_2_1
+  Scenario_SCEN57_y_2_2_1
+  Scenario_SCEN57_z_2_1
+  Scenario_SCEN57_y_1_3_1
+  Scenario_SCEN57_y_2_3_1
+  Scenario_SCEN57_z_3_1
+  Scenario_SCEN57_y_1_1_2
+  Scenario_SCEN57_y_2_1_2
+  Scenario_SCEN57_z_1_2
+  Scenario_SCEN57_y_1_2_2
+  Scenario_SCEN57_y_2_2_2
+  Scenario_SCEN57_z_2_2
+  Scenario_SCEN57_y_1_3_2
+  Scenario_SCEN57_y_2_3_2
+  Scenario_SCEN57_z_3_2
+  Scenario_SCEN57_y_1_1_3
+  Scenario_SCEN57_y_2_1_3
+  Scenario_SCEN57_z_1_3
+  Scenario_SCEN57_y_1_2_3
+  Scenario_SCEN57_y_2_2_3
+  Scenario_SCEN57_z_2_3
+  Scenario_SCEN57_y_1_3_3
+  Scenario_SCEN57_y_2_3_3
+  Scenario_SCEN57_z_3_3
+  Scenario_SCEN68_y_1_1_1
+  Scenario_SCEN68_y_2_1_1
+  Scenario_SCEN68_z_1_1
+  Scenario_SCEN68_y_1_2_1
+  Scenario_SCEN68_y_2_2_1
+  Scenario_SCEN68_z_2_1
+  Scenario_SCEN68_y_1_3_1
+  Scenario_SCEN68_y_2_3_1
+  Scenario_SCEN68_z_3_1
+  Scenario_SCEN68_y_1_1_2
+  Scenario_SCEN68_y_2_1_2
+  Scenario_SCEN68_z_1_2
+  Scenario_SCEN68_y_1_2_2
+  Scenario_SCEN68_y_2_2_2
+  Scenario_SCEN68_z_2_2
+  Scenario_SCEN68_y_1_3_2
+  Scenario_SCEN68_y_2_3_2
+  Scenario_SCEN68_z_3_2
+  Scenario_SCEN68_y_1_1_3
+  Scenario_SCEN68_y_2_1_3
+  Scenario_SCEN68_z_1_3
+  Scenario_SCEN68_y_1_2_3
+  Scenario_SCEN68_y_2_2_3
+  Scenario_SCEN68_z_2_3
+  Scenario_SCEN68_y_1_3_3
+  Scenario_SCEN68_y_2_3_3
+  Scenario_SCEN68_z_3_3
+  Scenario_SCEN86_y_1_1_1
+  Scenario_SCEN86_y_2_1_1
+  Scenario_SCEN86_z_1_1
+  Scenario_SCEN86_y_1_2_1
+  Scenario_SCEN86_y_2_2_1
+  Scenario_SCEN86_z_2_1
+  Scenario_SCEN86_y_1_3_1
+  Scenario_SCEN86_y_2_3_1
+  Scenario_SCEN86_z_3_1
+  Scenario_SCEN86_y_1_1_2
+  Scenario_SCEN86_y_2_1_2
+  Scenario_SCEN86_z_1_2
+  Scenario_SCEN86_y_1_2_2
+  Scenario_SCEN86_y_2_2_2
+  Scenario_SCEN86_z_2_2
+  Scenario_SCEN86_y_1_3_2
+  Scenario_SCEN86_y_2_3_2
+  Scenario_SCEN86_z_3_2
+  Scenario_SCEN86_y_1_1_3
+  Scenario_SCEN86_y_2_1_3
+  Scenario_SCEN86_z_1_3
+  Scenario_SCEN86_y_1_2_3
+  Scenario_SCEN86_y_2_2_3
+  Scenario_SCEN86_z_2_3
+  Scenario_SCEN86_y_1_3_3
+  Scenario_SCEN86_y_2_3_3
+  Scenario_SCEN86_z_3_3
+end
