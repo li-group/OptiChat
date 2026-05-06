@@ -9,17 +9,42 @@ c^T x_EV: 154.6795607713588
 Delta_0: -50.6232610879062
 C_comp: -50.6232610879062
 sum_K p_s Q_s(x_star): 40.273037895
+sum_K p_s Q_s(x_EV): 91.1678482
 K budget RHS: 90.8962989829062
 sum_K p_s Delta_s + C_comp: 0.2715492170937921
 
+Recourse consistency check
+--------------------------
+Termination: optimal
+Stored sum_K p_s Q_s(x_EV): 91.1678482
+Solved K recourse objective: 91.1678482
+Difference: 0.0
+
+K-budget diagnostics
+--------------------
+Budget RHS before LP constant shift: 90.8962989829062
+K-budget body constant: 0.0
+Effective LP RHS after constant shift: 90.8962989829062
+sum_p_K: 0.025
+sum_p_K * c^T x_EV: 3.86698901928397
+Weighted true objective constants included: 0.0
+
+Recourse objective extraction diagnostics
+-----------------------------------------
+SCEN2: constant_before_fixing=0.0, included_constant=True, first_stage_terms_removed=12, recourse_terms_kept=27
+SCEN45: constant_before_fixing=0.0, included_constant=True, first_stage_terms_removed=12, recourse_terms_kept=27
+SCEN57: constant_before_fixing=0.0, included_constant=True, first_stage_terms_removed=12, recourse_terms_kept=27
+SCEN68: constant_before_fixing=0.0, included_constant=True, first_stage_terms_removed=12, recourse_terms_kept=27
+SCEN86: constant_before_fixing=0.0, included_constant=True, first_stage_terms_removed=12, recourse_terms_kept=27
+
 IIS contents
 ------------
-Number of IIS constraints: 71
+Number of IIS constraints: 72
 Number of IIS variable bounds: 0
 K_budget rows in IIS: 1
 
 IIS scenario constraint counts:
-  SCEN2: 14
+  SCEN2: 15
   SCEN45: 14
   SCEN57: 13
   SCEN68: 15
@@ -32,3 +57,5 @@ Output files:
   /Users/ahluwala/Documents/GitHub/OptiChat/XSP_MERL/xsp_project/results_K_system_IIS/K_system_iis.ilp
   /Users/ahluwala/Documents/GitHub/OptiChat/XSP_MERL/xsp_project/results_K_system_IIS/K_system_iis_constraints.csv
   /Users/ahluwala/Documents/GitHub/OptiChat/XSP_MERL/xsp_project/results_K_system_IIS/K_system_iis_bounds.csv
+  /Users/ahluwala/Documents/GitHub/OptiChat/XSP_MERL/xsp_project/results_K_system_IIS/K_system_diagnostics.csv
+  /Users/ahluwala/Documents/GitHub/OptiChat/XSP_MERL/xsp_project/results_K_system_IIS/K_system_recourse_objective_diagnostics.csv

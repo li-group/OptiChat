@@ -1,0 +1,3 @@
+solution,first_stage_cost_cTx,expected_recourse_cost_sum_p_Q,total_expected_objective_cTx_plus_sum_p_Q,unweighted_sum_Q_for_diagnostics,num_scenarios,probability_sum
+x_star,205.302821859265,1629.2650650450018,1834.5678869042667,325853.01300899993,200,1.0
+x_EV,154.6795607713588,2413.7264937100003,2568.406054481359,482745.2987420001,200,1.0

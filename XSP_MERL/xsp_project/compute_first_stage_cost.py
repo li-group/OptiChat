@@ -1,3 +1,4 @@
+# compute_first_stage_cost.py
 from pathlib import Path
 from types import SimpleNamespace
 import csv
@@ -208,6 +209,10 @@ print("First-stage costs")
 print("============================================================")
 print("c^T x_star:", first_stage_cost_x_star)
 print("c^T x_EV  :", first_stage_cost_x_ev)
+
+obj = get_single_active_objective(model)
+repn = generate_standard_repn(obj.expr, compute_values=False)
+print("Objective constant in first-stage-cost model:", repn.constant)
 
 
 # ------------------------------------------------------------

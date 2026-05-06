@@ -17,7 +17,6 @@ out_dir.mkdir(exist_ok=True)
 
 cfg = SimpleNamespace(smps_dir=str(smps_dir))
 
-
 # ------------------------------------------------------------------
 # Parse scenario names
 # ------------------------------------------------------------------
@@ -25,7 +24,7 @@ cfg = SimpleNamespace(smps_dir=str(smps_dir))
 parsed = smps_module._ensure_parsed(cfg.smps_dir)
 scenario_names = [s["name"] for s in parsed["scenarios"]]
 
-print("Number of scenarios:", len(scenario_names))
+print("Number of scenarios::::::::", len(scenario_names))
 print("First five scenarios:", scenario_names[:5])
 
 
@@ -83,12 +82,12 @@ print("Variables:", num_vars)
 print("Constraints:", num_cons)
 print("Objectives:", num_objs)
 
-
 # ------------------------------------------------------------------
 # Solve with Gurobi
 # ------------------------------------------------------------------
 
 solve_now = True
+# solve_now = False
 
 if solve_now:
     print("\nSolving EF with Gurobi...")
@@ -108,7 +107,6 @@ if solve_now:
 # ------------------------------------------------------------------
 # Export solution values
 # ------------------------------------------------------------------
-
 sol_path = out_dir / "ef_solution_values.csv"
 
 with open(sol_path, "w") as f:
@@ -120,3 +118,33 @@ with open(sol_path, "w") as f:
 
 print("\nWrote EF solution values to:")
 print(sol_path)
+
+
+print("Number of scenarios::::::::", len(scenario_names))
+print("First five scenarios:", scenario_names[:5])
+
+print("\nEF summary:")
+print("Variables:", num_vars)
+print("Constraints:", num_cons)
+print("Objectives:", num_objs)
+
+
+###########################
+# Run below to look at constraints.
+###########################
+
+from pyomo.repn.standard_repn import generate_standard_repn
+import pyomo.environ as pyo
+
+# Print constraints involving z variables
+for c in ef.component_data_objects(pyo.Constraint, active=True):
+    repn = generate_standard_repn(c.body)
+
+    if repn.linear_vars is None:
+        continue
+
+    var_names = [v.name for v in repn.linear_vars]
+
+    if any(".z_" in name or "_z_" in name for name in var_names):
+        print("\nCONSTRAINT:", c.name)
+        print(c.expr)

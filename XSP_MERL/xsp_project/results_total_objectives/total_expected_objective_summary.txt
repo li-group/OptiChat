@@ -1,0 +1,15 @@
+Total expected objective summary
+================================
+
+For x_star:
+  c^T x_star:                  205.302821859265
+  sum_s p_s Q_s(x_star):       1629.2650650450018
+  c^T x_star + sum_s p_s Q_s:  1834.5678869042667
+
+For x_EV:
+  c^T x_EV:                    154.6795607713588
+  sum_s p_s Q_s(x_EV):         2413.7264937100003
+  c^T x_EV + sum_s p_s Q_s:    2568.406054481359
+
+Diagnostic:
+  z_EEV - z_SP:                733.8381675770925
