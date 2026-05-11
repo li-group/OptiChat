@@ -1,0 +1,19 @@
+dummy_demand_tssp x_star and x_EV solve summary
+=================================
+
+SMPS directory: /Users/ahluwala/Documents/GitHub/OptiChat/XSP_MERL/xsp_project/dummy_demand_tssp
+Number of scenarios: 10
+Probability sum: 1.0
+Root stage: ROOT
+Number of first-stage variables: 1
+
+z_SP: 95.00000000000001
+Expected-value deterministic objective: 55.0
+
+Files written:
+  x_star.csv
+  x_star_root_solution_raw.csv
+  x_EV.csv
+  first_stage_variables.csv
+  scenario_summary.csv
+  expected_value_modifications.csv

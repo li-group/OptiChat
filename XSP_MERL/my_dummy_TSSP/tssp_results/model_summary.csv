@@ -1,0 +1,16 @@
+quantity,value,description
+x_star,80.0,First-stage solution from the stochastic extensive-form model
+stochastic_model_objective,95.0,Objective reported by the stochastic extensive-form model
+x_star_first_stage_cost,80.0,First-stage cost c*x_star
+x_star_expected_recourse_cost,15.0,"Expected recourse cost E[Q(x_star, D)]"
+x_star_expected_total_cost_RP,95.0,Recourse problem objective RP
+x_EV,55.0,First-stage solution from the expected-value model
+expected_value_model_objective,55.0,Objective reported by the expected-value model
+x_EV_first_stage_cost,55.0,First-stage cost c*x_EV
+x_EV_expected_recourse_cost,62.5,"Expected recourse cost E[Q(x_EV, D)] evaluated on full scenarios"
+x_EV_expected_total_cost_EEV,117.5,"Expected result of using the expected-value solution, EEV"
+VSS,22.5,Value of the stochastic solution: EEV - RP
+Delta_0,-25.0,First-stage difference c*x_EV - c*x_star
+C_comp,-25.0,Compensation budget Delta_0 + sum_{s in G} p_s Delta_s
+minimal_bad_subset_size,3,Smallest number of bad scenarios selected
+minimal_bad_subset_plus_C_comp,12.5,sum_{s in K} p_s Delta_s + C_comp

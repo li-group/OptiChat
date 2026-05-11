@@ -1,0 +1,11 @@
+scenario,termination_condition,Q_value,num_fixed_first_stage_vars
+SCEN001,optimal,0.0,1
+SCEN002,optimal,0.0,1
+SCEN003,optimal,0.0,1
+SCEN004,optimal,0.0,1
+SCEN005,optimal,0.0,1
+SCEN006,optimal,0.0,1
+SCEN007,optimal,0.0,1
+SCEN008,optimal,0.0,1
+SCEN009,optimal,50.0,1
+SCEN010,optimal,100.0,1

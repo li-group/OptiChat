@@ -1,0 +1,136 @@
+Dummy demand two-stage stochastic program
+================================================================================
+
+Data
+----
+First-stage unit cost c = 1.0000
+Recourse unit cost r = 5.0000
+Number of scenarios = 10
+Demand scenarios = [10.0, 20.0, 30.0, 40.0, 50.0, 60.0, 70.0, 80.0, 90.0, 100.0]
+Scenario probability = 0.1000
+Expected demand = 55.0000
+
+Scenario table
+--------------
+scenario       demand    probability
+       0        10.00         0.1000
+       1        20.00         0.1000
+       2        30.00         0.1000
+       3        40.00         0.1000
+       4        50.00         0.1000
+       5        60.00         0.1000
+       6        70.00         0.1000
+       7        80.00         0.1000
+       8        90.00         0.1000
+       9       100.00         0.1000
+
+Stochastic extensive-form solution
+-----------------------------------
+x_star = 80.0000
+Stochastic model objective = 95.0000
+First-stage cost c*x_star = 80.0000
+
+  s   demand     y_star_s    Q_s(x_star)      p_s Q_s
+  0    10.00       0.0000         0.0000       0.0000
+  1    20.00       0.0000         0.0000       0.0000
+  2    30.00       0.0000         0.0000       0.0000
+  3    40.00       0.0000         0.0000       0.0000
+  4    50.00       0.0000         0.0000       0.0000
+  5    60.00       0.0000         0.0000       0.0000
+  6    70.00       0.0000         0.0000       0.0000
+  7    80.00       0.0000         0.0000       0.0000
+  8    90.00      10.0000        50.0000       5.0000
+  9   100.00      20.0000       100.0000      10.0000
+
+Expected-value model solution
+-----------------------------
+x_EV = 55.0000
+Expected-value model objective = 55.0000
+Expected-value model y = 0.0000
+First-stage cost c*x_EV = 55.0000
+
+Evaluation of stochastic solution x_star
+--------------------------------------------------------------------------------
+x = 80.0000
+First-stage cost c*x = 80.0000
+Expected recourse cost E[Q(x,D)] = 15.0000
+Expected total cost = 95.0000
+
+  s   demand     prob   shortage       Q_s(x)     p_s Q_s(x)   scenario total
+  0    10.00   0.1000       0.00         0.00           0.00            80.00
+  1    20.00   0.1000       0.00         0.00           0.00            80.00
+  2    30.00   0.1000       0.00         0.00           0.00            80.00
+  3    40.00   0.1000       0.00         0.00           0.00            80.00
+  4    50.00   0.1000       0.00         0.00           0.00            80.00
+  5    60.00   0.1000       0.00         0.00           0.00            80.00
+  6    70.00   0.1000       0.00         0.00           0.00            80.00
+  7    80.00   0.1000       0.00         0.00           0.00            80.00
+  8    90.00   0.1000      10.00        50.00           5.00           130.00
+  9   100.00   0.1000      20.00       100.00          10.00           180.00
+
+Evaluation of expected-value solution x_EV
+--------------------------------------------------------------------------------
+x = 55.0000
+First-stage cost c*x = 55.0000
+Expected recourse cost E[Q(x,D)] = 62.5000
+Expected total cost = 117.5000
+
+  s   demand     prob   shortage       Q_s(x)     p_s Q_s(x)   scenario total
+  0    10.00   0.1000       0.00         0.00           0.00            55.00
+  1    20.00   0.1000       0.00         0.00           0.00            55.00
+  2    30.00   0.1000       0.00         0.00           0.00            55.00
+  3    40.00   0.1000       0.00         0.00           0.00            55.00
+  4    50.00   0.1000       0.00         0.00           0.00            55.00
+  5    60.00   0.1000       5.00        25.00           2.50            80.00
+  6    70.00   0.1000      15.00        75.00           7.50           130.00
+  7    80.00   0.1000      25.00       125.00          12.50           180.00
+  8    90.00   0.1000      35.00       175.00          17.50           230.00
+  9   100.00   0.1000      45.00       225.00          22.50           280.00
+
+Comparison
+----------
+RP  = stochastic optimum expected cost      = 95.0000
+EEV = expected cost using x_EV in scenarios = 117.5000
+VSS = EEV - RP                              = 22.5000
+
+Scenario-wise regret decomposition
+-----------------------------------
+Delta_s = Q_s(x_EV) - Q_s(x_star)
+Delta_0 = c*x_EV - c*x_star
+Delta_0 = -25.0000
+sum_{s in G} p_s Delta_s = 0.0000
+sum_{s in B} p_s Delta_s = 47.5000
+C_comp = Delta_0 + sum_{s in G} p_s Delta_s = -25.0000
+VSS from decomposition = 22.5000
+Decomposition error = 0.00000000
+
+  s   demand     Q_star       Q_EV      Delta_s    p Delta_s    class
+  0    10.00       0.00       0.00         0.00         0.00     good
+  1    20.00       0.00       0.00         0.00         0.00     good
+  2    30.00       0.00       0.00         0.00         0.00     good
+  3    40.00       0.00       0.00         0.00         0.00     good
+  4    50.00       0.00       0.00         0.00         0.00     good
+  5    60.00       0.00      25.00        25.00         2.50      bad
+  6    70.00       0.00      75.00        75.00         7.50      bad
+  7    80.00       0.00     125.00       125.00        12.50      bad
+  8    90.00      50.00     175.00       125.00        12.50      bad
+  9   100.00     100.00     225.00       125.00        12.50      bad
+
+Good scenarios G = [0, 1, 2, 3, 4]
+Bad scenarios  B = [5, 6, 7, 8, 9]
+
+Minimal bad scenario subset
+---------------------------
+Status = found
+K = [7, 8, 9]
+sum_{s in K} p_s Delta_s = 37.5000
+sum_{s in K} p_s Delta_s + C_comp = 12.5000
+
+ rank   s   demand      Delta_s    p Delta_s    cum p Delta   cum + C_comp
+    1   7    80.00       125.00        12.50          12.50         -12.50
+    2   8    90.00       125.00        12.50          25.00           0.00
+    3   9   100.00       125.00        12.50          37.50          12.50
+
+Note
+----
+With these fixed data and costs, the stochastic objective can have multiple optimal first-stage solutions. Gurobi may return any optimal extreme point. The reported x_star, Q_s(x_star), regrets, and minimal bad subset are computed from the value returned by the solver.

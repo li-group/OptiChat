@@ -1,0 +1,5 @@
+constraint_name,kind,scenario,sense,rhs,row_expression
+c_u_K_budget_,K_budget,,<,40.0,0.5 Scenario_SCEN008_y + 0.5 Scenario_SCEN009_y + 0.5 Scenario_SCEN010_y
+c_l_Scenario_SCEN008_DEMAND_,scenario_constraint,SCEN008,>,25.0,Scenario_SCEN008_y
+c_l_Scenario_SCEN009_DEMAND_,scenario_constraint,SCEN009,>,35.0,Scenario_SCEN009_y
+c_l_Scenario_SCEN010_DEMAND_,scenario_constraint,SCEN010,>,45.0,Scenario_SCEN010_y

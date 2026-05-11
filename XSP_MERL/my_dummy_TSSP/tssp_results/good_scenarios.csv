@@ -1,0 +1,6 @@
+scenario,demand,probability,Q_s_x_star,Q_s_x_EV,Delta_s,p_s_Delta_s,classification
+0,10.0,0.1,0.0,0.0,0.0,0.0,good
+1,20.0,0.1,0.0,0.0,0.0,0.0,good
+2,30.0,0.1,0.0,0.0,0.0,0.0,good
+3,40.0,0.1,0.0,0.0,0.0,0.0,good
+4,50.0,0.1,0.0,0.0,0.0,0.0,good

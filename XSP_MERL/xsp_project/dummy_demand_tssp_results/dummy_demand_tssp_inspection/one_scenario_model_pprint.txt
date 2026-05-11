@@ -1,0 +1,22 @@
+2 Var Declarations
+    x : Size=1, Index=None
+        Key  : Lower : Value : Upper : Fixed : Stale : Domain
+        None :   0.0 :  None : 100.0 : False :  True : NonNegativeReals
+    y : Size=1, Index=None
+        Key  : Lower : Value : Upper                   : Fixed : Stale : Domain
+        None :   0.0 :  None : 1.7976931348623157e+308 : False :  True : NonNegativeReals
+
+1 Objective Declarations
+    objective : Size=1, Index=None, Active=True
+        Key  : Active : Sense    : Expression
+        None :   True : minimize : x + 5.0*y
+
+2 Constraint Declarations
+    DEMAND : Size=1, Index=None, Active=True
+        Key  : Lower : Body  : Upper : Active
+        None :  10.0 : x + y :  +Inf :   True
+    DUMMY : Size=1, Index=None, Active=True
+        Key  : Lower : Body : Upper : Active
+        None :   0.0 :    x :  +Inf :   True
+
+5 Declarations: x y DUMMY DEMAND objective

@@ -1,0 +1,11 @@
+scenario,Q_x_EV,Q_x_star,Delta,classification
+SCEN001,0.0,0.0,0.0,good
+SCEN002,0.0,0.0,0.0,good
+SCEN003,0.0,0.0,0.0,good
+SCEN004,0.0,0.0,0.0,good
+SCEN005,0.0,0.0,0.0,good
+SCEN006,25.0,0.0,25.0,bad
+SCEN007,75.0,0.0,75.0,bad
+SCEN008,125.0,0.0,125.0,bad
+SCEN009,175.0,50.0,125.0,bad
+SCEN010,225.0,100.0,125.0,bad

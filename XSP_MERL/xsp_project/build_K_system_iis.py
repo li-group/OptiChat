@@ -36,7 +36,8 @@ import mpisppy.problem_io.smps_module as smps_module
 # Settings
 # ============================================================
 
-DATA_FOLDER_NAME = "dcap233_200"
+# DATA_FOLDER_NAME = "dcap233_200"
+DATA_FOLDER_NAME = "dummy_demand_tssp"
 
 # General numerical tolerances
 TOL = 1e-8
@@ -65,14 +66,14 @@ OUTPUT_FOLDER = "results_K_system_IIS"
 project_dir = Path(__file__).resolve().parent
 smps_dir = project_dir / DATA_FOLDER_NAME
 
-x_ev_path = project_dir / RESULTS_XSTAR_XEV / "x_EV.csv"
-scenario_summary_path = project_dir / RESULTS_XSTAR_XEV / "scenario_summary.csv"
-good_bad_path = project_dir / RESULTS_GOOD_BAD / "good_bad_partition.csv"
-first_stage_cost_path = project_dir / RESULTS_FIRST_STAGE_COST / "first_stage_cost_summary.csv"
-K_path = project_dir / RESULTS_K / "K_min_bad_scenarios.csv"
+x_ev_path = project_dir / f"{DATA_FOLDER_NAME}_results" / RESULTS_XSTAR_XEV / "x_EV.csv"
+scenario_summary_path = project_dir / f"{DATA_FOLDER_NAME}_results" /  RESULTS_XSTAR_XEV / "scenario_summary.csv"
+good_bad_path = project_dir / f"{DATA_FOLDER_NAME}_results" / RESULTS_GOOD_BAD / "good_bad_partition.csv"
+first_stage_cost_path = project_dir / f"{DATA_FOLDER_NAME}_results" / RESULTS_FIRST_STAGE_COST / "first_stage_cost_summary.csv"
+K_path = project_dir / f"{DATA_FOLDER_NAME}_results" / RESULTS_K / "K_min_bad_scenarios.csv"
 
-out_dir = project_dir / OUTPUT_FOLDER
-out_dir.mkdir(exist_ok=True)
+out_dir = project_dir / f"{DATA_FOLDER_NAME}_results" / OUTPUT_FOLDER
+out_dir.mkdir(parents=True, exist_ok=True)
 
 lp_path = out_dir / "K_system.lp"
 iis_ilp_path = out_dir / "K_system_iis.ilp"

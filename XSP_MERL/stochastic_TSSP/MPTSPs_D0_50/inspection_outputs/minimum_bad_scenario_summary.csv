@@ -1,0 +1,10 @@
+quantity,value
+Delta_0_first_stage,-555.0
+good_scenario_weighted_sum,-317.9700000000001
+C_comp,-872.97
+bad_scenario_weighted_sum,1866.09
+VSS_decomposed,993.1199999999999
+minimum_bad_set_size,17
+minimum_bad_set_1_based,"[67, 80, 55, 4, 5, 62, 78, 96, 64, 20, 51, 61, 81, 9, 63, 43, 72]"
+selected_bad_weighted_sum,873.22
+C_comp_plus_selected_sum,0.25

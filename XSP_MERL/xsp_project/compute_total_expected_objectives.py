@@ -6,6 +6,9 @@ import re
 # ============================================================
 # Input folders
 # ============================================================
+# DATA_FOLDER_NAME = "dcap233_200"
+DATA_FOLDER_NAME = "dummy_demand_tssp"
+###############################################################
 
 RESULTS_FIRST_STAGE_COST = "results_first_stage_cost"
 RESULTS_RECOURSE_Q = "results_recourse_Q"
@@ -21,30 +24,34 @@ project_dir = Path(__file__).resolve().parent
 
 first_stage_cost_path = (
     project_dir
+    / f"{DATA_FOLDER_NAME}_results"
     / RESULTS_FIRST_STAGE_COST
     / "first_stage_cost_summary.csv"
 )
 
 scenario_summary_path = (
     project_dir
+    / f"{DATA_FOLDER_NAME}_results"
     / RESULTS_XSTAR_XEV
     / "scenario_summary.csv"
 )
 
 q_x_star_path = (
     project_dir
+    / f"{DATA_FOLDER_NAME}_results"
     / RESULTS_RECOURSE_Q
     / "Q_all_scenarios_x_star.csv"
 )
 
 q_x_ev_path = (
     project_dir
+    / f"{DATA_FOLDER_NAME}_results"
     / RESULTS_RECOURSE_Q
     / "Q_all_scenarios_x_EV.csv"
 )
 
-out_dir = project_dir / OUTPUT_FOLDER
-out_dir.mkdir(exist_ok=True)
+out_dir = project_dir / f"{DATA_FOLDER_NAME}_results" /  OUTPUT_FOLDER
+out_dir.mkdir(parents=True, exist_ok=True)
 
 
 # ============================================================

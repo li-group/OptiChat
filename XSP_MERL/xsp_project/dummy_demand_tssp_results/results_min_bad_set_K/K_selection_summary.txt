@@ -1,0 +1,27 @@
+Minimum bad-scenario set K selection
+====================================
+
+Tolerance: 1e-06
+
+c^T x_star: 80.0
+c^T x_EV:   55.0
+Delta_0:    -25.0
+
+Number of scenarios: 10
+Number of good scenarios: 5
+Number of bad scenarios: 5
+
+sum_good p_s Delta_s: 0.0
+sum_bad  p_s Delta_s: 47.5
+C_comp: -25.0
+VSS decomposition value: 22.5
+
+K selection condition:
+  sum_{s in K} p_s Delta_s + C_comp > 0
+
+|K|: 3
+sum_K p_s Delta_s: 37.5
+sum_K p_s Delta_s + C_comp: 12.5
+
+K scenarios:
+SCEN008, SCEN009, SCEN010

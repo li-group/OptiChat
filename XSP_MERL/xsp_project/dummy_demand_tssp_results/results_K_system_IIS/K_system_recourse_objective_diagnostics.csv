@@ -1,0 +1,4 @@
+scenario,objective_constant_before_fixing,included_objective_constant,num_first_stage_terms_removed,first_stage_objective_coeff_sum_abs,num_recourse_terms_kept,recourse_coeff_sum_abs
+SCEN008,0.0,True,1,1.0,1,5.0
+SCEN009,0.0,True,1,1.0,1,5.0
+SCEN010,0.0,True,1,1.0,1,5.0

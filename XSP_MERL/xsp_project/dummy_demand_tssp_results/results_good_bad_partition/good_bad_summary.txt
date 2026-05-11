@@ -1,0 +1,17 @@
+Good/bad scenario partition
+===========================
+
+Tolerance used: 1e-06
+Number of scenarios: 10
+Number of good scenarios: 5
+Number of bad scenarios: 5
+Number of near-zero good scenarios: 5
+
+Good scenarios:
+SCEN001, SCEN002, SCEN003, SCEN004, SCEN005
+
+Bad scenarios:
+SCEN006, SCEN007, SCEN008, SCEN009, SCEN010
+
+Near-zero scenarios, classified as good by Delta <= 0 rule with tolerance:
+SCEN001, SCEN002, SCEN003, SCEN004, SCEN005

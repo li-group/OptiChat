@@ -1,0 +1,11 @@
+metric,value
+x_star,80.0
+x_EV,55.0
+RP,95.0
+EEV,117.5
+VSS,22.5
+Delta_0,-25.0
+C_comp,-25.0
+VSS_from_decomposition,22.5
+minimal_bad_subset_size,3
+minimal_bad_subset_plus_C_comp,12.5

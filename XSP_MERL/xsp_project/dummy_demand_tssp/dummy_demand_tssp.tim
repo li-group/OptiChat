@@ -1,0 +1,5 @@
+TIME          TSSP
+PERIODS
+    x         DUMMY     ROOT
+    y         DEMAND    STAGE2
+ENDATA

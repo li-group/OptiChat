@@ -10,6 +10,9 @@ import re
 
 TOL = 1e-6
 
+# DATA_FOLDER_NAME = "dcap233_200"
+DATA_FOLDER_NAME = "dummy_demand_tssp"
+
 GOOD_BAD_FOLDER = "results_good_bad_partition"
 FIRST_STAGE_COST_FOLDER = "results_first_stage_cost"
 XSTAR_XEV_FOLDER = "results_xstar_xev"
@@ -24,24 +27,27 @@ project_dir = Path(__file__).resolve().parent
 
 good_bad_path = (
     project_dir
+    / f"{DATA_FOLDER_NAME}_results"
     / GOOD_BAD_FOLDER
     / "good_bad_partition.csv"
 )
 
 first_stage_cost_path = (
     project_dir
+    / f"{DATA_FOLDER_NAME}_results"
     / FIRST_STAGE_COST_FOLDER
     / "first_stage_cost_summary.csv"
 )
 
 scenario_summary_path = (
     project_dir
+    / f"{DATA_FOLDER_NAME}_results"
     / XSTAR_XEV_FOLDER
     / "scenario_summary.csv"
 )
 
-out_dir = project_dir / OUTPUT_FOLDER
-out_dir.mkdir(exist_ok=True)
+out_dir = project_dir / f"{DATA_FOLDER_NAME}_results" / OUTPUT_FOLDER
+out_dir.mkdir(parents=True, exist_ok=True)
 
 
 # ============================================================

@@ -1,0 +1,4 @@
+scenario,probability,Q_x_EV,Q_x_star,Delta,p_Delta,classification
+SCEN008,0.1,125.0,0.0,125.0,12.5,bad
+SCEN009,0.1,175.0,50.0,125.0,12.5,bad
+SCEN010,0.1,225.0,100.0,125.0,12.5,bad

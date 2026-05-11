@@ -1,0 +1,2 @@
+scenario,termination_condition,Q_value,num_fixed_first_stage_vars
+SCEN1,optimal,1985.585568,12

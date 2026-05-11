@@ -13,9 +13,9 @@ import mpisppy.problem_io.smps_module as smps_module
 # Settings
 # ============================================================
 
-DATA_FOLDER_NAME = "dcap233_200"
+# DATA_FOLDER_NAME = "dcap233_200"
+DATA_FOLDER_NAME = "dummy_demand_tssp"
 RESULTS_FOLDER_NAME = "results_xstar_xev"
-
 
 # ============================================================
 # Paths
@@ -23,9 +23,10 @@ RESULTS_FOLDER_NAME = "results_xstar_xev"
 
 project_dir = Path(__file__).resolve().parent
 smps_dir = project_dir / DATA_FOLDER_NAME
-results_dir = project_dir / RESULTS_FOLDER_NAME
-out_dir = project_dir / "results_first_stage_cost"
-out_dir.mkdir(exist_ok=True)
+results_dir = project_dir / f"{DATA_FOLDER_NAME}_results" / RESULTS_FOLDER_NAME
+results_dir.mkdir(parents=True, exist_ok=True)
+out_dir = project_dir / f"{DATA_FOLDER_NAME}_results" /"results_first_stage_cost"
+out_dir.mkdir(parents=True, exist_ok=True)
 
 cfg = SimpleNamespace(smps_dir=str(smps_dir))
 

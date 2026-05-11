@@ -1,0 +1,3 @@
+name,lower,body,upper,expr
+DUMMY,0.0,x,,0.0  <=  x
+DEMAND,10.0,x + y,,10.0  <=  x + y

@@ -8,6 +8,8 @@ import re
 # Settings
 # ============================================================
 
+# DATA_FOLDER_NAME = "dcap233_200"
+DATA_FOLDER_NAME = "dummy_demand_tssp"
 RESULTS_RECOURSE_FOLDER = "results_recourse_Q"
 OUTPUT_FOLDER = "results_good_bad_partition"
 
@@ -19,8 +21,8 @@ TOL = 1e-6
 # ============================================================
 
 project_dir = Path(__file__).resolve().parent
-recourse_dir = project_dir / RESULTS_RECOURSE_FOLDER
-out_dir = project_dir / OUTPUT_FOLDER
+recourse_dir = project_dir / f"{DATA_FOLDER_NAME}_results" / RESULTS_RECOURSE_FOLDER
+out_dir = project_dir / f"{DATA_FOLDER_NAME}_results" / OUTPUT_FOLDER
 out_dir.mkdir(exist_ok=True)
 
 q_star_path = recourse_dir / "Q_all_scenarios_x_star.csv"

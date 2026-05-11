@@ -1,0 +1,13 @@
+metric,value,description
+Delta_0,-25.0,First-stage difference c*x_EV - c*x_star
+good_scenario_weighted_delta_sum,0.0,sum_{s in G} p_s Delta_s
+bad_scenario_weighted_delta_sum,47.5,sum_{s in B} p_s Delta_s
+C_comp,-25.0,Delta_0 + sum_{s in G} p_s Delta_s
+VSS,22.5,EEV - RP
+VSS_from_decomposition,22.5,sum_{s in B} p_s Delta_s + C_comp
+decomposition_error,0.0,VSS_from_decomposition - VSS
+number_good_scenarios,5,|G| where G = {s: Delta_s <= 0}
+number_bad_scenarios,5,|B| where B = {s: Delta_s > 0}
+minimal_bad_subset_size,3,Smallest |K| found such that sum_{s in K} p_s Delta_s + C_comp > 0
+minimal_bad_subset_weighted_delta_sum,37.5,sum_{s in K} p_s Delta_s for selected K
+minimal_bad_subset_plus_C_comp,12.5,sum_{s in K} p_s Delta_s + C_comp

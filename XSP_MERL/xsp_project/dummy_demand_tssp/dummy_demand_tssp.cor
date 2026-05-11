@@ -1,0 +1,14 @@
+NAME          TSSP
+ROWS
+ N  OBJ
+ G  DUMMY
+ G  DEMAND
+COLUMNS
+    x         OBJ       1  DUMMY     1
+    x         DEMAND    1
+    y         OBJ       5  DEMAND    1
+RHS
+    RHS1      DUMMY     0         DEMAND    10
+BOUNDS
+ UP BND1      x         100
+ENDATA

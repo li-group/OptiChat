@@ -18,8 +18,8 @@ import mpisppy.problem_io.mps_reader as mps_reader
 # ============================================================
 
 SOLVER_NAME = "gurobi"
-DATA_FOLDER_NAME = "dcap233_200"
-
+# DATA_FOLDER_NAME = "dcap233_200"
+DATA_FOLDER_NAME = "dummy_demand_tssp" 
 
 # ============================================================
 # Paths
@@ -27,8 +27,8 @@ DATA_FOLDER_NAME = "dcap233_200"
 
 project_dir = Path(__file__).resolve().parent
 smps_dir = project_dir / DATA_FOLDER_NAME
-out_dir = project_dir / "results_xstar_xev"
-out_dir.mkdir(exist_ok=True)
+out_dir = project_dir / f"{DATA_FOLDER_NAME}_results" / "results_xstar_xev"
+out_dir.mkdir(parents=True, exist_ok=True)
 
 print("Project directory:", project_dir)
 print("SMPS directory:", smps_dir)
@@ -185,7 +185,7 @@ ef_obj = ExtensiveForm(
     all_scenario_names=scenario_names,
     scenario_creator=smps_module.scenario_creator,
     scenario_creator_kwargs={"cfg": cfg},
-    model_name="dcap233_200_EF",
+    model_name=f"{DATA_FOLDER_NAME}_EF",
     suppress_warnings=False,
 )
 
@@ -395,7 +395,7 @@ print("Wrote x_EV to:", out_dir / "x_EV.csv")
 summary_path = out_dir / "summary.txt"
 
 with open(summary_path, "w") as f:
-    f.write("DCAP x_star and x_EV solve summary\n")
+    f.write(f"{DATA_FOLDER_NAME} x_star and x_EV solve summary\n")
     f.write("=================================\n\n")
     f.write(f"SMPS directory: {smps_dir}\n")
     f.write(f"Number of scenarios: {len(scenario_names)}\n")

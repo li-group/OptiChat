@@ -1,0 +1,57 @@
+K-system IIS summary
+====================
+
+K scenarios: ['SCEN008', 'SCEN009', 'SCEN010']
+|K|: 3
+
+c^T x_star: 80.0
+c^T x_EV: 55.0
+Delta_0: -25.0
+C_comp: -25.0
+sum_K p_s Q_s(x_star): 15.0
+sum_K p_s Q_s(x_EV): 52.5
+K budget RHS: 40.0
+sum_K p_s Delta_s + C_comp: 12.5
+
+Recourse consistency check
+--------------------------
+Termination: optimal
+Stored sum_K p_s Q_s(x_EV): 52.5
+Solved K recourse objective: 52.5
+Difference: 0.0
+
+K-budget diagnostics
+--------------------
+Budget RHS before LP constant shift: 40.0
+K-budget body constant: 0.0
+Effective LP RHS after constant shift: 40.0
+sum_p_K: 0.30000000000000004
+sum_p_K * c^T x_EV: 16.500000000000004
+Weighted true objective constants included: 0.0
+
+Recourse objective extraction diagnostics
+-----------------------------------------
+SCEN008: constant_before_fixing=0.0, included_constant=True, first_stage_terms_removed=1, recourse_terms_kept=1
+SCEN009: constant_before_fixing=0.0, included_constant=True, first_stage_terms_removed=1, recourse_terms_kept=1
+SCEN010: constant_before_fixing=0.0, included_constant=True, first_stage_terms_removed=1, recourse_terms_kept=1
+
+IIS contents
+------------
+Number of IIS constraints: 4
+Number of IIS variable bounds: 0
+K_budget rows in IIS: 1
+
+IIS scenario constraint counts:
+  SCEN008: 1
+  SCEN009: 1
+  SCEN010: 1
+
+IIS scenario bound counts:
+
+Output files:
+  /Users/ahluwala/Documents/GitHub/OptiChat/XSP_MERL/xsp_project/dummy_demand_tssp_results/results_K_system_IIS/K_system.lp
+  /Users/ahluwala/Documents/GitHub/OptiChat/XSP_MERL/xsp_project/dummy_demand_tssp_results/results_K_system_IIS/K_system_iis.ilp
+  /Users/ahluwala/Documents/GitHub/OptiChat/XSP_MERL/xsp_project/dummy_demand_tssp_results/results_K_system_IIS/K_system_iis_constraints.csv
+  /Users/ahluwala/Documents/GitHub/OptiChat/XSP_MERL/xsp_project/dummy_demand_tssp_results/results_K_system_IIS/K_system_iis_bounds.csv
+  /Users/ahluwala/Documents/GitHub/OptiChat/XSP_MERL/xsp_project/dummy_demand_tssp_results/results_K_system_IIS/K_system_diagnostics.csv
+  /Users/ahluwala/Documents/GitHub/OptiChat/XSP_MERL/xsp_project/dummy_demand_tssp_results/results_K_system_IIS/K_system_recourse_objective_diagnostics.csv

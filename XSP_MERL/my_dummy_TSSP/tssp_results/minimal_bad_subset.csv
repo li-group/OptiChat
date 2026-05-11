@@ -1,0 +1,4 @@
+scenario,demand,probability,Q_s_x_star,Q_s_x_EV,Delta_s,p_s_Delta_s,classification,selection_rank,cumulative_p_s_Delta_s,cumulative_plus_C_comp
+7,80.0,0.1,0.0,125.0,125.0,12.5,bad,1,12.5,-12.5
+8,90.0,0.1,50.0,175.0,125.0,12.5,bad,2,25.0,0.0
+9,100.0,0.1,100.0,225.0,125.0,12.5,bad,3,37.5,12.5
