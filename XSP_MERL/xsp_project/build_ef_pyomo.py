@@ -55,7 +55,7 @@ ef = sputils.create_EF(
 )
 
 # Implement TSSP structure
-# Convert DAta to JSON
+# Convert Data to JSON
 # Have a way to add doc strings to params and variables.
 
 print("EF Pyomo model built.")
