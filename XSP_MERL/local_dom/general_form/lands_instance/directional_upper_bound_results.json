@@ -1,0 +1,4077 @@
+{
+  "instance_name": "lands_instance",
+  "method": "coordinate_directional_upper_bound_basis_tracking",
+  "selected_scenario": "scenario_3",
+  "selected_scenario_index_1_based": 3,
+  "xi_hat": [
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    7.0,
+    3.0,
+    2.0
+  ],
+  "initial_cost_gap_at_xi_hat": 10.333333333333258,
+  "directional_upper_bound_gamma_bar": 1.7619047619047592,
+  "best_direction": {
+    "coordinate_index_1_based": 5,
+    "coordinate_index_0_based": 4,
+    "sign": -1,
+    "direction_label": "xi_5_minus"
+  },
+  "num_coordinates": 7,
+  "num_directional_problems": 14,
+  "standard_form_dimensions": {
+    "num_rows_m_r": 7,
+    "num_original_second_stage_variables_n_y": 12,
+    "num_standard_form_variables_n_y_plus_m_r": 19,
+    "num_basis_candidates_combination": 50388,
+    "num_dual_feasible_bases_enumerated": 63
+  },
+  "basis_tracking_rule": {
+    "description": "At each breakpoint the implementation selects the lexicographically first dual-feasible, primal-feasible basis that is also feasible for a right-neighborhood of the ray parameter. This is the implemented anti-cycling/lexicographic rule.",
+    "basis_order": "increasing tuple of standard-form column indices, with y variables followed by slacks",
+    "standard_form_variables": [
+      "y_1",
+      "y_2",
+      "y_3",
+      "y_4",
+      "y_5",
+      "y_6",
+      "y_7",
+      "y_8",
+      "y_9",
+      "y_10",
+      "y_11",
+      "y_12",
+      "s_1",
+      "s_2",
+      "s_3",
+      "s_4",
+      "s_5",
+      "s_6",
+      "s_7"
+    ]
+  },
+  "positive_gap_scenarios": [
+    {
+      "scenario": "scenario_3",
+      "scenario_index_1_based": 3,
+      "xi_key": "xi_3",
+      "xi": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        7.0,
+        3.0,
+        2.0
+      ],
+      "cost_gap": 10.333333333333258
+    }
+  ],
+  "directions": [
+    {
+      "coordinate_index_1_based": 1,
+      "coordinate_index_0_based": 0,
+      "sign": 1,
+      "direction_label": "xi_1_plus",
+      "gamma_directional": "Infinity",
+      "termination_reason": "no_crossing_and_no_future_breakpoints",
+      "xi_at_termination_or_crossing": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        7.0,
+        3.0,
+        2.0
+      ],
+      "phi_at_termination_or_crossing": 10.333333333333258,
+      "Q_EV_at_termination_or_crossing": 360.66666666666663,
+      "Q_star_at_termination_or_crossing": 350.33333333333337,
+      "cost_EV_at_termination_or_crossing": 480.66666666666663,
+      "cost_star_at_termination_or_crossing": 470.33333333333337,
+      "num_intervals": 0,
+      "num_basis_changes": {
+        "EV": 0,
+        "star": 0
+      },
+      "num_bases_explored": {
+        "EV": 1,
+        "star": 1
+      },
+      "initial_basis_selection": {
+        "EV": "lexicographically_first_right_feasible_optimal_basis",
+        "star": "lexicographically_first_right_feasible_optimal_basis"
+      },
+      "basis_history": {
+        "EV": [
+          {
+            "indices_0_based": [
+              0,
+              3,
+              4,
+              6,
+              10,
+              11,
+              15
+            ],
+            "indices_1_based": [
+              1,
+              4,
+              5,
+              7,
+              11,
+              12,
+              16
+            ],
+            "variables": [
+              "y_1",
+              "y_4",
+              "y_5",
+              "y_7",
+              "y_11",
+              "y_12",
+              "s_4"
+            ],
+            "basic_values": [
+              0.833333333333333,
+              2.0,
+              1.0,
+              4.166666666666667,
+              2.0,
+              2.0,
+              0.0
+            ],
+            "rhs_direction_in_basis": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "value": 360.66666666666663,
+            "slope": 0.0,
+            "tau_to_next_breakpoint": "Infinity"
+          }
+        ],
+        "star": [
+          {
+            "indices_0_based": [
+              0,
+              3,
+              4,
+              5,
+              6,
+              11,
+              15
+            ],
+            "indices_1_based": [
+              1,
+              4,
+              5,
+              6,
+              7,
+              12,
+              16
+            ],
+            "variables": [
+              "y_1",
+              "y_4",
+              "y_5",
+              "y_6",
+              "y_7",
+              "y_12",
+              "s_4"
+            ],
+            "basic_values": [
+              2.666666666666667,
+              1.0,
+              3.0,
+              -4.440892098500626e-16,
+              3.3333333333333335,
+              2.0000000000000004,
+              -1.7763568394002505e-15
+            ],
+            "rhs_direction_in_basis": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "value": 350.33333333333337,
+            "slope": 0.0,
+            "tau_to_next_breakpoint": "Infinity"
+          }
+        ]
+      },
+      "intervals": [],
+      "basis_change_events": []
+    },
+    {
+      "coordinate_index_1_based": 1,
+      "coordinate_index_0_based": 0,
+      "sign": -1,
+      "direction_label": "xi_1_minus",
+      "gamma_directional": "Infinity",
+      "termination_reason": "no_crossing_and_no_future_breakpoints",
+      "xi_at_termination_or_crossing": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        7.0,
+        3.0,
+        2.0
+      ],
+      "phi_at_termination_or_crossing": 10.333333333333258,
+      "Q_EV_at_termination_or_crossing": 360.66666666666663,
+      "Q_star_at_termination_or_crossing": 350.33333333333337,
+      "cost_EV_at_termination_or_crossing": 480.66666666666663,
+      "cost_star_at_termination_or_crossing": 470.33333333333337,
+      "num_intervals": 0,
+      "num_basis_changes": {
+        "EV": 0,
+        "star": 0
+      },
+      "num_bases_explored": {
+        "EV": 1,
+        "star": 1
+      },
+      "initial_basis_selection": {
+        "EV": "lexicographically_first_right_feasible_optimal_basis",
+        "star": "lexicographically_first_right_feasible_optimal_basis"
+      },
+      "basis_history": {
+        "EV": [
+          {
+            "indices_0_based": [
+              0,
+              3,
+              4,
+              6,
+              10,
+              11,
+              15
+            ],
+            "indices_1_based": [
+              1,
+              4,
+              5,
+              7,
+              11,
+              12,
+              16
+            ],
+            "variables": [
+              "y_1",
+              "y_4",
+              "y_5",
+              "y_7",
+              "y_11",
+              "y_12",
+              "s_4"
+            ],
+            "basic_values": [
+              0.833333333333333,
+              2.0,
+              1.0,
+              4.166666666666667,
+              2.0,
+              2.0,
+              0.0
+            ],
+            "rhs_direction_in_basis": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "value": 360.66666666666663,
+            "slope": 0.0,
+            "tau_to_next_breakpoint": "Infinity"
+          }
+        ],
+        "star": [
+          {
+            "indices_0_based": [
+              0,
+              3,
+              4,
+              5,
+              6,
+              11,
+              15
+            ],
+            "indices_1_based": [
+              1,
+              4,
+              5,
+              6,
+              7,
+              12,
+              16
+            ],
+            "variables": [
+              "y_1",
+              "y_4",
+              "y_5",
+              "y_6",
+              "y_7",
+              "y_12",
+              "s_4"
+            ],
+            "basic_values": [
+              2.666666666666667,
+              1.0,
+              3.0,
+              -4.440892098500626e-16,
+              3.3333333333333335,
+              2.0000000000000004,
+              -1.7763568394002505e-15
+            ],
+            "rhs_direction_in_basis": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "value": 350.33333333333337,
+            "slope": 0.0,
+            "tau_to_next_breakpoint": "Infinity"
+          }
+        ]
+      },
+      "intervals": [],
+      "basis_change_events": []
+    },
+    {
+      "coordinate_index_1_based": 2,
+      "coordinate_index_0_based": 1,
+      "sign": 1,
+      "direction_label": "xi_2_plus",
+      "gamma_directional": "Infinity",
+      "termination_reason": "no_crossing_and_no_future_breakpoints",
+      "xi_at_termination_or_crossing": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        7.0,
+        3.0,
+        2.0
+      ],
+      "phi_at_termination_or_crossing": 10.333333333333258,
+      "Q_EV_at_termination_or_crossing": 360.66666666666663,
+      "Q_star_at_termination_or_crossing": 350.33333333333337,
+      "cost_EV_at_termination_or_crossing": 480.66666666666663,
+      "cost_star_at_termination_or_crossing": 470.33333333333337,
+      "num_intervals": 0,
+      "num_basis_changes": {
+        "EV": 0,
+        "star": 0
+      },
+      "num_bases_explored": {
+        "EV": 1,
+        "star": 1
+      },
+      "initial_basis_selection": {
+        "EV": "lexicographically_first_right_feasible_optimal_basis",
+        "star": "lexicographically_first_right_feasible_optimal_basis"
+      },
+      "basis_history": {
+        "EV": [
+          {
+            "indices_0_based": [
+              0,
+              3,
+              4,
+              6,
+              10,
+              11,
+              15
+            ],
+            "indices_1_based": [
+              1,
+              4,
+              5,
+              7,
+              11,
+              12,
+              16
+            ],
+            "variables": [
+              "y_1",
+              "y_4",
+              "y_5",
+              "y_7",
+              "y_11",
+              "y_12",
+              "s_4"
+            ],
+            "basic_values": [
+              0.833333333333333,
+              2.0,
+              1.0,
+              4.166666666666667,
+              2.0,
+              2.0,
+              0.0
+            ],
+            "rhs_direction_in_basis": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "value": 360.66666666666663,
+            "slope": 0.0,
+            "tau_to_next_breakpoint": "Infinity"
+          }
+        ],
+        "star": [
+          {
+            "indices_0_based": [
+              0,
+              3,
+              4,
+              5,
+              6,
+              11,
+              15
+            ],
+            "indices_1_based": [
+              1,
+              4,
+              5,
+              6,
+              7,
+              12,
+              16
+            ],
+            "variables": [
+              "y_1",
+              "y_4",
+              "y_5",
+              "y_6",
+              "y_7",
+              "y_12",
+              "s_4"
+            ],
+            "basic_values": [
+              2.666666666666667,
+              1.0,
+              3.0,
+              -4.440892098500626e-16,
+              3.3333333333333335,
+              2.0000000000000004,
+              -1.7763568394002505e-15
+            ],
+            "rhs_direction_in_basis": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "value": 350.33333333333337,
+            "slope": 0.0,
+            "tau_to_next_breakpoint": "Infinity"
+          }
+        ]
+      },
+      "intervals": [],
+      "basis_change_events": []
+    },
+    {
+      "coordinate_index_1_based": 2,
+      "coordinate_index_0_based": 1,
+      "sign": -1,
+      "direction_label": "xi_2_minus",
+      "gamma_directional": "Infinity",
+      "termination_reason": "no_crossing_and_no_future_breakpoints",
+      "xi_at_termination_or_crossing": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        7.0,
+        3.0,
+        2.0
+      ],
+      "phi_at_termination_or_crossing": 10.333333333333258,
+      "Q_EV_at_termination_or_crossing": 360.66666666666663,
+      "Q_star_at_termination_or_crossing": 350.33333333333337,
+      "cost_EV_at_termination_or_crossing": 480.66666666666663,
+      "cost_star_at_termination_or_crossing": 470.33333333333337,
+      "num_intervals": 0,
+      "num_basis_changes": {
+        "EV": 0,
+        "star": 0
+      },
+      "num_bases_explored": {
+        "EV": 1,
+        "star": 1
+      },
+      "initial_basis_selection": {
+        "EV": "lexicographically_first_right_feasible_optimal_basis",
+        "star": "lexicographically_first_right_feasible_optimal_basis"
+      },
+      "basis_history": {
+        "EV": [
+          {
+            "indices_0_based": [
+              0,
+              3,
+              4,
+              6,
+              10,
+              11,
+              15
+            ],
+            "indices_1_based": [
+              1,
+              4,
+              5,
+              7,
+              11,
+              12,
+              16
+            ],
+            "variables": [
+              "y_1",
+              "y_4",
+              "y_5",
+              "y_7",
+              "y_11",
+              "y_12",
+              "s_4"
+            ],
+            "basic_values": [
+              0.833333333333333,
+              2.0,
+              1.0,
+              4.166666666666667,
+              2.0,
+              2.0,
+              0.0
+            ],
+            "rhs_direction_in_basis": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "value": 360.66666666666663,
+            "slope": 0.0,
+            "tau_to_next_breakpoint": "Infinity"
+          }
+        ],
+        "star": [
+          {
+            "indices_0_based": [
+              0,
+              3,
+              4,
+              5,
+              6,
+              11,
+              15
+            ],
+            "indices_1_based": [
+              1,
+              4,
+              5,
+              6,
+              7,
+              12,
+              16
+            ],
+            "variables": [
+              "y_1",
+              "y_4",
+              "y_5",
+              "y_6",
+              "y_7",
+              "y_12",
+              "s_4"
+            ],
+            "basic_values": [
+              2.666666666666667,
+              1.0,
+              3.0,
+              -4.440892098500626e-16,
+              3.3333333333333335,
+              2.0000000000000004,
+              -1.7763568394002505e-15
+            ],
+            "rhs_direction_in_basis": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "value": 350.33333333333337,
+            "slope": 0.0,
+            "tau_to_next_breakpoint": "Infinity"
+          }
+        ]
+      },
+      "intervals": [],
+      "basis_change_events": []
+    },
+    {
+      "coordinate_index_1_based": 3,
+      "coordinate_index_0_based": 2,
+      "sign": 1,
+      "direction_label": "xi_3_plus",
+      "gamma_directional": "Infinity",
+      "termination_reason": "no_crossing_and_no_future_breakpoints",
+      "xi_at_termination_or_crossing": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        7.0,
+        3.0,
+        2.0
+      ],
+      "phi_at_termination_or_crossing": 10.333333333333258,
+      "Q_EV_at_termination_or_crossing": 360.66666666666663,
+      "Q_star_at_termination_or_crossing": 350.33333333333337,
+      "cost_EV_at_termination_or_crossing": 480.66666666666663,
+      "cost_star_at_termination_or_crossing": 470.33333333333337,
+      "num_intervals": 0,
+      "num_basis_changes": {
+        "EV": 0,
+        "star": 0
+      },
+      "num_bases_explored": {
+        "EV": 1,
+        "star": 1
+      },
+      "initial_basis_selection": {
+        "EV": "lexicographically_first_right_feasible_optimal_basis",
+        "star": "lexicographically_first_right_feasible_optimal_basis"
+      },
+      "basis_history": {
+        "EV": [
+          {
+            "indices_0_based": [
+              0,
+              3,
+              4,
+              6,
+              10,
+              11,
+              15
+            ],
+            "indices_1_based": [
+              1,
+              4,
+              5,
+              7,
+              11,
+              12,
+              16
+            ],
+            "variables": [
+              "y_1",
+              "y_4",
+              "y_5",
+              "y_7",
+              "y_11",
+              "y_12",
+              "s_4"
+            ],
+            "basic_values": [
+              0.833333333333333,
+              2.0,
+              1.0,
+              4.166666666666667,
+              2.0,
+              2.0,
+              0.0
+            ],
+            "rhs_direction_in_basis": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "value": 360.66666666666663,
+            "slope": 0.0,
+            "tau_to_next_breakpoint": "Infinity"
+          }
+        ],
+        "star": [
+          {
+            "indices_0_based": [
+              0,
+              3,
+              4,
+              5,
+              6,
+              11,
+              15
+            ],
+            "indices_1_based": [
+              1,
+              4,
+              5,
+              6,
+              7,
+              12,
+              16
+            ],
+            "variables": [
+              "y_1",
+              "y_4",
+              "y_5",
+              "y_6",
+              "y_7",
+              "y_12",
+              "s_4"
+            ],
+            "basic_values": [
+              2.666666666666667,
+              1.0,
+              3.0,
+              -4.440892098500626e-16,
+              3.3333333333333335,
+              2.0000000000000004,
+              -1.7763568394002505e-15
+            ],
+            "rhs_direction_in_basis": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "value": 350.33333333333337,
+            "slope": 0.0,
+            "tau_to_next_breakpoint": "Infinity"
+          }
+        ]
+      },
+      "intervals": [],
+      "basis_change_events": []
+    },
+    {
+      "coordinate_index_1_based": 3,
+      "coordinate_index_0_based": 2,
+      "sign": -1,
+      "direction_label": "xi_3_minus",
+      "gamma_directional": "Infinity",
+      "termination_reason": "no_crossing_and_no_future_breakpoints",
+      "xi_at_termination_or_crossing": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        7.0,
+        3.0,
+        2.0
+      ],
+      "phi_at_termination_or_crossing": 10.333333333333258,
+      "Q_EV_at_termination_or_crossing": 360.66666666666663,
+      "Q_star_at_termination_or_crossing": 350.33333333333337,
+      "cost_EV_at_termination_or_crossing": 480.66666666666663,
+      "cost_star_at_termination_or_crossing": 470.33333333333337,
+      "num_intervals": 0,
+      "num_basis_changes": {
+        "EV": 0,
+        "star": 0
+      },
+      "num_bases_explored": {
+        "EV": 1,
+        "star": 1
+      },
+      "initial_basis_selection": {
+        "EV": "lexicographically_first_right_feasible_optimal_basis",
+        "star": "lexicographically_first_right_feasible_optimal_basis"
+      },
+      "basis_history": {
+        "EV": [
+          {
+            "indices_0_based": [
+              0,
+              3,
+              4,
+              6,
+              10,
+              11,
+              15
+            ],
+            "indices_1_based": [
+              1,
+              4,
+              5,
+              7,
+              11,
+              12,
+              16
+            ],
+            "variables": [
+              "y_1",
+              "y_4",
+              "y_5",
+              "y_7",
+              "y_11",
+              "y_12",
+              "s_4"
+            ],
+            "basic_values": [
+              0.833333333333333,
+              2.0,
+              1.0,
+              4.166666666666667,
+              2.0,
+              2.0,
+              0.0
+            ],
+            "rhs_direction_in_basis": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "value": 360.66666666666663,
+            "slope": 0.0,
+            "tau_to_next_breakpoint": "Infinity"
+          }
+        ],
+        "star": [
+          {
+            "indices_0_based": [
+              0,
+              3,
+              4,
+              5,
+              6,
+              11,
+              15
+            ],
+            "indices_1_based": [
+              1,
+              4,
+              5,
+              6,
+              7,
+              12,
+              16
+            ],
+            "variables": [
+              "y_1",
+              "y_4",
+              "y_5",
+              "y_6",
+              "y_7",
+              "y_12",
+              "s_4"
+            ],
+            "basic_values": [
+              2.666666666666667,
+              1.0,
+              3.0,
+              -4.440892098500626e-16,
+              3.3333333333333335,
+              2.0000000000000004,
+              -1.7763568394002505e-15
+            ],
+            "rhs_direction_in_basis": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "value": 350.33333333333337,
+            "slope": 0.0,
+            "tau_to_next_breakpoint": "Infinity"
+          }
+        ]
+      },
+      "intervals": [],
+      "basis_change_events": []
+    },
+    {
+      "coordinate_index_1_based": 4,
+      "coordinate_index_0_based": 3,
+      "sign": 1,
+      "direction_label": "xi_4_plus",
+      "gamma_directional": "Infinity",
+      "termination_reason": "no_crossing_and_no_future_breakpoints",
+      "xi_at_termination_or_crossing": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        7.0,
+        3.0,
+        2.0
+      ],
+      "phi_at_termination_or_crossing": 10.333333333333258,
+      "Q_EV_at_termination_or_crossing": 360.66666666666663,
+      "Q_star_at_termination_or_crossing": 350.33333333333337,
+      "cost_EV_at_termination_or_crossing": 480.66666666666663,
+      "cost_star_at_termination_or_crossing": 470.33333333333337,
+      "num_intervals": 0,
+      "num_basis_changes": {
+        "EV": 0,
+        "star": 0
+      },
+      "num_bases_explored": {
+        "EV": 1,
+        "star": 1
+      },
+      "initial_basis_selection": {
+        "EV": "lexicographically_first_right_feasible_optimal_basis",
+        "star": "lexicographically_first_right_feasible_optimal_basis"
+      },
+      "basis_history": {
+        "EV": [
+          {
+            "indices_0_based": [
+              0,
+              3,
+              4,
+              6,
+              10,
+              11,
+              15
+            ],
+            "indices_1_based": [
+              1,
+              4,
+              5,
+              7,
+              11,
+              12,
+              16
+            ],
+            "variables": [
+              "y_1",
+              "y_4",
+              "y_5",
+              "y_7",
+              "y_11",
+              "y_12",
+              "s_4"
+            ],
+            "basic_values": [
+              0.833333333333333,
+              2.0,
+              1.0,
+              4.166666666666667,
+              2.0,
+              2.0,
+              0.0
+            ],
+            "rhs_direction_in_basis": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "value": 360.66666666666663,
+            "slope": 0.0,
+            "tau_to_next_breakpoint": "Infinity"
+          }
+        ],
+        "star": [
+          {
+            "indices_0_based": [
+              0,
+              3,
+              4,
+              5,
+              6,
+              11,
+              15
+            ],
+            "indices_1_based": [
+              1,
+              4,
+              5,
+              6,
+              7,
+              12,
+              16
+            ],
+            "variables": [
+              "y_1",
+              "y_4",
+              "y_5",
+              "y_6",
+              "y_7",
+              "y_12",
+              "s_4"
+            ],
+            "basic_values": [
+              2.666666666666667,
+              1.0,
+              3.0,
+              -4.440892098500626e-16,
+              3.3333333333333335,
+              2.0000000000000004,
+              -1.7763568394002505e-15
+            ],
+            "rhs_direction_in_basis": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "value": 350.33333333333337,
+            "slope": 0.0,
+            "tau_to_next_breakpoint": "Infinity"
+          }
+        ]
+      },
+      "intervals": [],
+      "basis_change_events": []
+    },
+    {
+      "coordinate_index_1_based": 4,
+      "coordinate_index_0_based": 3,
+      "sign": -1,
+      "direction_label": "xi_4_minus",
+      "gamma_directional": "Infinity",
+      "termination_reason": "no_crossing_and_no_future_breakpoints",
+      "xi_at_termination_or_crossing": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        7.0,
+        3.0,
+        2.0
+      ],
+      "phi_at_termination_or_crossing": 10.333333333333258,
+      "Q_EV_at_termination_or_crossing": 360.66666666666663,
+      "Q_star_at_termination_or_crossing": 350.33333333333337,
+      "cost_EV_at_termination_or_crossing": 480.66666666666663,
+      "cost_star_at_termination_or_crossing": 470.33333333333337,
+      "num_intervals": 0,
+      "num_basis_changes": {
+        "EV": 0,
+        "star": 0
+      },
+      "num_bases_explored": {
+        "EV": 1,
+        "star": 1
+      },
+      "initial_basis_selection": {
+        "EV": "lexicographically_first_right_feasible_optimal_basis",
+        "star": "lexicographically_first_right_feasible_optimal_basis"
+      },
+      "basis_history": {
+        "EV": [
+          {
+            "indices_0_based": [
+              0,
+              3,
+              4,
+              6,
+              10,
+              11,
+              15
+            ],
+            "indices_1_based": [
+              1,
+              4,
+              5,
+              7,
+              11,
+              12,
+              16
+            ],
+            "variables": [
+              "y_1",
+              "y_4",
+              "y_5",
+              "y_7",
+              "y_11",
+              "y_12",
+              "s_4"
+            ],
+            "basic_values": [
+              0.833333333333333,
+              2.0,
+              1.0,
+              4.166666666666667,
+              2.0,
+              2.0,
+              0.0
+            ],
+            "rhs_direction_in_basis": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "value": 360.66666666666663,
+            "slope": 0.0,
+            "tau_to_next_breakpoint": "Infinity"
+          }
+        ],
+        "star": [
+          {
+            "indices_0_based": [
+              0,
+              3,
+              4,
+              5,
+              6,
+              11,
+              15
+            ],
+            "indices_1_based": [
+              1,
+              4,
+              5,
+              6,
+              7,
+              12,
+              16
+            ],
+            "variables": [
+              "y_1",
+              "y_4",
+              "y_5",
+              "y_6",
+              "y_7",
+              "y_12",
+              "s_4"
+            ],
+            "basic_values": [
+              2.666666666666667,
+              1.0,
+              3.0,
+              -4.440892098500626e-16,
+              3.3333333333333335,
+              2.0000000000000004,
+              -1.7763568394002505e-15
+            ],
+            "rhs_direction_in_basis": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "value": 350.33333333333337,
+            "slope": 0.0,
+            "tau_to_next_breakpoint": "Infinity"
+          }
+        ]
+      },
+      "intervals": [],
+      "basis_change_events": []
+    },
+    {
+      "coordinate_index_1_based": 5,
+      "coordinate_index_0_based": 4,
+      "sign": 1,
+      "direction_label": "xi_5_plus",
+      "gamma_directional": "Infinity",
+      "termination_reason": "stopped_at_degenerate_breakpoint_without_right_feasible_basis",
+      "xi_at_termination_or_crossing": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        7.0,
+        3.0,
+        2.0
+      ],
+      "phi_at_termination_or_crossing": 10.333333333333258,
+      "Q_EV_at_termination_or_crossing": 360.66666666666663,
+      "Q_star_at_termination_or_crossing": 350.33333333333337,
+      "cost_EV_at_termination_or_crossing": 480.66666666666663,
+      "cost_star_at_termination_or_crossing": 470.33333333333337,
+      "num_intervals": 1,
+      "num_basis_changes": {
+        "EV": 0,
+        "star": 0
+      },
+      "num_bases_explored": {
+        "EV": 1,
+        "star": 1
+      },
+      "initial_basis_selection": {
+        "EV": "lexicographically_first_optimal_basis_no_right_feasible_basis",
+        "star": "lexicographically_first_optimal_basis_no_right_feasible_basis"
+      },
+      "basis_history": {
+        "EV": [
+          {
+            "indices_0_based": [
+              0,
+              3,
+              4,
+              6,
+              10,
+              11,
+              15
+            ],
+            "indices_1_based": [
+              1,
+              4,
+              5,
+              7,
+              11,
+              12,
+              16
+            ],
+            "variables": [
+              "y_1",
+              "y_4",
+              "y_5",
+              "y_7",
+              "y_11",
+              "y_12",
+              "s_4"
+            ],
+            "basic_values": [
+              0.833333333333333,
+              2.0,
+              1.0,
+              4.166666666666667,
+              2.0,
+              2.0,
+              0.0
+            ],
+            "rhs_direction_in_basis": [
+              0.0,
+              1.0,
+              -1.0,
+              0.0,
+              1.0,
+              0.0,
+              -1.0
+            ],
+            "value": 360.66666666666663,
+            "slope": 51.0,
+            "tau_to_next_breakpoint": 0.0
+          }
+        ],
+        "star": [
+          {
+            "indices_0_based": [
+              0,
+              3,
+              4,
+              5,
+              6,
+              11,
+              15
+            ],
+            "indices_1_based": [
+              1,
+              4,
+              5,
+              6,
+              7,
+              12,
+              16
+            ],
+            "variables": [
+              "y_1",
+              "y_4",
+              "y_5",
+              "y_6",
+              "y_7",
+              "y_12",
+              "s_4"
+            ],
+            "basic_values": [
+              2.666666666666667,
+              1.0,
+              3.0,
+              -4.440892098500626e-16,
+              3.3333333333333335,
+              2.0000000000000004,
+              -1.7763568394002505e-15
+            ],
+            "rhs_direction_in_basis": [
+              0.0,
+              1.0,
+              0.0,
+              -1.0,
+              0.0,
+              1.0,
+              -1.0
+            ],
+            "value": 350.33333333333337,
+            "slope": 46.0,
+            "tau_to_next_breakpoint": 0.0
+          }
+        ]
+      },
+      "intervals": [
+        {
+          "interval_index": 0,
+          "start_t": 0.0,
+          "end_t": 0.0,
+          "length": 0.0,
+          "EV_basis": {
+            "indices_0_based": [
+              0,
+              3,
+              4,
+              6,
+              10,
+              11,
+              15
+            ],
+            "indices_1_based": [
+              1,
+              4,
+              5,
+              7,
+              11,
+              12,
+              16
+            ],
+            "variables": [
+              "y_1",
+              "y_4",
+              "y_5",
+              "y_7",
+              "y_11",
+              "y_12",
+              "s_4"
+            ]
+          },
+          "star_basis": {
+            "indices_0_based": [
+              0,
+              3,
+              4,
+              5,
+              6,
+              11,
+              15
+            ],
+            "indices_1_based": [
+              1,
+              4,
+              5,
+              6,
+              7,
+              12,
+              16
+            ],
+            "variables": [
+              "y_1",
+              "y_4",
+              "y_5",
+              "y_6",
+              "y_7",
+              "y_12",
+              "s_4"
+            ]
+          },
+          "EV_tau": 0.0,
+          "star_tau": 0.0,
+          "phi_start": 10.333333333333258,
+          "phi_end": 10.333333333333258,
+          "beta": 5.0,
+          "event_at_end": [
+            "EV",
+            "star"
+          ],
+          "leaving_variables_at_end": {
+            "EV": [
+              {
+                "basis_row": 6,
+                "leaving_index_0_based": 15,
+                "leaving_index_1_based": 16,
+                "leaving_variable": "s_4",
+                "ratio": 0.0,
+                "basic_value": 0.0,
+                "direction_value": -1.0
+              }
+            ],
+            "star": [
+              {
+                "basis_row": 3,
+                "leaving_index_0_based": 5,
+                "leaving_index_1_based": 6,
+                "leaving_variable": "y_6",
+                "ratio": 0.0,
+                "basic_value": -4.440892098500626e-16,
+                "direction_value": -1.0
+              },
+              {
+                "basis_row": 6,
+                "leaving_index_0_based": 15,
+                "leaving_index_1_based": 16,
+                "leaving_variable": "s_4",
+                "ratio": 0.0,
+                "basic_value": -1.7763568394002505e-15,
+                "direction_value": -1.0
+              }
+            ]
+          }
+        }
+      ],
+      "basis_change_events": [
+        {
+          "event_index": 0,
+          "t": 0.0,
+          "active_breakpoint_for": [
+            "EV",
+            "star"
+          ],
+          "basis_changed_for": [],
+          "updates": [
+            {
+              "x_label": "EV",
+              "selection_rule": "lexicographically_first_optimal_basis_no_right_feasible_basis",
+              "old_basis": {
+                "indices_0_based": [
+                  0,
+                  3,
+                  4,
+                  6,
+                  10,
+                  11,
+                  15
+                ],
+                "indices_1_based": [
+                  1,
+                  4,
+                  5,
+                  7,
+                  11,
+                  12,
+                  16
+                ],
+                "variables": [
+                  "y_1",
+                  "y_4",
+                  "y_5",
+                  "y_7",
+                  "y_11",
+                  "y_12",
+                  "s_4"
+                ]
+              },
+              "new_basis": {
+                "indices_0_based": [
+                  0,
+                  3,
+                  4,
+                  6,
+                  10,
+                  11,
+                  15
+                ],
+                "indices_1_based": [
+                  1,
+                  4,
+                  5,
+                  7,
+                  11,
+                  12,
+                  16
+                ],
+                "variables": [
+                  "y_1",
+                  "y_4",
+                  "y_5",
+                  "y_7",
+                  "y_11",
+                  "y_12",
+                  "s_4"
+                ],
+                "basic_values": [
+                  0.833333333333333,
+                  2.0,
+                  1.0,
+                  4.166666666666667,
+                  2.0,
+                  2.0,
+                  0.0
+                ],
+                "rhs_direction_in_basis": [
+                  0.0,
+                  1.0,
+                  -1.0,
+                  0.0,
+                  1.0,
+                  0.0,
+                  -1.0
+                ],
+                "value": 360.66666666666663,
+                "slope": 51.0,
+                "tau_to_next_breakpoint": 0.0
+              },
+              "basis_changed": false
+            },
+            {
+              "x_label": "star",
+              "selection_rule": "lexicographically_first_optimal_basis_no_right_feasible_basis",
+              "old_basis": {
+                "indices_0_based": [
+                  0,
+                  3,
+                  4,
+                  5,
+                  6,
+                  11,
+                  15
+                ],
+                "indices_1_based": [
+                  1,
+                  4,
+                  5,
+                  6,
+                  7,
+                  12,
+                  16
+                ],
+                "variables": [
+                  "y_1",
+                  "y_4",
+                  "y_5",
+                  "y_6",
+                  "y_7",
+                  "y_12",
+                  "s_4"
+                ]
+              },
+              "new_basis": {
+                "indices_0_based": [
+                  0,
+                  3,
+                  4,
+                  5,
+                  6,
+                  11,
+                  15
+                ],
+                "indices_1_based": [
+                  1,
+                  4,
+                  5,
+                  6,
+                  7,
+                  12,
+                  16
+                ],
+                "variables": [
+                  "y_1",
+                  "y_4",
+                  "y_5",
+                  "y_6",
+                  "y_7",
+                  "y_12",
+                  "s_4"
+                ],
+                "basic_values": [
+                  2.666666666666667,
+                  1.0,
+                  3.0,
+                  -4.440892098500626e-16,
+                  3.3333333333333335,
+                  2.0000000000000004,
+                  -1.7763568394002505e-15
+                ],
+                "rhs_direction_in_basis": [
+                  0.0,
+                  1.0,
+                  0.0,
+                  -1.0,
+                  0.0,
+                  1.0,
+                  -1.0
+                ],
+                "value": 350.33333333333337,
+                "slope": 46.0,
+                "tau_to_next_breakpoint": 0.0
+              },
+              "basis_changed": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "coordinate_index_1_based": 5,
+      "coordinate_index_0_based": 4,
+      "sign": -1,
+      "direction_label": "xi_5_minus",
+      "gamma_directional": 1.7619047619047592,
+      "termination_reason": "finite_crossing_found_before_next_breakpoint",
+      "xi_at_termination_or_crossing": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        5.238095238095241,
+        3.0,
+        2.0
+      ],
+      "phi_at_termination_or_crossing": 0.0,
+      "Q_EV_at_termination_or_crossing": 270.8095238095239,
+      "Q_star_at_termination_or_crossing": 270.8095238095239,
+      "cost_EV_at_termination_or_crossing": 390.8095238095239,
+      "cost_star_at_termination_or_crossing": 390.8095238095239,
+      "num_intervals": 2,
+      "num_basis_changes": {
+        "EV": 0,
+        "star": 1
+      },
+      "num_bases_explored": {
+        "EV": 1,
+        "star": 2
+      },
+      "initial_basis_selection": {
+        "EV": "lexicographically_first_right_feasible_optimal_basis",
+        "star": "lexicographically_first_right_feasible_optimal_basis"
+      },
+      "basis_history": {
+        "EV": [
+          {
+            "indices_0_based": [
+              0,
+              3,
+              4,
+              6,
+              10,
+              11,
+              15
+            ],
+            "indices_1_based": [
+              1,
+              4,
+              5,
+              7,
+              11,
+              12,
+              16
+            ],
+            "variables": [
+              "y_1",
+              "y_4",
+              "y_5",
+              "y_7",
+              "y_11",
+              "y_12",
+              "s_4"
+            ],
+            "basic_values": [
+              0.833333333333333,
+              2.0,
+              1.0,
+              4.166666666666667,
+              2.0,
+              2.0,
+              0.0
+            ],
+            "rhs_direction_in_basis": [
+              0.0,
+              -1.0,
+              1.0,
+              0.0,
+              -1.0,
+              0.0,
+              1.0
+            ],
+            "value": 360.66666666666663,
+            "slope": -51.0,
+            "tau_to_next_breakpoint": 2.0
+          }
+        ],
+        "star": [
+          {
+            "indices_0_based": [
+              0,
+              3,
+              4,
+              5,
+              6,
+              11,
+              15
+            ],
+            "indices_1_based": [
+              1,
+              4,
+              5,
+              6,
+              7,
+              12,
+              16
+            ],
+            "variables": [
+              "y_1",
+              "y_4",
+              "y_5",
+              "y_6",
+              "y_7",
+              "y_12",
+              "s_4"
+            ],
+            "basic_values": [
+              2.666666666666667,
+              1.0,
+              3.0,
+              -4.440892098500626e-16,
+              3.3333333333333335,
+              2.0000000000000004,
+              -1.7763568394002505e-15
+            ],
+            "rhs_direction_in_basis": [
+              0.0,
+              -1.0,
+              0.0,
+              1.0,
+              0.0,
+              -1.0,
+              1.0
+            ],
+            "value": 350.33333333333337,
+            "slope": -46.0,
+            "tau_to_next_breakpoint": 1.0
+          },
+          {
+            "indices_0_based": [
+              0,
+              1,
+              4,
+              5,
+              6,
+              11,
+              15
+            ],
+            "indices_1_based": [
+              1,
+              2,
+              5,
+              6,
+              7,
+              12,
+              16
+            ],
+            "variables": [
+              "y_1",
+              "y_2",
+              "y_5",
+              "y_6",
+              "y_7",
+              "y_12",
+              "s_4"
+            ],
+            "basic_values": [
+              2.6666666666666665,
+              0.0,
+              3.0,
+              0.9999999999999996,
+              3.3333333333333335,
+              1.0000000000000004,
+              0.9999999999999982
+            ],
+            "rhs_direction_in_basis": [
+              -1.0,
+              1.0,
+              -1.0,
+              1.0,
+              0.0,
+              -1.0,
+              1.0
+            ],
+            "value": 304.3333333333333,
+            "slope": -44.0,
+            "tau_to_next_breakpoint": 1.0000000000000004
+          }
+        ]
+      },
+      "intervals": [
+        {
+          "interval_index": 0,
+          "start_t": 0.0,
+          "end_t": 1.0,
+          "length": 1.0,
+          "EV_basis": {
+            "indices_0_based": [
+              0,
+              3,
+              4,
+              6,
+              10,
+              11,
+              15
+            ],
+            "indices_1_based": [
+              1,
+              4,
+              5,
+              7,
+              11,
+              12,
+              16
+            ],
+            "variables": [
+              "y_1",
+              "y_4",
+              "y_5",
+              "y_7",
+              "y_11",
+              "y_12",
+              "s_4"
+            ]
+          },
+          "star_basis": {
+            "indices_0_based": [
+              0,
+              3,
+              4,
+              5,
+              6,
+              11,
+              15
+            ],
+            "indices_1_based": [
+              1,
+              4,
+              5,
+              6,
+              7,
+              12,
+              16
+            ],
+            "variables": [
+              "y_1",
+              "y_4",
+              "y_5",
+              "y_6",
+              "y_7",
+              "y_12",
+              "s_4"
+            ]
+          },
+          "EV_tau": 2.0,
+          "star_tau": 1.0,
+          "phi_start": 10.333333333333258,
+          "phi_end": 5.3333333333332575,
+          "beta": -5.0,
+          "event_at_end": [
+            "star"
+          ],
+          "leaving_variables_at_end": {
+            "EV": [],
+            "star": [
+              {
+                "basis_row": 1,
+                "leaving_index_0_based": 3,
+                "leaving_index_1_based": 4,
+                "leaving_variable": "y_4",
+                "ratio": 1.0,
+                "basic_value": 1.0,
+                "direction_value": -1.0
+              }
+            ]
+          }
+        },
+        {
+          "interval_index": 1,
+          "start_t": 1.0,
+          "end_t": 1.7619047619047592,
+          "length": 0.7619047619047592,
+          "EV_basis": {
+            "indices_0_based": [
+              0,
+              3,
+              4,
+              6,
+              10,
+              11,
+              15
+            ],
+            "indices_1_based": [
+              1,
+              4,
+              5,
+              7,
+              11,
+              12,
+              16
+            ],
+            "variables": [
+              "y_1",
+              "y_4",
+              "y_5",
+              "y_7",
+              "y_11",
+              "y_12",
+              "s_4"
+            ]
+          },
+          "star_basis": {
+            "indices_0_based": [
+              0,
+              1,
+              4,
+              5,
+              6,
+              11,
+              15
+            ],
+            "indices_1_based": [
+              1,
+              2,
+              5,
+              6,
+              7,
+              12,
+              16
+            ],
+            "variables": [
+              "y_1",
+              "y_2",
+              "y_5",
+              "y_6",
+              "y_7",
+              "y_12",
+              "s_4"
+            ]
+          },
+          "phi_start": 5.333333333333314,
+          "phi_end": 0.0,
+          "beta": -7.0,
+          "event_at_end": [
+            "violation_crossing"
+          ]
+        }
+      ],
+      "basis_change_events": [
+        {
+          "event_index": 0,
+          "t": 1.0,
+          "active_breakpoint_for": [
+            "star"
+          ],
+          "basis_changed_for": [
+            "star"
+          ],
+          "updates": [
+            {
+              "x_label": "star",
+              "selection_rule": "lexicographically_first_right_feasible_optimal_basis",
+              "old_basis": {
+                "indices_0_based": [
+                  0,
+                  3,
+                  4,
+                  5,
+                  6,
+                  11,
+                  15
+                ],
+                "indices_1_based": [
+                  1,
+                  4,
+                  5,
+                  6,
+                  7,
+                  12,
+                  16
+                ],
+                "variables": [
+                  "y_1",
+                  "y_4",
+                  "y_5",
+                  "y_6",
+                  "y_7",
+                  "y_12",
+                  "s_4"
+                ]
+              },
+              "new_basis": {
+                "indices_0_based": [
+                  0,
+                  1,
+                  4,
+                  5,
+                  6,
+                  11,
+                  15
+                ],
+                "indices_1_based": [
+                  1,
+                  2,
+                  5,
+                  6,
+                  7,
+                  12,
+                  16
+                ],
+                "variables": [
+                  "y_1",
+                  "y_2",
+                  "y_5",
+                  "y_6",
+                  "y_7",
+                  "y_12",
+                  "s_4"
+                ],
+                "basic_values": [
+                  2.6666666666666665,
+                  0.0,
+                  3.0,
+                  0.9999999999999996,
+                  3.3333333333333335,
+                  1.0000000000000004,
+                  0.9999999999999982
+                ],
+                "rhs_direction_in_basis": [
+                  -1.0,
+                  1.0,
+                  -1.0,
+                  1.0,
+                  0.0,
+                  -1.0,
+                  1.0
+                ],
+                "value": 304.3333333333333,
+                "slope": -44.0,
+                "tau_to_next_breakpoint": 1.0000000000000004
+              },
+              "basis_changed": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "coordinate_index_1_based": 6,
+      "coordinate_index_0_based": 5,
+      "sign": 1,
+      "direction_label": "xi_6_plus",
+      "gamma_directional": "Infinity",
+      "termination_reason": "stopped_at_degenerate_breakpoint_without_right_feasible_basis",
+      "xi_at_termination_or_crossing": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        7.0,
+        3.0,
+        2.0
+      ],
+      "phi_at_termination_or_crossing": 10.333333333333258,
+      "Q_EV_at_termination_or_crossing": 360.66666666666663,
+      "Q_star_at_termination_or_crossing": 350.33333333333337,
+      "cost_EV_at_termination_or_crossing": 480.66666666666663,
+      "cost_star_at_termination_or_crossing": 470.33333333333337,
+      "num_intervals": 1,
+      "num_basis_changes": {
+        "EV": 0,
+        "star": 0
+      },
+      "num_bases_explored": {
+        "EV": 1,
+        "star": 1
+      },
+      "initial_basis_selection": {
+        "EV": "lexicographically_first_optimal_basis_no_right_feasible_basis",
+        "star": "lexicographically_first_optimal_basis_no_right_feasible_basis"
+      },
+      "basis_history": {
+        "EV": [
+          {
+            "indices_0_based": [
+              0,
+              3,
+              4,
+              6,
+              10,
+              11,
+              15
+            ],
+            "indices_1_based": [
+              1,
+              4,
+              5,
+              7,
+              11,
+              12,
+              16
+            ],
+            "variables": [
+              "y_1",
+              "y_4",
+              "y_5",
+              "y_7",
+              "y_11",
+              "y_12",
+              "s_4"
+            ],
+            "basic_values": [
+              0.833333333333333,
+              2.0,
+              1.0,
+              4.166666666666667,
+              2.0,
+              2.0,
+              0.0
+            ],
+            "rhs_direction_in_basis": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.0,
+              0.0,
+              -1.0
+            ],
+            "value": 360.66666666666663,
+            "slope": 33.0,
+            "tau_to_next_breakpoint": 0.0
+          }
+        ],
+        "star": [
+          {
+            "indices_0_based": [
+              0,
+              3,
+              4,
+              5,
+              6,
+              11,
+              15
+            ],
+            "indices_1_based": [
+              1,
+              4,
+              5,
+              6,
+              7,
+              12,
+              16
+            ],
+            "variables": [
+              "y_1",
+              "y_4",
+              "y_5",
+              "y_6",
+              "y_7",
+              "y_12",
+              "s_4"
+            ],
+            "basic_values": [
+              2.666666666666667,
+              1.0,
+              3.0,
+              -4.440892098500626e-16,
+              3.3333333333333335,
+              2.0000000000000004,
+              -1.7763568394002505e-15
+            ],
+            "rhs_direction_in_basis": [
+              0.0,
+              0.0,
+              1.0,
+              -1.0,
+              0.0,
+              1.0,
+              -1.0
+            ],
+            "value": 350.33333333333337,
+            "slope": 28.0,
+            "tau_to_next_breakpoint": 0.0
+          }
+        ]
+      },
+      "intervals": [
+        {
+          "interval_index": 0,
+          "start_t": 0.0,
+          "end_t": 0.0,
+          "length": 0.0,
+          "EV_basis": {
+            "indices_0_based": [
+              0,
+              3,
+              4,
+              6,
+              10,
+              11,
+              15
+            ],
+            "indices_1_based": [
+              1,
+              4,
+              5,
+              7,
+              11,
+              12,
+              16
+            ],
+            "variables": [
+              "y_1",
+              "y_4",
+              "y_5",
+              "y_7",
+              "y_11",
+              "y_12",
+              "s_4"
+            ]
+          },
+          "star_basis": {
+            "indices_0_based": [
+              0,
+              3,
+              4,
+              5,
+              6,
+              11,
+              15
+            ],
+            "indices_1_based": [
+              1,
+              4,
+              5,
+              6,
+              7,
+              12,
+              16
+            ],
+            "variables": [
+              "y_1",
+              "y_4",
+              "y_5",
+              "y_6",
+              "y_7",
+              "y_12",
+              "s_4"
+            ]
+          },
+          "EV_tau": 0.0,
+          "star_tau": 0.0,
+          "phi_start": 10.333333333333258,
+          "phi_end": 10.333333333333258,
+          "beta": 5.0,
+          "event_at_end": [
+            "EV",
+            "star"
+          ],
+          "leaving_variables_at_end": {
+            "EV": [
+              {
+                "basis_row": 6,
+                "leaving_index_0_based": 15,
+                "leaving_index_1_based": 16,
+                "leaving_variable": "s_4",
+                "ratio": 0.0,
+                "basic_value": 0.0,
+                "direction_value": -1.0
+              }
+            ],
+            "star": [
+              {
+                "basis_row": 3,
+                "leaving_index_0_based": 5,
+                "leaving_index_1_based": 6,
+                "leaving_variable": "y_6",
+                "ratio": 0.0,
+                "basic_value": -4.440892098500626e-16,
+                "direction_value": -1.0
+              },
+              {
+                "basis_row": 6,
+                "leaving_index_0_based": 15,
+                "leaving_index_1_based": 16,
+                "leaving_variable": "s_4",
+                "ratio": 0.0,
+                "basic_value": -1.7763568394002505e-15,
+                "direction_value": -1.0
+              }
+            ]
+          }
+        }
+      ],
+      "basis_change_events": [
+        {
+          "event_index": 0,
+          "t": 0.0,
+          "active_breakpoint_for": [
+            "EV",
+            "star"
+          ],
+          "basis_changed_for": [],
+          "updates": [
+            {
+              "x_label": "EV",
+              "selection_rule": "lexicographically_first_optimal_basis_no_right_feasible_basis",
+              "old_basis": {
+                "indices_0_based": [
+                  0,
+                  3,
+                  4,
+                  6,
+                  10,
+                  11,
+                  15
+                ],
+                "indices_1_based": [
+                  1,
+                  4,
+                  5,
+                  7,
+                  11,
+                  12,
+                  16
+                ],
+                "variables": [
+                  "y_1",
+                  "y_4",
+                  "y_5",
+                  "y_7",
+                  "y_11",
+                  "y_12",
+                  "s_4"
+                ]
+              },
+              "new_basis": {
+                "indices_0_based": [
+                  0,
+                  3,
+                  4,
+                  6,
+                  10,
+                  11,
+                  15
+                ],
+                "indices_1_based": [
+                  1,
+                  4,
+                  5,
+                  7,
+                  11,
+                  12,
+                  16
+                ],
+                "variables": [
+                  "y_1",
+                  "y_4",
+                  "y_5",
+                  "y_7",
+                  "y_11",
+                  "y_12",
+                  "s_4"
+                ],
+                "basic_values": [
+                  0.833333333333333,
+                  2.0,
+                  1.0,
+                  4.166666666666667,
+                  2.0,
+                  2.0,
+                  0.0
+                ],
+                "rhs_direction_in_basis": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  1.0,
+                  0.0,
+                  -1.0
+                ],
+                "value": 360.66666666666663,
+                "slope": 33.0,
+                "tau_to_next_breakpoint": 0.0
+              },
+              "basis_changed": false
+            },
+            {
+              "x_label": "star",
+              "selection_rule": "lexicographically_first_optimal_basis_no_right_feasible_basis",
+              "old_basis": {
+                "indices_0_based": [
+                  0,
+                  3,
+                  4,
+                  5,
+                  6,
+                  11,
+                  15
+                ],
+                "indices_1_based": [
+                  1,
+                  4,
+                  5,
+                  6,
+                  7,
+                  12,
+                  16
+                ],
+                "variables": [
+                  "y_1",
+                  "y_4",
+                  "y_5",
+                  "y_6",
+                  "y_7",
+                  "y_12",
+                  "s_4"
+                ]
+              },
+              "new_basis": {
+                "indices_0_based": [
+                  0,
+                  3,
+                  4,
+                  5,
+                  6,
+                  11,
+                  15
+                ],
+                "indices_1_based": [
+                  1,
+                  4,
+                  5,
+                  6,
+                  7,
+                  12,
+                  16
+                ],
+                "variables": [
+                  "y_1",
+                  "y_4",
+                  "y_5",
+                  "y_6",
+                  "y_7",
+                  "y_12",
+                  "s_4"
+                ],
+                "basic_values": [
+                  2.666666666666667,
+                  1.0,
+                  3.0,
+                  -4.440892098500626e-16,
+                  3.3333333333333335,
+                  2.0000000000000004,
+                  -1.7763568394002505e-15
+                ],
+                "rhs_direction_in_basis": [
+                  0.0,
+                  0.0,
+                  1.0,
+                  -1.0,
+                  0.0,
+                  1.0,
+                  -1.0
+                ],
+                "value": 350.33333333333337,
+                "slope": 28.0,
+                "tau_to_next_breakpoint": 0.0
+              },
+              "basis_changed": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "coordinate_index_1_based": 6,
+      "coordinate_index_0_based": 5,
+      "sign": -1,
+      "direction_label": "xi_6_minus",
+      "gamma_directional": 2.3333333333332575,
+      "termination_reason": "finite_crossing_found_before_next_breakpoint",
+      "xi_at_termination_or_crossing": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        7.0,
+        0.6666666666667425,
+        2.0
+      ],
+      "phi_at_termination_or_crossing": 0.0,
+      "Q_EV_at_termination_or_crossing": 285.3333333333354,
+      "Q_star_at_termination_or_crossing": 285.3333333333354,
+      "cost_EV_at_termination_or_crossing": 405.3333333333354,
+      "cost_star_at_termination_or_crossing": 405.3333333333354,
+      "num_intervals": 2,
+      "num_basis_changes": {
+        "EV": 1,
+        "star": 1
+      },
+      "num_bases_explored": {
+        "EV": 2,
+        "star": 2
+      },
+      "initial_basis_selection": {
+        "EV": "lexicographically_first_right_feasible_optimal_basis",
+        "star": "lexicographically_first_right_feasible_optimal_basis"
+      },
+      "basis_history": {
+        "EV": [
+          {
+            "indices_0_based": [
+              0,
+              3,
+              4,
+              6,
+              10,
+              11,
+              15
+            ],
+            "indices_1_based": [
+              1,
+              4,
+              5,
+              7,
+              11,
+              12,
+              16
+            ],
+            "variables": [
+              "y_1",
+              "y_4",
+              "y_5",
+              "y_7",
+              "y_11",
+              "y_12",
+              "s_4"
+            ],
+            "basic_values": [
+              0.833333333333333,
+              2.0,
+              1.0,
+              4.166666666666667,
+              2.0,
+              2.0,
+              0.0
+            ],
+            "rhs_direction_in_basis": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              -1.0,
+              0.0,
+              1.0
+            ],
+            "value": 360.66666666666663,
+            "slope": -33.0,
+            "tau_to_next_breakpoint": 2.0
+          },
+          {
+            "indices_0_based": [
+              0,
+              3,
+              4,
+              5,
+              6,
+              11,
+              15
+            ],
+            "indices_1_based": [
+              1,
+              4,
+              5,
+              6,
+              7,
+              12,
+              16
+            ],
+            "variables": [
+              "y_1",
+              "y_4",
+              "y_5",
+              "y_6",
+              "y_7",
+              "y_12",
+              "s_4"
+            ],
+            "basic_values": [
+              0.833333333333333,
+              2.0,
+              1.0,
+              0.0,
+              4.166666666666667,
+              2.0,
+              2.0
+            ],
+            "rhs_direction_in_basis": [
+              0.0,
+              0.0,
+              -1.0,
+              1.0,
+              0.0,
+              -1.0,
+              1.0
+            ],
+            "value": 294.66666666666663,
+            "slope": -28.0,
+            "tau_to_next_breakpoint": 1.0
+          }
+        ],
+        "star": [
+          {
+            "indices_0_based": [
+              0,
+              3,
+              4,
+              5,
+              6,
+              11,
+              15
+            ],
+            "indices_1_based": [
+              1,
+              4,
+              5,
+              6,
+              7,
+              12,
+              16
+            ],
+            "variables": [
+              "y_1",
+              "y_4",
+              "y_5",
+              "y_6",
+              "y_7",
+              "y_12",
+              "s_4"
+            ],
+            "basic_values": [
+              2.666666666666667,
+              1.0,
+              3.0,
+              -4.440892098500626e-16,
+              3.3333333333333335,
+              2.0000000000000004,
+              -1.7763568394002505e-15
+            ],
+            "rhs_direction_in_basis": [
+              0.0,
+              0.0,
+              -1.0,
+              1.0,
+              0.0,
+              -1.0,
+              1.0
+            ],
+            "value": 350.33333333333337,
+            "slope": -28.0,
+            "tau_to_next_breakpoint": 2.0000000000000004
+          },
+          {
+            "indices_0_based": [
+              0,
+              3,
+              4,
+              5,
+              6,
+              13,
+              15
+            ],
+            "indices_1_based": [
+              1,
+              4,
+              5,
+              6,
+              7,
+              14,
+              16
+            ],
+            "variables": [
+              "y_1",
+              "y_4",
+              "y_5",
+              "y_6",
+              "y_7",
+              "s_2",
+              "s_4"
+            ],
+            "basic_values": [
+              2.666666666666667,
+              1.0,
+              1.0,
+              2.0,
+              3.3333333333333335,
+              -4.440892098500626e-16,
+              1.9999999999999987
+            ],
+            "rhs_direction_in_basis": [
+              0.0,
+              0.0,
+              -1.0,
+              0.0,
+              0.0,
+              1.0,
+              0.0
+            ],
+            "value": 294.33333333333337,
+            "slope": -27.0,
+            "tau_to_next_breakpoint": 1.0
+          }
+        ]
+      },
+      "intervals": [
+        {
+          "interval_index": 0,
+          "start_t": 0.0,
+          "end_t": 2.0,
+          "length": 2.0,
+          "EV_basis": {
+            "indices_0_based": [
+              0,
+              3,
+              4,
+              6,
+              10,
+              11,
+              15
+            ],
+            "indices_1_based": [
+              1,
+              4,
+              5,
+              7,
+              11,
+              12,
+              16
+            ],
+            "variables": [
+              "y_1",
+              "y_4",
+              "y_5",
+              "y_7",
+              "y_11",
+              "y_12",
+              "s_4"
+            ]
+          },
+          "star_basis": {
+            "indices_0_based": [
+              0,
+              3,
+              4,
+              5,
+              6,
+              11,
+              15
+            ],
+            "indices_1_based": [
+              1,
+              4,
+              5,
+              6,
+              7,
+              12,
+              16
+            ],
+            "variables": [
+              "y_1",
+              "y_4",
+              "y_5",
+              "y_6",
+              "y_7",
+              "y_12",
+              "s_4"
+            ]
+          },
+          "EV_tau": 2.0,
+          "star_tau": 2.0000000000000004,
+          "phi_start": 10.333333333333258,
+          "phi_end": 0.33333333333325754,
+          "beta": -5.0,
+          "event_at_end": [
+            "EV",
+            "star"
+          ],
+          "leaving_variables_at_end": {
+            "EV": [
+              {
+                "basis_row": 4,
+                "leaving_index_0_based": 10,
+                "leaving_index_1_based": 11,
+                "leaving_variable": "y_11",
+                "ratio": 2.0,
+                "basic_value": 2.0,
+                "direction_value": -1.0
+              }
+            ],
+            "star": [
+              {
+                "basis_row": 5,
+                "leaving_index_0_based": 11,
+                "leaving_index_1_based": 12,
+                "leaving_variable": "y_12",
+                "ratio": 2.0000000000000004,
+                "basic_value": 2.0000000000000004,
+                "direction_value": -1.0
+              }
+            ]
+          }
+        },
+        {
+          "interval_index": 1,
+          "start_t": 2.0,
+          "end_t": 2.3333333333332575,
+          "length": 0.33333333333325754,
+          "EV_basis": {
+            "indices_0_based": [
+              0,
+              3,
+              4,
+              5,
+              6,
+              11,
+              15
+            ],
+            "indices_1_based": [
+              1,
+              4,
+              5,
+              6,
+              7,
+              12,
+              16
+            ],
+            "variables": [
+              "y_1",
+              "y_4",
+              "y_5",
+              "y_6",
+              "y_7",
+              "y_12",
+              "s_4"
+            ]
+          },
+          "star_basis": {
+            "indices_0_based": [
+              0,
+              3,
+              4,
+              5,
+              6,
+              13,
+              15
+            ],
+            "indices_1_based": [
+              1,
+              4,
+              5,
+              6,
+              7,
+              14,
+              16
+            ],
+            "variables": [
+              "y_1",
+              "y_4",
+              "y_5",
+              "y_6",
+              "y_7",
+              "s_2",
+              "s_4"
+            ]
+          },
+          "phi_start": 0.33333333333325754,
+          "phi_end": 0.0,
+          "beta": -1.0,
+          "event_at_end": [
+            "violation_crossing"
+          ]
+        }
+      ],
+      "basis_change_events": [
+        {
+          "event_index": 0,
+          "t": 2.0,
+          "active_breakpoint_for": [
+            "EV",
+            "star"
+          ],
+          "basis_changed_for": [
+            "EV",
+            "star"
+          ],
+          "updates": [
+            {
+              "x_label": "EV",
+              "selection_rule": "lexicographically_first_right_feasible_optimal_basis",
+              "old_basis": {
+                "indices_0_based": [
+                  0,
+                  3,
+                  4,
+                  6,
+                  10,
+                  11,
+                  15
+                ],
+                "indices_1_based": [
+                  1,
+                  4,
+                  5,
+                  7,
+                  11,
+                  12,
+                  16
+                ],
+                "variables": [
+                  "y_1",
+                  "y_4",
+                  "y_5",
+                  "y_7",
+                  "y_11",
+                  "y_12",
+                  "s_4"
+                ]
+              },
+              "new_basis": {
+                "indices_0_based": [
+                  0,
+                  3,
+                  4,
+                  5,
+                  6,
+                  11,
+                  15
+                ],
+                "indices_1_based": [
+                  1,
+                  4,
+                  5,
+                  6,
+                  7,
+                  12,
+                  16
+                ],
+                "variables": [
+                  "y_1",
+                  "y_4",
+                  "y_5",
+                  "y_6",
+                  "y_7",
+                  "y_12",
+                  "s_4"
+                ],
+                "basic_values": [
+                  0.833333333333333,
+                  2.0,
+                  1.0,
+                  0.0,
+                  4.166666666666667,
+                  2.0,
+                  2.0
+                ],
+                "rhs_direction_in_basis": [
+                  0.0,
+                  0.0,
+                  -1.0,
+                  1.0,
+                  0.0,
+                  -1.0,
+                  1.0
+                ],
+                "value": 294.66666666666663,
+                "slope": -28.0,
+                "tau_to_next_breakpoint": 1.0
+              },
+              "basis_changed": true
+            },
+            {
+              "x_label": "star",
+              "selection_rule": "lexicographically_first_right_feasible_optimal_basis",
+              "old_basis": {
+                "indices_0_based": [
+                  0,
+                  3,
+                  4,
+                  5,
+                  6,
+                  11,
+                  15
+                ],
+                "indices_1_based": [
+                  1,
+                  4,
+                  5,
+                  6,
+                  7,
+                  12,
+                  16
+                ],
+                "variables": [
+                  "y_1",
+                  "y_4",
+                  "y_5",
+                  "y_6",
+                  "y_7",
+                  "y_12",
+                  "s_4"
+                ]
+              },
+              "new_basis": {
+                "indices_0_based": [
+                  0,
+                  3,
+                  4,
+                  5,
+                  6,
+                  13,
+                  15
+                ],
+                "indices_1_based": [
+                  1,
+                  4,
+                  5,
+                  6,
+                  7,
+                  14,
+                  16
+                ],
+                "variables": [
+                  "y_1",
+                  "y_4",
+                  "y_5",
+                  "y_6",
+                  "y_7",
+                  "s_2",
+                  "s_4"
+                ],
+                "basic_values": [
+                  2.666666666666667,
+                  1.0,
+                  1.0,
+                  2.0,
+                  3.3333333333333335,
+                  -4.440892098500626e-16,
+                  1.9999999999999987
+                ],
+                "rhs_direction_in_basis": [
+                  0.0,
+                  0.0,
+                  -1.0,
+                  0.0,
+                  0.0,
+                  1.0,
+                  0.0
+                ],
+                "value": 294.33333333333337,
+                "slope": -27.0,
+                "tau_to_next_breakpoint": 1.0
+              },
+              "basis_changed": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "coordinate_index_1_based": 7,
+      "coordinate_index_0_based": 6,
+      "sign": 1,
+      "direction_label": "xi_7_plus",
+      "gamma_directional": "Infinity",
+      "termination_reason": "stopped_at_degenerate_breakpoint_without_right_feasible_basis",
+      "xi_at_termination_or_crossing": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        7.0,
+        3.0,
+        2.0
+      ],
+      "phi_at_termination_or_crossing": 10.333333333333258,
+      "Q_EV_at_termination_or_crossing": 360.66666666666663,
+      "Q_star_at_termination_or_crossing": 350.33333333333337,
+      "cost_EV_at_termination_or_crossing": 480.66666666666663,
+      "cost_star_at_termination_or_crossing": 470.33333333333337,
+      "num_intervals": 1,
+      "num_basis_changes": {
+        "EV": 0,
+        "star": 0
+      },
+      "num_bases_explored": {
+        "EV": 1,
+        "star": 1
+      },
+      "initial_basis_selection": {
+        "EV": "lexicographically_first_optimal_basis_no_right_feasible_basis",
+        "star": "lexicographically_first_optimal_basis_no_right_feasible_basis"
+      },
+      "basis_history": {
+        "EV": [
+          {
+            "indices_0_based": [
+              0,
+              3,
+              4,
+              6,
+              10,
+              11,
+              15
+            ],
+            "indices_1_based": [
+              1,
+              4,
+              5,
+              7,
+              11,
+              12,
+              16
+            ],
+            "variables": [
+              "y_1",
+              "y_4",
+              "y_5",
+              "y_7",
+              "y_11",
+              "y_12",
+              "s_4"
+            ],
+            "basic_values": [
+              0.833333333333333,
+              2.0,
+              1.0,
+              4.166666666666667,
+              2.0,
+              2.0,
+              0.0
+            ],
+            "rhs_direction_in_basis": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.0,
+              -1.0
+            ],
+            "value": 360.66666666666663,
+            "slope": 5.5,
+            "tau_to_next_breakpoint": 0.0
+          }
+        ],
+        "star": [
+          {
+            "indices_0_based": [
+              0,
+              3,
+              4,
+              5,
+              6,
+              11,
+              15
+            ],
+            "indices_1_based": [
+              1,
+              4,
+              5,
+              6,
+              7,
+              12,
+              16
+            ],
+            "variables": [
+              "y_1",
+              "y_4",
+              "y_5",
+              "y_6",
+              "y_7",
+              "y_12",
+              "s_4"
+            ],
+            "basic_values": [
+              2.666666666666667,
+              1.0,
+              3.0,
+              -4.440892098500626e-16,
+              3.3333333333333335,
+              2.0000000000000004,
+              -1.7763568394002505e-15
+            ],
+            "rhs_direction_in_basis": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.0,
+              -1.0
+            ],
+            "value": 350.33333333333337,
+            "slope": 5.5,
+            "tau_to_next_breakpoint": 0.0
+          }
+        ]
+      },
+      "intervals": [
+        {
+          "interval_index": 0,
+          "start_t": 0.0,
+          "end_t": 0.0,
+          "length": 0.0,
+          "EV_basis": {
+            "indices_0_based": [
+              0,
+              3,
+              4,
+              6,
+              10,
+              11,
+              15
+            ],
+            "indices_1_based": [
+              1,
+              4,
+              5,
+              7,
+              11,
+              12,
+              16
+            ],
+            "variables": [
+              "y_1",
+              "y_4",
+              "y_5",
+              "y_7",
+              "y_11",
+              "y_12",
+              "s_4"
+            ]
+          },
+          "star_basis": {
+            "indices_0_based": [
+              0,
+              3,
+              4,
+              5,
+              6,
+              11,
+              15
+            ],
+            "indices_1_based": [
+              1,
+              4,
+              5,
+              6,
+              7,
+              12,
+              16
+            ],
+            "variables": [
+              "y_1",
+              "y_4",
+              "y_5",
+              "y_6",
+              "y_7",
+              "y_12",
+              "s_4"
+            ]
+          },
+          "EV_tau": 0.0,
+          "star_tau": 0.0,
+          "phi_start": 10.333333333333258,
+          "phi_end": 10.333333333333258,
+          "beta": 0.0,
+          "event_at_end": [
+            "EV",
+            "star"
+          ],
+          "leaving_variables_at_end": {
+            "EV": [
+              {
+                "basis_row": 6,
+                "leaving_index_0_based": 15,
+                "leaving_index_1_based": 16,
+                "leaving_variable": "s_4",
+                "ratio": 0.0,
+                "basic_value": 0.0,
+                "direction_value": -1.0
+              }
+            ],
+            "star": [
+              {
+                "basis_row": 6,
+                "leaving_index_0_based": 15,
+                "leaving_index_1_based": 16,
+                "leaving_variable": "s_4",
+                "ratio": 0.0,
+                "basic_value": -1.7763568394002505e-15,
+                "direction_value": -1.0
+              }
+            ]
+          }
+        }
+      ],
+      "basis_change_events": [
+        {
+          "event_index": 0,
+          "t": 0.0,
+          "active_breakpoint_for": [
+            "EV",
+            "star"
+          ],
+          "basis_changed_for": [],
+          "updates": [
+            {
+              "x_label": "EV",
+              "selection_rule": "lexicographically_first_optimal_basis_no_right_feasible_basis",
+              "old_basis": {
+                "indices_0_based": [
+                  0,
+                  3,
+                  4,
+                  6,
+                  10,
+                  11,
+                  15
+                ],
+                "indices_1_based": [
+                  1,
+                  4,
+                  5,
+                  7,
+                  11,
+                  12,
+                  16
+                ],
+                "variables": [
+                  "y_1",
+                  "y_4",
+                  "y_5",
+                  "y_7",
+                  "y_11",
+                  "y_12",
+                  "s_4"
+                ]
+              },
+              "new_basis": {
+                "indices_0_based": [
+                  0,
+                  3,
+                  4,
+                  6,
+                  10,
+                  11,
+                  15
+                ],
+                "indices_1_based": [
+                  1,
+                  4,
+                  5,
+                  7,
+                  11,
+                  12,
+                  16
+                ],
+                "variables": [
+                  "y_1",
+                  "y_4",
+                  "y_5",
+                  "y_7",
+                  "y_11",
+                  "y_12",
+                  "s_4"
+                ],
+                "basic_values": [
+                  0.833333333333333,
+                  2.0,
+                  1.0,
+                  4.166666666666667,
+                  2.0,
+                  2.0,
+                  0.0
+                ],
+                "rhs_direction_in_basis": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  1.0,
+                  -1.0
+                ],
+                "value": 360.66666666666663,
+                "slope": 5.5,
+                "tau_to_next_breakpoint": 0.0
+              },
+              "basis_changed": false
+            },
+            {
+              "x_label": "star",
+              "selection_rule": "lexicographically_first_optimal_basis_no_right_feasible_basis",
+              "old_basis": {
+                "indices_0_based": [
+                  0,
+                  3,
+                  4,
+                  5,
+                  6,
+                  11,
+                  15
+                ],
+                "indices_1_based": [
+                  1,
+                  4,
+                  5,
+                  6,
+                  7,
+                  12,
+                  16
+                ],
+                "variables": [
+                  "y_1",
+                  "y_4",
+                  "y_5",
+                  "y_6",
+                  "y_7",
+                  "y_12",
+                  "s_4"
+                ]
+              },
+              "new_basis": {
+                "indices_0_based": [
+                  0,
+                  3,
+                  4,
+                  5,
+                  6,
+                  11,
+                  15
+                ],
+                "indices_1_based": [
+                  1,
+                  4,
+                  5,
+                  6,
+                  7,
+                  12,
+                  16
+                ],
+                "variables": [
+                  "y_1",
+                  "y_4",
+                  "y_5",
+                  "y_6",
+                  "y_7",
+                  "y_12",
+                  "s_4"
+                ],
+                "basic_values": [
+                  2.666666666666667,
+                  1.0,
+                  3.0,
+                  -4.440892098500626e-16,
+                  3.3333333333333335,
+                  2.0000000000000004,
+                  -1.7763568394002505e-15
+                ],
+                "rhs_direction_in_basis": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  1.0,
+                  -1.0
+                ],
+                "value": 350.33333333333337,
+                "slope": 5.5,
+                "tau_to_next_breakpoint": 0.0
+              },
+              "basis_changed": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "coordinate_index_1_based": 7,
+      "coordinate_index_0_based": 6,
+      "sign": -1,
+      "direction_label": "xi_7_minus",
+      "gamma_directional": "Infinity",
+      "termination_reason": "no_crossing_and_no_future_breakpoints",
+      "xi_at_termination_or_crossing": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        7.0,
+        3.0,
+        0.0
+      ],
+      "phi_at_termination_or_crossing": 10.333333333333258,
+      "Q_EV_at_termination_or_crossing": 349.66666666666663,
+      "Q_star_at_termination_or_crossing": 339.33333333333337,
+      "cost_EV_at_termination_or_crossing": 469.66666666666663,
+      "cost_star_at_termination_or_crossing": 459.33333333333337,
+      "num_intervals": 1,
+      "num_basis_changes": {
+        "EV": 1,
+        "star": 1
+      },
+      "num_bases_explored": {
+        "EV": 2,
+        "star": 2
+      },
+      "initial_basis_selection": {
+        "EV": "lexicographically_first_right_feasible_optimal_basis",
+        "star": "lexicographically_first_right_feasible_optimal_basis"
+      },
+      "basis_history": {
+        "EV": [
+          {
+            "indices_0_based": [
+              0,
+              3,
+              4,
+              6,
+              10,
+              11,
+              15
+            ],
+            "indices_1_based": [
+              1,
+              4,
+              5,
+              7,
+              11,
+              12,
+              16
+            ],
+            "variables": [
+              "y_1",
+              "y_4",
+              "y_5",
+              "y_7",
+              "y_11",
+              "y_12",
+              "s_4"
+            ],
+            "basic_values": [
+              0.833333333333333,
+              2.0,
+              1.0,
+              4.166666666666667,
+              2.0,
+              2.0,
+              0.0
+            ],
+            "rhs_direction_in_basis": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              -1.0,
+              1.0
+            ],
+            "value": 360.66666666666663,
+            "slope": -5.5,
+            "tau_to_next_breakpoint": 2.0
+          },
+          {
+            "indices_0_based": [
+              0,
+              3,
+              4,
+              6,
+              10,
+              15,
+              18
+            ],
+            "indices_1_based": [
+              1,
+              4,
+              5,
+              7,
+              11,
+              16,
+              19
+            ],
+            "variables": [
+              "y_1",
+              "y_4",
+              "y_5",
+              "y_7",
+              "y_11",
+              "s_4",
+              "s_7"
+            ],
+            "basic_values": [
+              0.833333333333333,
+              2.0,
+              1.0,
+              4.166666666666667,
+              2.0,
+              2.0,
+              0.0
+            ],
+            "rhs_direction_in_basis": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "value": 349.66666666666663,
+            "slope": 0.0,
+            "tau_to_next_breakpoint": "Infinity"
+          }
+        ],
+        "star": [
+          {
+            "indices_0_based": [
+              0,
+              3,
+              4,
+              5,
+              6,
+              11,
+              15
+            ],
+            "indices_1_based": [
+              1,
+              4,
+              5,
+              6,
+              7,
+              12,
+              16
+            ],
+            "variables": [
+              "y_1",
+              "y_4",
+              "y_5",
+              "y_6",
+              "y_7",
+              "y_12",
+              "s_4"
+            ],
+            "basic_values": [
+              2.666666666666667,
+              1.0,
+              3.0,
+              -4.440892098500626e-16,
+              3.3333333333333335,
+              2.0000000000000004,
+              -1.7763568394002505e-15
+            ],
+            "rhs_direction_in_basis": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              -1.0,
+              1.0
+            ],
+            "value": 350.33333333333337,
+            "slope": -5.5,
+            "tau_to_next_breakpoint": 2.0000000000000004
+          },
+          {
+            "indices_0_based": [
+              0,
+              3,
+              4,
+              6,
+              10,
+              15,
+              18
+            ],
+            "indices_1_based": [
+              1,
+              4,
+              5,
+              7,
+              11,
+              16,
+              19
+            ],
+            "variables": [
+              "y_1",
+              "y_4",
+              "y_5",
+              "y_7",
+              "y_11",
+              "s_4",
+              "s_7"
+            ],
+            "basic_values": [
+              2.666666666666667,
+              1.0,
+              2.9999999999999996,
+              3.3333333333333335,
+              4.440892098500626e-16,
+              1.9999999999999982,
+              0.0
+            ],
+            "rhs_direction_in_basis": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "value": 339.33333333333337,
+            "slope": 0.0,
+            "tau_to_next_breakpoint": "Infinity"
+          }
+        ]
+      },
+      "intervals": [
+        {
+          "interval_index": 0,
+          "start_t": 0.0,
+          "end_t": 2.0,
+          "length": 2.0,
+          "EV_basis": {
+            "indices_0_based": [
+              0,
+              3,
+              4,
+              6,
+              10,
+              11,
+              15
+            ],
+            "indices_1_based": [
+              1,
+              4,
+              5,
+              7,
+              11,
+              12,
+              16
+            ],
+            "variables": [
+              "y_1",
+              "y_4",
+              "y_5",
+              "y_7",
+              "y_11",
+              "y_12",
+              "s_4"
+            ]
+          },
+          "star_basis": {
+            "indices_0_based": [
+              0,
+              3,
+              4,
+              5,
+              6,
+              11,
+              15
+            ],
+            "indices_1_based": [
+              1,
+              4,
+              5,
+              6,
+              7,
+              12,
+              16
+            ],
+            "variables": [
+              "y_1",
+              "y_4",
+              "y_5",
+              "y_6",
+              "y_7",
+              "y_12",
+              "s_4"
+            ]
+          },
+          "EV_tau": 2.0,
+          "star_tau": 2.0000000000000004,
+          "phi_start": 10.333333333333258,
+          "phi_end": 10.333333333333258,
+          "beta": 0.0,
+          "event_at_end": [
+            "EV",
+            "star"
+          ],
+          "leaving_variables_at_end": {
+            "EV": [
+              {
+                "basis_row": 5,
+                "leaving_index_0_based": 11,
+                "leaving_index_1_based": 12,
+                "leaving_variable": "y_12",
+                "ratio": 2.0,
+                "basic_value": 2.0,
+                "direction_value": -1.0
+              }
+            ],
+            "star": [
+              {
+                "basis_row": 5,
+                "leaving_index_0_based": 11,
+                "leaving_index_1_based": 12,
+                "leaving_variable": "y_12",
+                "ratio": 2.0000000000000004,
+                "basic_value": 2.0000000000000004,
+                "direction_value": -1.0
+              }
+            ]
+          }
+        }
+      ],
+      "basis_change_events": [
+        {
+          "event_index": 0,
+          "t": 2.0,
+          "active_breakpoint_for": [
+            "EV",
+            "star"
+          ],
+          "basis_changed_for": [
+            "EV",
+            "star"
+          ],
+          "updates": [
+            {
+              "x_label": "EV",
+              "selection_rule": "lexicographically_first_right_feasible_optimal_basis",
+              "old_basis": {
+                "indices_0_based": [
+                  0,
+                  3,
+                  4,
+                  6,
+                  10,
+                  11,
+                  15
+                ],
+                "indices_1_based": [
+                  1,
+                  4,
+                  5,
+                  7,
+                  11,
+                  12,
+                  16
+                ],
+                "variables": [
+                  "y_1",
+                  "y_4",
+                  "y_5",
+                  "y_7",
+                  "y_11",
+                  "y_12",
+                  "s_4"
+                ]
+              },
+              "new_basis": {
+                "indices_0_based": [
+                  0,
+                  3,
+                  4,
+                  6,
+                  10,
+                  15,
+                  18
+                ],
+                "indices_1_based": [
+                  1,
+                  4,
+                  5,
+                  7,
+                  11,
+                  16,
+                  19
+                ],
+                "variables": [
+                  "y_1",
+                  "y_4",
+                  "y_5",
+                  "y_7",
+                  "y_11",
+                  "s_4",
+                  "s_7"
+                ],
+                "basic_values": [
+                  0.833333333333333,
+                  2.0,
+                  1.0,
+                  4.166666666666667,
+                  2.0,
+                  2.0,
+                  0.0
+                ],
+                "rhs_direction_in_basis": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  1.0
+                ],
+                "value": 349.66666666666663,
+                "slope": 0.0,
+                "tau_to_next_breakpoint": "Infinity"
+              },
+              "basis_changed": true
+            },
+            {
+              "x_label": "star",
+              "selection_rule": "lexicographically_first_right_feasible_optimal_basis",
+              "old_basis": {
+                "indices_0_based": [
+                  0,
+                  3,
+                  4,
+                  5,
+                  6,
+                  11,
+                  15
+                ],
+                "indices_1_based": [
+                  1,
+                  4,
+                  5,
+                  6,
+                  7,
+                  12,
+                  16
+                ],
+                "variables": [
+                  "y_1",
+                  "y_4",
+                  "y_5",
+                  "y_6",
+                  "y_7",
+                  "y_12",
+                  "s_4"
+                ]
+              },
+              "new_basis": {
+                "indices_0_based": [
+                  0,
+                  3,
+                  4,
+                  6,
+                  10,
+                  15,
+                  18
+                ],
+                "indices_1_based": [
+                  1,
+                  4,
+                  5,
+                  7,
+                  11,
+                  16,
+                  19
+                ],
+                "variables": [
+                  "y_1",
+                  "y_4",
+                  "y_5",
+                  "y_7",
+                  "y_11",
+                  "s_4",
+                  "s_7"
+                ],
+                "basic_values": [
+                  2.666666666666667,
+                  1.0,
+                  2.9999999999999996,
+                  3.3333333333333335,
+                  4.440892098500626e-16,
+                  1.9999999999999982,
+                  0.0
+                ],
+                "rhs_direction_in_basis": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  1.0
+                ],
+                "value": 339.33333333333337,
+                "slope": 0.0,
+                "tau_to_next_breakpoint": "Infinity"
+              },
+              "basis_changed": true
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "source_files": {
+    "instance_data": "instance_data.json",
+    "stochastic_results": "stochastic_results.json",
+    "expectedvalue_results": "expectedvalue_results.json",
+    "cost_gap_diagnostics": "cost_gap_diagnostics.json"
+  },
+  "notes": [
+    "The coordinate-ray search gives an upper bound on the true l1 local dominance radius.",
+    "No coordinate of xi is fixed here; each directional problem perturbs exactly one coordinate by construction.",
+    "Directions with no finite violation are reported with gamma_directional = Infinity."
+  ]
+}

@@ -1,0 +1,71 @@
+{
+  "instance_name": "lands_instance",
+  "method": "dual_extreme_point_enumeration_lp_cross_check",
+  "selected_scenario": "scenario_3",
+  "selected_scenario_index_1_based": 3,
+  "xi_hat": [
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    7.0,
+    3.0,
+    2.0
+  ],
+  "initial_cost_gap_at_xi_hat": 10.333333333333371,
+  "gamma_l1_radius": 1.7619047619047619,
+  "nearest_violation_xi": [
+    -0.0,
+    -0.0,
+    -0.0,
+    -0.0,
+    5.238095238095238,
+    3.0,
+    2.0
+  ],
+  "absolute_deviation_t": [
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    1.7619047619047619,
+    0.0,
+    0.0
+  ],
+  "l1_distance_check": 1.7619047619047619,
+  "first_stage_cost_star": 120.0,
+  "first_stage_cost_EV": 119.99999999999999,
+  "Q_x_star_at_nearest_violation": 270.8095238095238,
+  "Q_x_EV_at_nearest_violation": 270.80952380952385,
+  "cost_with_x_star_at_nearest_violation": 390.8095238095238,
+  "cost_with_x_EV_at_nearest_violation": 390.80952380952385,
+  "gap_at_nearest_violation": 5.684341886080802e-14,
+  "num_dual_extreme_points": 63,
+  "num_feasible_dual_extreme_point_pairs": 544,
+  "selected_dual_extreme_point_indices": {
+    "EV": 14,
+    "star": 3
+  },
+  "pi_EV": [
+    -11.0,
+    -6.0,
+    -19.0,
+    0.0,
+    -51.0,
+    -33.0,
+    -5.5
+  ],
+  "pi_star": [
+    -4.0,
+    -1.0,
+    -12.0,
+    0.0,
+    -44.0,
+    -28.0,
+    -5.5
+  ],
+  "notes": [
+    "This is an optional cross-check for small instances, not the primary Pyomo/Gurobi workflow.",
+    "The primary local-dominance model is built by build_pyomo_model() and solved by solve_pyomo()."
+  ]
+}

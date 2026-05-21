@@ -1,0 +1,158 @@
+{
+  "label": "EV solution under expected scenario",
+  "instance_name": "lands_instance",
+  "backend": "pyomo",
+  "solver": "gurobi",
+  "constraint_form_used": "T x + W y <= H xi_bar",
+  "objective": 378.66666666666663,
+  "EV_objective": 378.66666666666663,
+  "first_stage_cost": 120.0,
+  "expected_scenario_second_stage_cost": 258.66666666666663,
+  "total_second_stage_cost_under_expected_scenario": 258.66666666666663,
+  "scenario_second_stage_costs": {
+    "expected_value_scenario": 258.66666666666663
+  },
+  "x_EV": [
+    0.833333333333333,
+    3.0,
+    4.166666666666667,
+    4.0
+  ],
+  "x_vector": [
+    0.833333333333333,
+    3.0,
+    4.166666666666667,
+    4.0
+  ],
+  "y": [
+    0.833333333333333,
+    0.0,
+    0.0,
+    0.0,
+    3.0,
+    0.0,
+    4.166666666666667,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    2.0
+  ],
+  "expected_xi": [
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    5.0,
+    3.0,
+    2.0
+  ],
+  "probabilities": [
+    0.3,
+    0.4,
+    0.3
+  ],
+  "scenario_names": [
+    "scenario_1",
+    "scenario_2",
+    "scenario_3"
+  ],
+  "consistency_report": {
+    "status": "passed",
+    "num_first_stage_vars": 4,
+    "num_second_stage_vars": 12,
+    "num_scenarios": 3,
+    "A_shape": [
+      2,
+      4
+    ],
+    "T_shape": [
+      7,
+      4
+    ],
+    "W_shape": [
+      7,
+      12
+    ],
+    "H_shape": [
+      7,
+      7
+    ],
+    "probability_sum": 1.0,
+    "constraint_form_used": "T x + W y_s <= H xi_s"
+  },
+  "recourse_evaluations": {
+    "scenario_1": {
+      "Q_value": 174.4,
+      "y": [
+        0.0,
+        0.833333333333333,
+        0.0,
+        0.0,
+        1.0,
+        2.0,
+        3.0,
+        1.166666666666667,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "backend": "pyomo",
+      "solver": "gurobi"
+    },
+    "scenario_2": {
+      "Q_value": 258.66666666666663,
+      "y": [
+        0.833333333333333,
+        0.0,
+        0.0,
+        0.0,
+        3.0,
+        0.0,
+        4.166666666666667,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        2.0
+      ],
+      "backend": "pyomo",
+      "solver": "gurobi"
+    },
+    "scenario_3": {
+      "Q_value": 360.66666666666663,
+      "y": [
+        0.833333333333333,
+        0.0,
+        0.0,
+        2.0,
+        1.0,
+        0.0,
+        4.166666666666667,
+        0.0,
+        0.0,
+        0.0,
+        2.0,
+        2.0
+      ],
+      "backend": "pyomo",
+      "solver": "gurobi"
+    }
+  },
+  "EEV_objective": 383.9866666666666,
+  "EEV": 383.9866666666666,
+  "EEV_first_stage_cost": 120.0,
+  "EEV_expected_second_stage_cost": 263.9866666666666,
+  "EEV_total_second_stage_cost": 263.9866666666666,
+  "EEV_scenario_second_stage_costs": {
+    "scenario_1": 174.4,
+    "scenario_2": 258.66666666666663,
+    "scenario_3": 360.66666666666663
+  },
+  "EEV_weighted_second_stage_costs": {
+    "scenario_1": 52.32,
+    "scenario_2": 103.46666666666665,
+    "scenario_3": 108.19999999999999
+  }
+}

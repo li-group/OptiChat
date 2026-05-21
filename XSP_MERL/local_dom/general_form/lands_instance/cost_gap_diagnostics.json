@@ -1,0 +1,49 @@
+{
+  "instance_name": "lands_instance",
+  "definition": {
+    "cost_gap": "Delta(xi) = (c^T x_EV + Q(x_EV, xi)) - (c^T x_star + Q(x_star, xi)).",
+    "sign_convention": "Positive means x_EV is more expensive than x_star for that realized scenario; negative means x_EV is cheaper."
+  },
+  "metrics": {
+    "RP": 381.85333333333335,
+    "EV_objective": 378.66666666666663,
+    "EEV": 383.9866666666666,
+    "VSS": 2.133333333333269,
+    "expected_cost_gap": 2.1333333333333027,
+    "first_stage_cost_difference_cTxEV_minus_cTxStar": 1.4210854715202004e-14
+  },
+  "scenario_cost_gaps": {
+    "scenario_1": {
+      "probability": 0.3,
+      "Q_x_star_xi": 175.4,
+      "Q_x_EV_xi": 174.4,
+      "cost_with_x_star": 295.4,
+      "cost_with_x_EV": 294.4,
+      "cost_gap": -1.0,
+      "weighted_cost_gap": -0.3
+    },
+    "scenario_2": {
+      "probability": 0.4,
+      "Q_x_star_xi": 260.3333333333333,
+      "Q_x_EV_xi": 258.66666666666663,
+      "cost_with_x_star": 380.3333333333333,
+      "cost_with_x_EV": 378.66666666666663,
+      "cost_gap": -1.6666666666666856,
+      "weighted_cost_gap": -0.6666666666666743
+    },
+    "scenario_3": {
+      "probability": 0.3,
+      "Q_x_star_xi": 350.33333333333337,
+      "Q_x_EV_xi": 360.66666666666663,
+      "cost_with_x_star": 470.33333333333337,
+      "cost_with_x_EV": 480.66666666666663,
+      "cost_gap": 10.333333333333258,
+      "weighted_cost_gap": 3.099999999999977
+    }
+  },
+  "source_files": {
+    "stochastic_results": "stochastic_results.json",
+    "expectedvalue_results": "expectedvalue_results.json"
+  },
+  "note": "This file was computed only from saved result JSONs; no optimization model was re-solved."
+}

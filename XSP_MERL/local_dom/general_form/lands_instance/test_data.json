@@ -1,0 +1,58 @@
+{
+  "stochastic_solution": {
+    "label": "RP/stochastic optimum",
+    "objective": 381.8533333333333,
+    "first_stage_cost": 120.0,
+    "expected_second_stage_cost": 261.8533333333333,
+    "scenario_second_stage_costs": {
+      "scenario_1": 175.4,
+      "scenario_2": 260.3333333333333,
+      "scenario_3": 350.3333333333333
+    },
+    "x_vector": [2.6667, 4, 3.3334, 2]
+  },
+  "expected_value_solution": {
+    "label": "EV solution under expected scenario",
+    "objective": 378.6666666666667,
+    "first_stage_cost": 120.0,
+    "expected_second_stage_cost": 258.6666666666667,
+    "scenario_second_stage_costs": {
+      "expected_value_scenario": 258.6666666666667
+    }
+  },
+  "eev_evaluation": {
+    "label": "EEV evaluation with x fixed to x_EV",
+    "objective": 383.9866666666667,
+    "first_stage_cost": 120.0,
+    "expected_second_stage_cost": 263.9866666666667,
+    "scenario_second_stage_costs": {
+      "scenario_1": 174.4,
+      "scenario_2": 258.6666666666667,
+      "scenario_3": 360.6666666666667
+    }
+  },
+  "metrics": {
+    "RP": 381.8533333333333,
+    "EV_objective": 378.6666666666667,
+    "EEV": 383.9866666666667,
+    "VSS": 2.1333333333333826
+  },
+"definition": {
+"cost_gap": "Delta(xi) = (c^T x_EV + Q(x_EV, xi)) - (c^T x_star + Q(x_star, xi)).",
+"sign_convention": "Positive means x_EV is more expensive than x_star for that realized scenario; negative means x_EV is cheaper for that realized scenario."
+},
+"scenario_cost_gaps": {
+"scenario_1": {
+    "cost_gap": -1.0,
+    "weighted_cost_gap": -0.3
+},
+"scenario_2": {
+    "cost_gap": -1.6666666666666288,
+    "weighted_cost_gap": -0.6666666666666515
+},
+"scenario_3": {
+    "cost_gap": 10.333333333333371,
+    "weighted_cost_gap": 3.100000000000011
+}
+}
+}

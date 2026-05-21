@@ -1,0 +1,489 @@
+{
+  "model_name": "LandS energy planning problem - deterministic equivalent",
+  "sets": {
+    "I": [
+      "1",
+      "2",
+      "3",
+      "4"
+    ],
+    "J": [
+      "1",
+      "2",
+      "3"
+    ],
+    "S": [
+      "xi_3",
+      "xi_5",
+      "xi_7"
+    ]
+  },
+  "definition": {
+    "cost_gap": "Delta(xi) = (c^T x_EV + Q(x_EV, xi)) - (c^T x_star + Q(x_star, xi)).",
+    "sign_convention": "Positive means x_EV is more expensive than x_star for that realized scenario; negative means x_EV is cheaper for that realized scenario.",
+    "recourse_value": "Q(x, xi) is computed by fixing x and solving the second-stage allocation LP for the realized scenario xi."
+  },
+  "first_stage_solutions": {
+    "x_star": {
+      "1": 2.666666666666667,
+      "2": 3.9999999999999996,
+      "3": 3.3333333333333335,
+      "4": 1.9999999999999987
+    },
+    "x_EV": {
+      "1": 0.833333333333333,
+      "2": 3.0,
+      "3": 4.166666666666667,
+      "4": 4.0
+    },
+    "first_stage_cost_x_star": 120.0,
+    "first_stage_cost_x_EV": 120.0
+  },
+  "scenario_cost_gaps": {
+    "xi_3": {
+      "probability": 0.3,
+      "demand": {
+        "1": 3.0,
+        "2": 3.0,
+        "3": 2.0
+      },
+      "x_star_evaluation": {
+        "first_stage_cost": 120.0,
+        "recourse_cost_Q_x_xi": 175.4,
+        "total_scenario_cost": 295.4,
+        "y_by_i_j": {
+          "1": {
+            "1": 0.0,
+            "2": 2.6666666666666665,
+            "3": 0.0
+          },
+          "2": {
+            "1": 0.0,
+            "2": 0.0,
+            "3": 2.0
+          },
+          "3": {
+            "1": 3.0,
+            "2": 0.3333333333333335,
+            "3": 0.0
+          },
+          "4": {
+            "1": 0.0,
+            "2": 0.0,
+            "3": 0.0
+          }
+        },
+        "feasibility": {
+          "capacity_by_i": {
+            "1": {
+              "used": 2.6666666666666665,
+              "capacity": 2.666666666666667,
+              "slack": 0.0
+            },
+            "2": {
+              "used": 2.0,
+              "capacity": 3.9999999999999996,
+              "slack": 1.9999999999999996
+            },
+            "3": {
+              "used": 3.3333333333333335,
+              "capacity": 3.3333333333333335,
+              "slack": 0.0
+            },
+            "4": {
+              "used": 0.0,
+              "capacity": 1.9999999999999987,
+              "slack": 1.9999999999999987
+            }
+          },
+          "demand_by_j": {
+            "1": {
+              "supplied": 3.0,
+              "demand": 3.0,
+              "surplus": 0.0
+            },
+            "2": {
+              "supplied": 3.0,
+              "demand": 3.0,
+              "surplus": 0.0
+            },
+            "3": {
+              "supplied": 2.0,
+              "demand": 2.0,
+              "surplus": 0.0
+            }
+          }
+        }
+      },
+      "x_EV_evaluation": {
+        "first_stage_cost": 120.0,
+        "recourse_cost_Q_x_xi": 174.4,
+        "total_scenario_cost": 294.4,
+        "y_by_i_j": {
+          "1": {
+            "1": 0.0,
+            "2": 0.833333333333333,
+            "3": 0.0
+          },
+          "2": {
+            "1": 0.0,
+            "2": 1.0,
+            "3": 2.0
+          },
+          "3": {
+            "1": 3.0,
+            "2": 1.166666666666667,
+            "3": 0.0
+          },
+          "4": {
+            "1": 0.0,
+            "2": 0.0,
+            "3": 0.0
+          }
+        },
+        "feasibility": {
+          "capacity_by_i": {
+            "1": {
+              "used": 0.833333333333333,
+              "capacity": 0.833333333333333,
+              "slack": 0.0
+            },
+            "2": {
+              "used": 3.0,
+              "capacity": 3.0,
+              "slack": 0.0
+            },
+            "3": {
+              "used": 4.166666666666667,
+              "capacity": 4.166666666666667,
+              "slack": 0.0
+            },
+            "4": {
+              "used": 0.0,
+              "capacity": 4.0,
+              "slack": 4.0
+            }
+          },
+          "demand_by_j": {
+            "1": {
+              "supplied": 3.0,
+              "demand": 3.0,
+              "surplus": 0.0
+            },
+            "2": {
+              "supplied": 3.0,
+              "demand": 3.0,
+              "surplus": 0.0
+            },
+            "3": {
+              "supplied": 2.0,
+              "demand": 2.0,
+              "surplus": 0.0
+            }
+          }
+        }
+      },
+      "cost_gap": -1.0,
+      "weighted_cost_gap": -0.3
+    },
+    "xi_5": {
+      "probability": 0.4,
+      "demand": {
+        "1": 5.0,
+        "2": 3.0,
+        "3": 2.0
+      },
+      "x_star_evaluation": {
+        "first_stage_cost": 120.0,
+        "recourse_cost_Q_x_xi": 260.3333333333333,
+        "total_scenario_cost": 380.3333333333333,
+        "y_by_i_j": {
+          "1": {
+            "1": 1.6666666666666665,
+            "2": 1.0000000000000004,
+            "3": 0.0
+          },
+          "2": {
+            "1": 0.0,
+            "2": 1.9999999999999996,
+            "3": 2.0
+          },
+          "3": {
+            "1": 3.3333333333333335,
+            "2": 0.0,
+            "3": 0.0
+          },
+          "4": {
+            "1": 0.0,
+            "2": 0.0,
+            "3": 0.0
+          }
+        },
+        "feasibility": {
+          "capacity_by_i": {
+            "1": {
+              "used": 2.666666666666667,
+              "capacity": 2.666666666666667,
+              "slack": 0.0
+            },
+            "2": {
+              "used": 3.9999999999999996,
+              "capacity": 3.9999999999999996,
+              "slack": 0.0
+            },
+            "3": {
+              "used": 3.3333333333333335,
+              "capacity": 3.3333333333333335,
+              "slack": 0.0
+            },
+            "4": {
+              "used": 0.0,
+              "capacity": 1.9999999999999987,
+              "slack": 1.9999999999999987
+            }
+          },
+          "demand_by_j": {
+            "1": {
+              "supplied": 5.0,
+              "demand": 5.0,
+              "surplus": 0.0
+            },
+            "2": {
+              "supplied": 3.0,
+              "demand": 3.0,
+              "surplus": 0.0
+            },
+            "3": {
+              "supplied": 2.0,
+              "demand": 2.0,
+              "surplus": 0.0
+            }
+          }
+        }
+      },
+      "x_EV_evaluation": {
+        "first_stage_cost": 120.0,
+        "recourse_cost_Q_x_xi": 258.6666666666667,
+        "total_scenario_cost": 378.6666666666667,
+        "y_by_i_j": {
+          "1": {
+            "1": 0.833333333333333,
+            "2": 0.0,
+            "3": 0.0
+          },
+          "2": {
+            "1": 0.0,
+            "2": 3.0,
+            "3": 0.0
+          },
+          "3": {
+            "1": 4.166666666666667,
+            "2": 0.0,
+            "3": 0.0
+          },
+          "4": {
+            "1": 0.0,
+            "2": 0.0,
+            "3": 2.0
+          }
+        },
+        "feasibility": {
+          "capacity_by_i": {
+            "1": {
+              "used": 0.833333333333333,
+              "capacity": 0.833333333333333,
+              "slack": 0.0
+            },
+            "2": {
+              "used": 3.0,
+              "capacity": 3.0,
+              "slack": 0.0
+            },
+            "3": {
+              "used": 4.166666666666667,
+              "capacity": 4.166666666666667,
+              "slack": 0.0
+            },
+            "4": {
+              "used": 2.0,
+              "capacity": 4.0,
+              "slack": 2.0
+            }
+          },
+          "demand_by_j": {
+            "1": {
+              "supplied": 5.0,
+              "demand": 5.0,
+              "surplus": 0.0
+            },
+            "2": {
+              "supplied": 3.0,
+              "demand": 3.0,
+              "surplus": 0.0
+            },
+            "3": {
+              "supplied": 2.0,
+              "demand": 2.0,
+              "surplus": 0.0
+            }
+          }
+        }
+      },
+      "cost_gap": -1.6666666666666288,
+      "weighted_cost_gap": -0.6666666666666515
+    },
+    "xi_7": {
+      "probability": 0.3,
+      "demand": {
+        "1": 7.0,
+        "2": 3.0,
+        "3": 2.0
+      },
+      "x_star_evaluation": {
+        "first_stage_cost": 120.0,
+        "recourse_cost_Q_x_xi": 350.3333333333333,
+        "total_scenario_cost": 470.3333333333333,
+        "y_by_i_j": {
+          "1": {
+            "1": 2.666666666666667,
+            "2": 0.0,
+            "3": 0.0
+          },
+          "2": {
+            "1": 0.9999999999999996,
+            "2": 3.0,
+            "3": 0.0
+          },
+          "3": {
+            "1": 3.3333333333333335,
+            "2": 0.0,
+            "3": 0.0
+          },
+          "4": {
+            "1": 0.0,
+            "2": 0.0,
+            "3": 2.0
+          }
+        },
+        "feasibility": {
+          "capacity_by_i": {
+            "1": {
+              "used": 2.666666666666667,
+              "capacity": 2.666666666666667,
+              "slack": 0.0
+            },
+            "2": {
+              "used": 3.9999999999999996,
+              "capacity": 3.9999999999999996,
+              "slack": 0.0
+            },
+            "3": {
+              "used": 3.3333333333333335,
+              "capacity": 3.3333333333333335,
+              "slack": 0.0
+            },
+            "4": {
+              "used": 2.0,
+              "capacity": 1.9999999999999987,
+              "slack": 0.0
+            }
+          },
+          "demand_by_j": {
+            "1": {
+              "supplied": 7.0,
+              "demand": 7.0,
+              "surplus": 0.0
+            },
+            "2": {
+              "supplied": 3.0,
+              "demand": 3.0,
+              "surplus": 0.0
+            },
+            "3": {
+              "supplied": 2.0,
+              "demand": 2.0,
+              "surplus": 0.0
+            }
+          }
+        }
+      },
+      "x_EV_evaluation": {
+        "first_stage_cost": 120.0,
+        "recourse_cost_Q_x_xi": 360.6666666666667,
+        "total_scenario_cost": 480.6666666666667,
+        "y_by_i_j": {
+          "1": {
+            "1": 0.833333333333333,
+            "2": 0.0,
+            "3": 0.0
+          },
+          "2": {
+            "1": 2.0,
+            "2": 1.0,
+            "3": 0.0
+          },
+          "3": {
+            "1": 4.166666666666667,
+            "2": 0.0,
+            "3": 0.0
+          },
+          "4": {
+            "1": 0.0,
+            "2": 2.0,
+            "3": 2.0
+          }
+        },
+        "feasibility": {
+          "capacity_by_i": {
+            "1": {
+              "used": 0.833333333333333,
+              "capacity": 0.833333333333333,
+              "slack": 0.0
+            },
+            "2": {
+              "used": 3.0,
+              "capacity": 3.0,
+              "slack": 0.0
+            },
+            "3": {
+              "used": 4.166666666666667,
+              "capacity": 4.166666666666667,
+              "slack": 0.0
+            },
+            "4": {
+              "used": 4.0,
+              "capacity": 4.0,
+              "slack": 0.0
+            }
+          },
+          "demand_by_j": {
+            "1": {
+              "supplied": 7.0,
+              "demand": 7.0,
+              "surplus": 0.0
+            },
+            "2": {
+              "supplied": 3.0,
+              "demand": 3.0,
+              "surplus": 0.0
+            },
+            "3": {
+              "supplied": 2.0,
+              "demand": 2.0,
+              "surplus": 0.0
+            }
+          }
+        }
+      },
+      "cost_gap": 10.333333333333371,
+      "weighted_cost_gap": 3.100000000000011
+    }
+  },
+  "summary": {
+    "expected_cost_gap": 2.1333333333333595,
+    "RP": 381.8533333333333,
+    "EEV": 383.9866666666667,
+    "VSS": 2.1333333333333826,
+    "expected_cost_gap_minus_VSS": 0.0
+  }
+}

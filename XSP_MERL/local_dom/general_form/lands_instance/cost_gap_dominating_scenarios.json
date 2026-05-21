@@ -1,0 +1,67 @@
+{
+  "instance_name": "lands_instance",
+  "definition": {
+    "dominating_scenario": "A scenario with Delta(xi_s) > 0, i.e., x_star is cheaper than x_EV at that realized scenario.",
+    "gap_tolerance": 1e-08
+  },
+  "num_positive_gap_scenarios": 1,
+  "cost_gap_dominating_scenarios": [
+    {
+      "scenario_index_1_based": 3,
+      "scenario_name": "scenario_3",
+      "xi_key": "xi_3",
+      "xi_hat": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        7.0,
+        3.0,
+        2.0
+      ],
+      "cost_gap": 10.333333333333258,
+      "weighted_cost_gap": 3.099999999999977,
+      "probability": 0.3
+    }
+  ],
+  "nonpositive_gap_scenarios": [
+    {
+      "scenario_index_1_based": 1,
+      "scenario_name": "scenario_1",
+      "xi_key": "xi_1",
+      "xi_hat": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        3.0,
+        3.0,
+        2.0
+      ],
+      "cost_gap": -1.0,
+      "weighted_cost_gap": -0.3,
+      "probability": 0.3
+    },
+    {
+      "scenario_index_1_based": 2,
+      "scenario_name": "scenario_2",
+      "xi_key": "xi_2",
+      "xi_hat": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        5.0,
+        3.0,
+        2.0
+      ],
+      "cost_gap": -1.6666666666666856,
+      "weighted_cost_gap": -0.6666666666666743,
+      "probability": 0.4
+    }
+  ],
+  "missing_scenarios_in_cost_gap_diagnostics": [],
+  "default_selected_scenario": "scenario_3",
+  "default_selected_scenario_index_1_based": 3,
+  "source_file": "cost_gap_diagnostics.json"
+}
