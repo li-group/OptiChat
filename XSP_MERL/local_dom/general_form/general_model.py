@@ -1,7 +1,8 @@
 """
 Reusable two-stage stochastic programming workflow in deterministic-equivalent form.
 
-The module supports the instance structure used by lands_instance/instance_data.json
+The module supports the instance structure used by instance_name/instance_name.json 
+
 and is written in terms of general matrices/vectors:
 
     min_x,y_s c^T x + sum_s p_s d^T y_s
@@ -22,6 +23,7 @@ import json
 import math
 import re
 from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple
+from unittest import result
 
 try:
     import pyomo.environ as pyo  # type: ignore
@@ -43,12 +45,30 @@ Number = float
 
 
 class DataConsistencyError(ValueError):
-    """Raised when instance_data.json is dimensionally inconsistent."""
+    # """Raised when instance_data.json is dimensionally inconsistent."""
+    """Raised when {instance_name}.json/instance_data.json is dimensionally inconsistent."""
 
 
 class SolveError(RuntimeError):
     """Raised when an optimization model does not solve to optimality."""
 
+def _resolve_instance_dir(instance_name: str, base_dir: Optional[str | Path] = None) -> Path:
+    root = _as_path(base_dir)
+
+    candidates = [
+        root / instance_name,
+        root / "lands_generated_instances" / instance_name,
+    ]
+
+    for instance_dir in candidates:
+        input_dir = instance_dir / "input_data"
+        if (input_dir / f"{instance_name}.json").exists() or (input_dir / "instance_data.json").exists():
+            return instance_dir
+
+    looked = "\n".join(str(p) for p in candidates)
+    raise FileNotFoundError(
+        f"Could not find instance {instance_name!r}. Looked in:\n{looked}"
+    )
 
 def _as_path(base_dir: Optional[str | Path]) -> Path:
     return Path(base_dir).expanduser().resolve() if base_dir is not None else Path(__file__).resolve().parent
@@ -131,7 +151,7 @@ def _max_abs_diff(left: Sequence[float], right: Sequence[float]) -> float:
 
 @dataclass(frozen=True)
 class TSSPInstance:
-    """A validated TSSP instance loaded from instance_data.json."""
+    """A validated TSSP instance loaded from instance_data.json or from {instance_name}.json."""
 
     name: str
     instance_dir: Path
@@ -149,17 +169,21 @@ class TSSPInstance:
 
     @classmethod
     def load(cls, instance_name: str, base_dir: Optional[str | Path] = None) -> "TSSPInstance":
-        root = _as_path(base_dir)
-        instance_dir = root / instance_name
-        data_path = instance_dir / "instance_data.json"
+        instance_dir = _resolve_instance_dir(instance_name, base_dir)
+
+        data_path = instance_dir / "input_data" / f"{instance_name}.json"
+        if not data_path.exists():
+            data_path = instance_dir / "input_data" / "instance_data.json"
+
         if not data_path.exists():
             raise FileNotFoundError(f"Could not find instance data at {data_path}")
+
         data = _read_json(data_path)
 
         required = ["A", "b", "c", "d", "T", "W", "H"]
         missing = [key for key in required if key not in data]
         if missing:
-            raise DataConsistencyError(f"instance_data.json is missing required keys: {missing}")
+            raise DataConsistencyError(f"{instance_name}.json/instance_data.json is missing required keys: {missing}")
 
         A = _matrix_from_json("A", data["A"])
         T = _matrix_from_json("T", data["T"])
@@ -530,7 +554,11 @@ class StochasticProgramDE(_SolverMixin):
                 "solver": rec["solver"],
             }
         result["recourse_evaluations"] = recourse_evaluations
-        _write_json(self.instance.instance_dir / "stochastic_results.json", result)
+        # output_dir = self.instance.instance_dir / "output_data"
+        output_dir = self.instance.instance_dir / "output_data"
+        output_dir.mkdir(parents=True, exist_ok=True)
+        _write_json(output_dir / "stochastic_results.json", result)
+        # _write_json(self.instance.instance_dir / "output_data" / "stochastic_results.json", result)
         return result
 
 
@@ -679,16 +707,16 @@ class ExpectedValueProgramDE(_SolverMixin):
         result["EEV_total_second_stage_cost"] = eev_second_stage
         result["EEV_scenario_second_stage_costs"] = scenario_second_stage_costs
         result["EEV_weighted_second_stage_costs"] = weighted_second_stage_costs
-        _write_json(self.instance.instance_dir / "expectedvalue_results.json", result)
+        output_dir = self.instance.instance_dir / "output_data"
+        output_dir.mkdir(parents=True, exist_ok=True)
+        _write_json(output_dir / "expectedvalue_results.json", result)
         return result
-
 
 def create_cost_gap_diagnostics(instance_name: str, base_dir: Optional[str | Path] = None) -> Dict[str, Any]:
     """Create cost_gap_diagnostics.json from saved JSONs only; no model re-solve."""
-    root = _as_path(base_dir)
-    instance_dir = root / instance_name
-    stochastic_path = instance_dir / "stochastic_results.json"
-    ev_path = instance_dir / "expectedvalue_results.json"
+    instance_dir = _resolve_instance_dir(instance_name, base_dir)
+    stochastic_path = instance_dir / "output_data" / "stochastic_results.json"
+    ev_path = instance_dir / "output_data" / "expectedvalue_results.json"
     if not stochastic_path.exists() or not ev_path.exists():
         raise FileNotFoundError(
             "Run stochastic and expected-value solves first. Missing one of: "
@@ -746,7 +774,10 @@ def create_cost_gap_diagnostics(instance_name: str, base_dir: Optional[str | Pat
         },
         "note": "This file was computed only from saved result JSONs; no optimization model was re-solved.",
     }
-    _write_json(instance_dir / "cost_gap_diagnostics.json", payload)
+    output_dir = instance_dir / "output_data"
+    output_dir.mkdir(parents=True, exist_ok=True)
+    _write_json(output_dir / "cost_gap_diagnostics.json", payload)
+    # _write_json(instance_dir / "cost_gap_diagnostics.json", payload)
     return payload
 
 

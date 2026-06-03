@@ -1,0 +1,85 @@
+{
+  "source_files": {
+    "stochastic_results_path": "lands_instances/lands_instance_small_1_1_1/output_data/stochastic_results.json",
+    "expectedvalue_results_path": "lands_instances/lands_instance_small_1_1_1/output_data/expectedvalue_results.json"
+  },
+  "computed_without_additional_optimization_solves": true,
+  "tolerance": 1e-08,
+  "total_number_of_evaluated_scenarios": 10,
+  "number_of_scenarios_with_nonnegative_cost_gap": 5,
+  "number_of_scenarios_with_negative_cost_gap": 5,
+  "scenarios_with_nonnegative_cost_gap": [
+    {
+      "scenario_id": "xi_3",
+      "probability": 0.1,
+      "cost_gap": 11.007115895169306,
+      "stochastic_policy_cost": 328.29914206406124,
+      "expected_value_policy_cost": 339.30625795923055
+    },
+    {
+      "scenario_id": "xi_6",
+      "probability": 0.1,
+      "cost_gap": 4.045065676038348,
+      "stochastic_policy_cost": 315.63108729770124,
+      "expected_value_policy_cost": 319.6761529737396
+    },
+    {
+      "scenario_id": "xi_7",
+      "probability": 0.1,
+      "cost_gap": 11.007115895169306,
+      "stochastic_policy_cost": 301.00576698104527,
+      "expected_value_policy_cost": 312.0128828762146
+    },
+    {
+      "scenario_id": "xi_8",
+      "probability": 0.1,
+      "cost_gap": 2.1835940119372026,
+      "stochastic_policy_cost": 315.23533685474933,
+      "expected_value_policy_cost": 317.41893086668654
+    },
+    {
+      "scenario_id": "xi_10",
+      "probability": 0.1,
+      "cost_gap": 7.4830744757533125,
+      "stochastic_policy_cost": 323.6956364150363,
+      "expected_value_policy_cost": 331.1787108907896
+    }
+  ],
+  "scenarios_with_negative_cost_gap": [
+    {
+      "scenario_id": "xi_1",
+      "probability": 0.1,
+      "cost_gap": -0.21475752821373817,
+      "stochastic_policy_cost": 305.8233004897413,
+      "expected_value_policy_cost": 305.6085429615276
+    },
+    {
+      "scenario_id": "xi_2",
+      "probability": 0.1,
+      "cost_gap": -1.788230127127349,
+      "stochastic_policy_cost": 315.7495543998833,
+      "expected_value_policy_cost": 313.961324272756
+    },
+    {
+      "scenario_id": "xi_4",
+      "probability": 0.1,
+      "cost_gap": -1.788230127127349,
+      "stochastic_policy_cost": 313.8239394440173,
+      "expected_value_policy_cost": 312.03570931688995
+    },
+    {
+      "scenario_id": "xi_5",
+      "probability": 0.1,
+      "cost_gap": -1.788230127127349,
+      "stochastic_policy_cost": 381.0728721385343,
+      "expected_value_policy_cost": 379.28464201140696
+    },
+    {
+      "scenario_id": "xi_9",
+      "probability": 0.1,
+      "cost_gap": -1.7882301271272922,
+      "stochastic_policy_cost": 293.7232704045693,
+      "expected_value_policy_cost": 291.935040277442
+    }
+  ]
+}

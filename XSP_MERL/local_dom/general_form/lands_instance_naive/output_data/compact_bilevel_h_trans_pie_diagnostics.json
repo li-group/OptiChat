@@ -1,0 +1,414 @@
+{
+  "instance_name": "lands_instance_naive",
+  "selected_scenario": "scenario_3",
+  "selected_scenario_index_1_based": 3,
+  "definition": {
+    "dual_region": "Pi = {pi_star : W^T pi_star <= d, pi_star <= 0}",
+    "projected_dual_sensitivity": "g_star = H^T pi_star",
+    "bound_computation": "For each k, lower_bound[k] = min H[:, k]^T pi_star over Pi, and upper_bound[k] = max H[:, k]^T pi_star over Pi.",
+    "solver_order": "First try Pyomo with solver='gurobi'; if unavailable or not optimal, fall back to scipy.optimize.linprog with HiGHS.",
+    "missing_bound_encoding": "None in Python, null in JSON."
+  },
+  "dimensions": {
+    "H_shape": [
+      7,
+      7
+    ],
+    "pi_star_dimension": 7,
+    "H_transpose_shape": [
+      7,
+      7
+    ],
+    "g_star_dimension": 7,
+    "W_shape": [
+      7,
+      12
+    ],
+    "d_dimension": 12,
+    "dual_constraint_matrix_W_transpose_shape": [
+      12,
+      7
+    ]
+  },
+  "summary": {
+    "num_g_dimensions": 7,
+    "num_lower_bounds_found": 7,
+    "num_upper_bounds_found": 4,
+    "lower_bound_found_indices_0_based": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ],
+    "upper_bound_found_indices_0_based": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "lower_bound_missing_indices_0_based": [],
+    "upper_bound_missing_indices_0_based": [
+      4,
+      5,
+      6
+    ],
+    "lower_bounds_found_by_gurobi_indices_0_based": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ],
+    "upper_bounds_found_by_gurobi_indices_0_based": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "lower_bounds_found_by_linprog_fallback_indices_0_based": [],
+    "upper_bounds_found_by_linprog_fallback_indices_0_based": [],
+    "all_lower_bounds_found": true,
+    "all_upper_bounds_found": false
+  },
+  "bounds_by_g_dimension": [
+    {
+      "g_index_0_based": 0,
+      "H_column_index_0_based": 0,
+      "objective_vector_H_col": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "lower_bound": 0.0,
+      "lower_bound_status": "optimal",
+      "lower_bound_final_backend": "pyomo",
+      "lower_bound_final_solver": "gurobi",
+      "lower_bound_gurobi_attempt": {
+        "attempted": true,
+        "success": true,
+        "backend": "pyomo",
+        "solver": "gurobi",
+        "value": 0.0,
+        "solver_status": "ok",
+        "termination_condition": "optimal",
+        "message": "optimal"
+      },
+      "lower_bound_linprog_fallback_attempt": null,
+      "upper_bound": 0.0,
+      "upper_bound_status": "optimal",
+      "upper_bound_final_backend": "pyomo",
+      "upper_bound_final_solver": "gurobi",
+      "upper_bound_gurobi_attempt": {
+        "attempted": true,
+        "success": true,
+        "backend": "pyomo",
+        "solver": "gurobi",
+        "value": 0.0,
+        "solver_status": "ok",
+        "termination_condition": "optimal",
+        "message": "optimal"
+      },
+      "upper_bound_linprog_fallback_attempt": null
+    },
+    {
+      "g_index_0_based": 1,
+      "H_column_index_0_based": 1,
+      "objective_vector_H_col": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "lower_bound": 0.0,
+      "lower_bound_status": "optimal",
+      "lower_bound_final_backend": "pyomo",
+      "lower_bound_final_solver": "gurobi",
+      "lower_bound_gurobi_attempt": {
+        "attempted": true,
+        "success": true,
+        "backend": "pyomo",
+        "solver": "gurobi",
+        "value": 0.0,
+        "solver_status": "ok",
+        "termination_condition": "optimal",
+        "message": "optimal"
+      },
+      "lower_bound_linprog_fallback_attempt": null,
+      "upper_bound": 0.0,
+      "upper_bound_status": "optimal",
+      "upper_bound_final_backend": "pyomo",
+      "upper_bound_final_solver": "gurobi",
+      "upper_bound_gurobi_attempt": {
+        "attempted": true,
+        "success": true,
+        "backend": "pyomo",
+        "solver": "gurobi",
+        "value": 0.0,
+        "solver_status": "ok",
+        "termination_condition": "optimal",
+        "message": "optimal"
+      },
+      "upper_bound_linprog_fallback_attempt": null
+    },
+    {
+      "g_index_0_based": 2,
+      "H_column_index_0_based": 2,
+      "objective_vector_H_col": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "lower_bound": 0.0,
+      "lower_bound_status": "optimal",
+      "lower_bound_final_backend": "pyomo",
+      "lower_bound_final_solver": "gurobi",
+      "lower_bound_gurobi_attempt": {
+        "attempted": true,
+        "success": true,
+        "backend": "pyomo",
+        "solver": "gurobi",
+        "value": 0.0,
+        "solver_status": "ok",
+        "termination_condition": "optimal",
+        "message": "optimal"
+      },
+      "lower_bound_linprog_fallback_attempt": null,
+      "upper_bound": 0.0,
+      "upper_bound_status": "optimal",
+      "upper_bound_final_backend": "pyomo",
+      "upper_bound_final_solver": "gurobi",
+      "upper_bound_gurobi_attempt": {
+        "attempted": true,
+        "success": true,
+        "backend": "pyomo",
+        "solver": "gurobi",
+        "value": 0.0,
+        "solver_status": "ok",
+        "termination_condition": "optimal",
+        "message": "optimal"
+      },
+      "upper_bound_linprog_fallback_attempt": null
+    },
+    {
+      "g_index_0_based": 3,
+      "H_column_index_0_based": 3,
+      "objective_vector_H_col": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "lower_bound": 0.0,
+      "lower_bound_status": "optimal",
+      "lower_bound_final_backend": "pyomo",
+      "lower_bound_final_solver": "gurobi",
+      "lower_bound_gurobi_attempt": {
+        "attempted": true,
+        "success": true,
+        "backend": "pyomo",
+        "solver": "gurobi",
+        "value": 0.0,
+        "solver_status": "ok",
+        "termination_condition": "optimal",
+        "message": "optimal"
+      },
+      "lower_bound_linprog_fallback_attempt": null,
+      "upper_bound": 0.0,
+      "upper_bound_status": "optimal",
+      "upper_bound_final_backend": "pyomo",
+      "upper_bound_final_solver": "gurobi",
+      "upper_bound_gurobi_attempt": {
+        "attempted": true,
+        "success": true,
+        "backend": "pyomo",
+        "solver": "gurobi",
+        "value": 0.0,
+        "solver_status": "ok",
+        "termination_condition": "optimal",
+        "message": "optimal"
+      },
+      "upper_bound_linprog_fallback_attempt": null
+    },
+    {
+      "g_index_0_based": 4,
+      "H_column_index_0_based": 4,
+      "objective_vector_H_col": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        -1.0,
+        0.0,
+        0.0
+      ],
+      "lower_bound": 0.0,
+      "lower_bound_status": "optimal",
+      "lower_bound_final_backend": "pyomo",
+      "lower_bound_final_solver": "gurobi",
+      "lower_bound_gurobi_attempt": {
+        "attempted": true,
+        "success": true,
+        "backend": "pyomo",
+        "solver": "gurobi",
+        "value": 0.0,
+        "solver_status": "ok",
+        "termination_condition": "optimal",
+        "message": "optimal"
+      },
+      "lower_bound_linprog_fallback_attempt": null,
+      "upper_bound": null,
+      "upper_bound_status": "not_found",
+      "upper_bound_final_backend": null,
+      "upper_bound_final_solver": null,
+      "upper_bound_gurobi_attempt": {
+        "attempted": true,
+        "success": false,
+        "backend": "pyomo",
+        "solver": "gurobi",
+        "value": null,
+        "solver_status": "warning",
+        "termination_condition": "infeasibleOrUnbounded",
+        "message": "Pyomo/Gurobi did not return an optimal bound. status=warning, termination=infeasibleOrUnbounded"
+      },
+      "upper_bound_linprog_fallback_attempt": {
+        "attempted": false,
+        "success": false,
+        "backend": "scipy",
+        "solver": "highs",
+        "value": null,
+        "solver_status": null,
+        "termination_condition": null,
+        "message": "scipy.optimize.linprog is not installed."
+      }
+    },
+    {
+      "g_index_0_based": 5,
+      "H_column_index_0_based": 5,
+      "objective_vector_H_col": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        -1.0,
+        0.0
+      ],
+      "lower_bound": 0.0,
+      "lower_bound_status": "optimal",
+      "lower_bound_final_backend": "pyomo",
+      "lower_bound_final_solver": "gurobi",
+      "lower_bound_gurobi_attempt": {
+        "attempted": true,
+        "success": true,
+        "backend": "pyomo",
+        "solver": "gurobi",
+        "value": 0.0,
+        "solver_status": "ok",
+        "termination_condition": "optimal",
+        "message": "optimal"
+      },
+      "lower_bound_linprog_fallback_attempt": null,
+      "upper_bound": null,
+      "upper_bound_status": "not_found",
+      "upper_bound_final_backend": null,
+      "upper_bound_final_solver": null,
+      "upper_bound_gurobi_attempt": {
+        "attempted": true,
+        "success": false,
+        "backend": "pyomo",
+        "solver": "gurobi",
+        "value": null,
+        "solver_status": "warning",
+        "termination_condition": "infeasibleOrUnbounded",
+        "message": "Pyomo/Gurobi did not return an optimal bound. status=warning, termination=infeasibleOrUnbounded"
+      },
+      "upper_bound_linprog_fallback_attempt": {
+        "attempted": false,
+        "success": false,
+        "backend": "scipy",
+        "solver": "highs",
+        "value": null,
+        "solver_status": null,
+        "termination_condition": null,
+        "message": "scipy.optimize.linprog is not installed."
+      }
+    },
+    {
+      "g_index_0_based": 6,
+      "H_column_index_0_based": 6,
+      "objective_vector_H_col": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        -1.0
+      ],
+      "lower_bound": 0.0,
+      "lower_bound_status": "optimal",
+      "lower_bound_final_backend": "pyomo",
+      "lower_bound_final_solver": "gurobi",
+      "lower_bound_gurobi_attempt": {
+        "attempted": true,
+        "success": true,
+        "backend": "pyomo",
+        "solver": "gurobi",
+        "value": 0.0,
+        "solver_status": "ok",
+        "termination_condition": "optimal",
+        "message": "optimal"
+      },
+      "lower_bound_linprog_fallback_attempt": null,
+      "upper_bound": null,
+      "upper_bound_status": "not_found",
+      "upper_bound_final_backend": null,
+      "upper_bound_final_solver": null,
+      "upper_bound_gurobi_attempt": {
+        "attempted": true,
+        "success": false,
+        "backend": "pyomo",
+        "solver": "gurobi",
+        "value": null,
+        "solver_status": "warning",
+        "termination_condition": "infeasibleOrUnbounded",
+        "message": "Pyomo/Gurobi did not return an optimal bound. status=warning, termination=infeasibleOrUnbounded"
+      },
+      "upper_bound_linprog_fallback_attempt": {
+        "attempted": false,
+        "success": false,
+        "backend": "scipy",
+        "solver": "highs",
+        "value": null,
+        "solver_status": null,
+        "termination_condition": null,
+        "message": "scipy.optimize.linprog is not installed."
+      }
+    }
+  ],
+  "notes": [
+    "These are bounds on g_star = H^T pi_star, not direct bounds on each pi_star component.",
+    "The compact one-sided model uses products g_star[k] * xi[k].",
+    "If a lower or upper bound is missing, the corresponding Pyomo Var bound should be left as None.",
+    "A missing bound usually means the LP was infeasible, unbounded, or neither solver returned an optimal solution."
+  ]
+}

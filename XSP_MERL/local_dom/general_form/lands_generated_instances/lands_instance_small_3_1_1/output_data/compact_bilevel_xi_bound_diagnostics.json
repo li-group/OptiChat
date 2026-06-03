@@ -1,0 +1,457 @@
+{
+  "instance_name": "lands_instance_small_3_1_1",
+  "selected_scenario": "scenario_1",
+  "selected_scenario_index_1_based": 1,
+  "definition": {
+    "purpose": "Find incumbent nearest-violation certificate to bound xi.",
+    "cost_gap": "Delta(xi) = c^T x_EV + Q(x_EV, xi) - c^T x_star - Q(x_star, xi).",
+    "incumbent_condition": "Delta(xi_bar) <= gap_tol.",
+    "incumbent_radius": "U = ||xi_bar - xi_hat||_1.",
+    "safe_xi_bounds": "xi_hat[k] - U <= xi[k] <= xi_hat[k] + U.",
+    "safe_radius_cutoff": "sum_k t[k] <= U."
+  },
+  "parameters": {
+    "solver": "gurobi",
+    "backend": "auto",
+    "gap_tol": 1e-08,
+    "early_stop_from_saved_scenario": true
+  },
+  "dimensions": {
+    "xi_dimension": 14,
+    "H_shape": [
+      14,
+      14
+    ],
+    "W_shape": [
+      14,
+      48
+    ],
+    "T_shape": [
+      14,
+      8
+    ]
+  },
+  "incumbent": {
+    "found": true,
+    "source": "saved_realized_scenario",
+    "incumbent_radius_U": 12.990554999999999,
+    "xi_hat": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.091412,
+      2.206065,
+      4.715787,
+      0.572804,
+      2.433188,
+      1.56493
+    ],
+    "incumbent_xi": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      2.293478,
+      9.976065,
+      1.989129,
+      0.593973,
+      2.330191,
+      2.732595
+    ],
+    "incumbent_cost_gap": -20.349956936640524,
+    "Q_x_EV_xi": null,
+    "Q_x_star_xi": null,
+    "cost_with_x_EV": null,
+    "cost_with_x_star": null
+  },
+  "xi_bounds": {
+    "available": true,
+    "radius_U": 12.990554999999999,
+    "lower_bounds": [
+      -12.990554999999999,
+      -12.990554999999999,
+      -12.990554999999999,
+      -12.990554999999999,
+      -12.990554999999999,
+      -12.990554999999999,
+      -12.990554999999999,
+      -12.990554999999999,
+      -11.899142999999999,
+      -10.784489999999998,
+      -8.274767999999998,
+      -12.417750999999999,
+      -10.557367,
+      -11.425624999999998
+    ],
+    "upper_bounds": [
+      12.990554999999999,
+      12.990554999999999,
+      12.990554999999999,
+      12.990554999999999,
+      12.990554999999999,
+      12.990554999999999,
+      12.990554999999999,
+      12.990554999999999,
+      14.081966999999999,
+      15.19662,
+      17.706342,
+      13.563358999999998,
+      15.423742999999998,
+      14.555485
+    ],
+    "componentwise_bounds": [
+      {
+        "xi_index_0_based": 0,
+        "xi_hat": 0.0,
+        "lower_bound": -12.990554999999999,
+        "upper_bound": 12.990554999999999,
+        "incumbent_xi_value": 0.0
+      },
+      {
+        "xi_index_0_based": 1,
+        "xi_hat": 0.0,
+        "lower_bound": -12.990554999999999,
+        "upper_bound": 12.990554999999999,
+        "incumbent_xi_value": 0.0
+      },
+      {
+        "xi_index_0_based": 2,
+        "xi_hat": 0.0,
+        "lower_bound": -12.990554999999999,
+        "upper_bound": 12.990554999999999,
+        "incumbent_xi_value": 0.0
+      },
+      {
+        "xi_index_0_based": 3,
+        "xi_hat": 0.0,
+        "lower_bound": -12.990554999999999,
+        "upper_bound": 12.990554999999999,
+        "incumbent_xi_value": 0.0
+      },
+      {
+        "xi_index_0_based": 4,
+        "xi_hat": 0.0,
+        "lower_bound": -12.990554999999999,
+        "upper_bound": 12.990554999999999,
+        "incumbent_xi_value": 0.0
+      },
+      {
+        "xi_index_0_based": 5,
+        "xi_hat": 0.0,
+        "lower_bound": -12.990554999999999,
+        "upper_bound": 12.990554999999999,
+        "incumbent_xi_value": 0.0
+      },
+      {
+        "xi_index_0_based": 6,
+        "xi_hat": 0.0,
+        "lower_bound": -12.990554999999999,
+        "upper_bound": 12.990554999999999,
+        "incumbent_xi_value": 0.0
+      },
+      {
+        "xi_index_0_based": 7,
+        "xi_hat": 0.0,
+        "lower_bound": -12.990554999999999,
+        "upper_bound": 12.990554999999999,
+        "incumbent_xi_value": 0.0
+      },
+      {
+        "xi_index_0_based": 8,
+        "xi_hat": 1.091412,
+        "lower_bound": -11.899142999999999,
+        "upper_bound": 14.081966999999999,
+        "incumbent_xi_value": 2.293478
+      },
+      {
+        "xi_index_0_based": 9,
+        "xi_hat": 2.206065,
+        "lower_bound": -10.784489999999998,
+        "upper_bound": 15.19662,
+        "incumbent_xi_value": 9.976065
+      },
+      {
+        "xi_index_0_based": 10,
+        "xi_hat": 4.715787,
+        "lower_bound": -8.274767999999998,
+        "upper_bound": 17.706342,
+        "incumbent_xi_value": 1.989129
+      },
+      {
+        "xi_index_0_based": 11,
+        "xi_hat": 0.572804,
+        "lower_bound": -12.417750999999999,
+        "upper_bound": 13.563358999999998,
+        "incumbent_xi_value": 0.593973
+      },
+      {
+        "xi_index_0_based": 12,
+        "xi_hat": 2.433188,
+        "lower_bound": -10.557367,
+        "upper_bound": 15.423742999999998,
+        "incumbent_xi_value": 2.330191
+      },
+      {
+        "xi_index_0_based": 13,
+        "xi_hat": 1.56493,
+        "lower_bound": -11.425624999999998,
+        "upper_bound": 14.555485,
+        "incumbent_xi_value": 2.732595
+      }
+    ]
+  },
+  "search_summary": {
+    "num_directions_tried": 0,
+    "num_candidate_evaluations": 10,
+    "num_failed_candidate_evaluations": 0,
+    "scenario_spread_l1_from_xi_hat": null,
+    "stopped_after_saved_scenario_incumbent": true
+  },
+  "evaluated_candidates": [
+    {
+      "source": "saved_realized_scenario",
+      "scenario_name": "scenario_1",
+      "scenario_index_1_based": 1,
+      "xi": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.091412,
+        2.206065,
+        4.715787,
+        0.572804,
+        2.433188,
+        1.56493
+      ],
+      "cost_gap": 42.767470525380986,
+      "incumbent_radius_U": 0.0
+    },
+    {
+      "source": "saved_realized_scenario",
+      "scenario_name": "scenario_2",
+      "scenario_index_1_based": 2,
+      "xi": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.710527,
+        3.996644,
+        1.7634,
+        3.343161,
+        2.779563,
+        1.929875
+      ],
+      "cost_gap": 17.431620888516022,
+      "incumbent_radius_U": 8.843758000000001
+    },
+    {
+      "source": "saved_realized_scenario",
+      "scenario_name": "scenario_3",
+      "scenario_index_1_based": 3,
+      "xi": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.749648,
+        2.681518,
+        1.57228,
+        0.701505,
+        2.541519,
+        7.401326
+      ],
+      "cost_gap": 17.909275020305586,
+      "incumbent_radius_U": 10.350624000000002
+    },
+    {
+      "source": "saved_realized_scenario",
+      "scenario_name": "scenario_4",
+      "scenario_index_1_based": 4,
+      "xi": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        4.927841,
+        2.005995,
+        1.279196,
+        0.66152,
+        2.628361,
+        2.214843
+      ],
+      "cost_gap": 22.600330220482704,
+      "incumbent_radius_U": 8.406892
+    },
+    {
+      "source": "saved_realized_scenario",
+      "scenario_name": "scenario_5",
+      "scenario_index_1_based": 5,
+      "xi": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.886712,
+        11.499432,
+        2.150624,
+        0.664758,
+        2.572402,
+        2.667841
+      ],
+      "cost_gap": 3.9546731929425505,
+      "incumbent_radius_U": 13.987909
+    },
+    {
+      "source": "saved_realized_scenario",
+      "scenario_name": "scenario_6",
+      "scenario_index_1_based": 6,
+      "xi": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.86069,
+        2.524468,
+        0.941381,
+        2.639704,
+        2.389371,
+        2.400868
+      ],
+      "cost_gap": 23.54166198603201,
+      "incumbent_radius_U": 7.808741999999999
+    },
+    {
+      "source": "saved_realized_scenario",
+      "scenario_name": "scenario_7",
+      "scenario_index_1_based": 7,
+      "xi": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        2.293478,
+        9.976065,
+        1.989129,
+        0.593973,
+        2.330191,
+        2.732595
+      ],
+      "cost_gap": -20.349956936640524,
+      "incumbent_radius_U": 12.990554999999999
+    },
+    {
+      "source": "saved_realized_scenario",
+      "scenario_name": "scenario_8",
+      "scenario_index_1_based": 8,
+      "xi": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        4.97487,
+        3.509828,
+        1.286413,
+        0.704072,
+        1.737601,
+        1.840256
+      ],
+      "cost_gap": 22.60033022048276,
+      "incumbent_radius_U": 9.718776
+    },
+    {
+      "source": "saved_realized_scenario",
+      "scenario_name": "scenario_9",
+      "scenario_index_1_based": 9,
+      "xi": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.339983,
+        3.069122,
+        5.979608,
+        1.083513,
+        3.075881,
+        2.223349
+      ],
+      "cost_gap": 48.72270733493025,
+      "incumbent_radius_U": 4.18727
+    },
+    {
+      "source": "saved_realized_scenario",
+      "scenario_name": "scenario_10",
+      "scenario_index_1_based": 10,
+      "xi": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.707927,
+        3.56512,
+        1.027339,
+        0.592719,
+        8.2455,
+        2.820088
+      ],
+      "cost_gap": 15.636069302471412,
+      "incumbent_radius_U": 12.751403
+    }
+  ],
+  "failed_candidates": [],
+  "notes": [
+    "A saved realized scenario already gave Delta(xi) <= gap_tol.",
+    "Ray search was skipped to avoid unnecessary recourse solves.",
+    "The resulting xi bounds and sum(t) <= U cutoff are safe."
+  ]
+}

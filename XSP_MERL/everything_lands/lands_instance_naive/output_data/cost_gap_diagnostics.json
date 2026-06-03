@@ -1,0 +1,36 @@
+{
+  "source_files": {
+    "stochastic_results_path": "lands_instance_naive/output_data/stochastic_results.json",
+    "expectedvalue_results_path": "lands_instance_naive/output_data/expectedvalue_results.json"
+  },
+  "computed_without_additional_optimization_solves": true,
+  "tolerance": 1e-08,
+  "total_number_of_evaluated_scenarios": 3,
+  "number_of_scenarios_with_nonnegative_cost_gap": 1,
+  "number_of_scenarios_with_negative_cost_gap": 2,
+  "scenarios_with_nonnegative_cost_gap": [
+    {
+      "scenario_id": "xi_3",
+      "probability": 0.3,
+      "cost_gap": 10.333333333333371,
+      "stochastic_policy_cost": 470.3333333333333,
+      "expected_value_policy_cost": 480.6666666666667
+    }
+  ],
+  "scenarios_with_negative_cost_gap": [
+    {
+      "scenario_id": "xi_1",
+      "probability": 0.3,
+      "cost_gap": -1.0,
+      "stochastic_policy_cost": 295.4,
+      "expected_value_policy_cost": 294.4
+    },
+    {
+      "scenario_id": "xi_2",
+      "probability": 0.4,
+      "cost_gap": -1.6666666666666288,
+      "stochastic_policy_cost": 380.3333333333333,
+      "expected_value_policy_cost": 378.6666666666667
+    }
+  ]
+}

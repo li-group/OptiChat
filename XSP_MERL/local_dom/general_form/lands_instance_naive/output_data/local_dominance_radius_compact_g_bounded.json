@@ -1,0 +1,178 @@
+{
+  "instance_name": "lands_instance_naive",
+  "method": "compact_one_sided_pyomo_with_g_bounds_certificate",
+  "solver": "gurobi",
+  "solver_status": "ok",
+  "termination_condition": "optimal",
+  "selected_scenario": "scenario_3",
+  "selected_scenario_index_1_based": 3,
+  "xi_hat": [
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    7.0,
+    3.0,
+    2.0
+  ],
+  "initial_cost_gap_at_xi_hat": 10.333333333333258,
+  "gamma_l1_radius": 0.0,
+  "nearest_violation_xi": [
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    7.0,
+    3.0000006487708686,
+    2.0
+  ],
+  "absolute_deviation_t": [
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0
+  ],
+  "l1_distance_check": 6.487708685831706e-07,
+  "x_star": [
+    2.666666666666667,
+    3.9999999999999996,
+    3.3333333333333335,
+    1.9999999999999987
+  ],
+  "x_EV": [
+    0.833333333333333,
+    3.0,
+    4.166666666666667,
+    4.0
+  ],
+  "first_stage_cost_star": 119.99999999999999,
+  "first_stage_cost_EV": 120.0,
+  "y_EV": [
+    0.8333333333333334,
+    0.0,
+    0.0,
+    2.0,
+    1.0,
+    0.0,
+    4.166666666666667,
+    0.0,
+    0.0,
+    0.0,
+    2.0000006487708686,
+    2.0
+  ],
+  "pi_star": [
+    -15927564.762204017,
+    -15927559.762204017,
+    -15927572.762204017,
+    -15927553.762204017,
+    -15927604.762204017,
+    -15927586.762204017,
+    -15927559.262204017
+  ],
+  "g_star": [
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    15927604.762204017,
+    15927586.762204017,
+    15927559.262204017
+  ],
+  "Q_x_EV_primal_candidate_at_nearest_violation": 360.66668807610534,
+  "Q_x_star_dual_certificate_at_nearest_violation": 360.6666876077652,
+  "Q_x_star_dual_certificate_from_pi_at_nearest_violation": 360.6666876375675,
+  "Q_x_star_dual_certificate_from_g_at_nearest_violation": 360.6666876077652,
+  "cost_with_x_EV_primal_candidate_at_nearest_violation": 480.66668807610534,
+  "cost_with_x_star_dual_certificate_at_nearest_violation": 480.6666876077652,
+  "certified_gap_at_nearest_violation": 4.6834014710839256e-07,
+  "g_bounds_used": [
+    {
+      "g_index_0_based": 0,
+      "lower_bound": 0.0,
+      "upper_bound": 0.0,
+      "g_value": 0.0,
+      "lower_bound_violation_positive_part": 0.0,
+      "upper_bound_violation_positive_part": 0.0
+    },
+    {
+      "g_index_0_based": 1,
+      "lower_bound": 0.0,
+      "upper_bound": 0.0,
+      "g_value": 0.0,
+      "lower_bound_violation_positive_part": 0.0,
+      "upper_bound_violation_positive_part": 0.0
+    },
+    {
+      "g_index_0_based": 2,
+      "lower_bound": 0.0,
+      "upper_bound": 0.0,
+      "g_value": 0.0,
+      "lower_bound_violation_positive_part": 0.0,
+      "upper_bound_violation_positive_part": 0.0
+    },
+    {
+      "g_index_0_based": 3,
+      "lower_bound": 0.0,
+      "upper_bound": 0.0,
+      "g_value": 0.0,
+      "lower_bound_violation_positive_part": 0.0,
+      "upper_bound_violation_positive_part": 0.0
+    },
+    {
+      "g_index_0_based": 4,
+      "lower_bound": 0.0,
+      "upper_bound": null,
+      "g_value": 15927604.762204017,
+      "lower_bound_violation_positive_part": 0.0,
+      "upper_bound_violation_positive_part": 0.0
+    },
+    {
+      "g_index_0_based": 5,
+      "lower_bound": 0.0,
+      "upper_bound": null,
+      "g_value": 15927586.762204017,
+      "lower_bound_violation_positive_part": 0.0,
+      "upper_bound_violation_positive_part": 0.0
+    },
+    {
+      "g_index_0_based": 6,
+      "lower_bound": 0.0,
+      "upper_bound": null,
+      "g_value": 15927559.262204017,
+      "lower_bound_violation_positive_part": 0.0,
+      "upper_bound_violation_positive_part": 0.0
+    }
+  ],
+  "residual_checks": {
+    "max_primal_EV_violation_positive_part": 6.487708681390814e-07,
+    "max_dual_star_violation_positive_part": 0.0,
+    "max_pi_star_upper_bound_violation_positive_part": 0.0,
+    "max_g_star_link_abs_residual": 0.0,
+    "max_g_star_lower_bound_violation_positive_part": 0.0,
+    "max_g_star_upper_bound_violation_positive_part": 0.0,
+    "q_star_dual_certificate_g_form_abs_difference": 2.9802322387695312e-08,
+    "violation_certificate_lhs_minus_rhs": 4.6834014710839256e-07,
+    "l1_epigraph_gap_sum_t_minus_abs_distance": -6.487708685831706e-07
+  },
+  "source_files": {
+    "instance_data": "input_data/instance_data.json or input_data/{instance_name}.json",
+    "stochastic_results": "output_data/stochastic_results.json",
+    "expectedvalue_results": "output_data/expectedvalue_results.json",
+    "cost_gap_diagnostics": "output_data/cost_gap_diagnostics.json",
+    "cost_gap_dominating_scenarios": "output_data/cost_gap_dominating_scenarios.json",
+    "compact_g_bounds_diagnostics": "output_data/compact_bilevel_h_trans_pie_diagnostics.json"
+  },
+  "notes": [
+    "This is the compact one-sided nearest-violation formulation.",
+    "The model uses y_EV as a primal feasible recourse decision for x_EV.",
+    "The model uses pi_star as a dual feasible certificate for the x_star recourse problem.",
+    "No y_star variables are present in this compact formulation.",
+    "No pi_EV variables are present in this compact formulation.",
+    "If g_star is present, the model uses g_star = H^T pi_star and the bilinear term g_star^T xi.",
+    "The compact model is nonconvex because of the bilinear projected sensitivity term."
+  ]
+}

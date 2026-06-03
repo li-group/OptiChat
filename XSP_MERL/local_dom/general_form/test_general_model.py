@@ -1,3 +1,4 @@
+# test_general_model.py
 from pathlib import Path
 import json
 import math
@@ -12,7 +13,8 @@ from general_model import (
 )
 
 BASE_DIR = Path(__file__).resolve().parent
-INSTANCE_NAME = "lands_instance"
+# INSTANCE_NAME = "lands_instance"
+INSTANCE_NAME = "lands_instance_naive"
 TOL = 1e-5
 X_TOL = 1e-3
 
@@ -46,10 +48,10 @@ def test_full_workflow_against_provided_solution_data():
     # backend="auto" uses Pyomo+Gurobi when installed and scipy linprog otherwise.
     run_full_workflow(INSTANCE_NAME, base_dir=BASE_DIR, solver="gurobi", backend="auto")
 
-    test_data = _load_json(BASE_DIR / INSTANCE_NAME / "test_data.json")
-    stochastic = _load_json(BASE_DIR / INSTANCE_NAME / "stochastic_results.json")
-    expected_value = _load_json(BASE_DIR / INSTANCE_NAME / "expectedvalue_results.json")
-    diagnostics = _load_json(BASE_DIR / INSTANCE_NAME / "cost_gap_diagnostics.json")
+    test_data = _load_json(BASE_DIR / INSTANCE_NAME / "test_data"/ "test_data.json")
+    stochastic = _load_json(BASE_DIR / INSTANCE_NAME / "output_data" / "stochastic_results.json")
+    expected_value = _load_json(BASE_DIR / INSTANCE_NAME / "output_data" / "expectedvalue_results.json")
+    diagnostics = _load_json(BASE_DIR / INSTANCE_NAME / "output_data" / "cost_gap_diagnostics.json")
 
     st_expected = test_data["stochastic_solution"]
     _assert_close(stochastic["objective"], st_expected["objective"])
@@ -96,3 +98,8 @@ def test_cost_gap_diagnostics_uses_saved_jsons_only():
     diagnostics = create_cost_gap_diagnostics(INSTANCE_NAME, base_dir=BASE_DIR)
     assert diagnostics["note"].startswith("This file was computed only from saved result JSONs")
     _assert_close(diagnostics["metrics"]["expected_cost_gap"], diagnostics["metrics"]["VSS"])
+
+
+if __name__ == "__main__":
+    import pytest
+    raise SystemExit(pytest.main([__file__, "-q"]))

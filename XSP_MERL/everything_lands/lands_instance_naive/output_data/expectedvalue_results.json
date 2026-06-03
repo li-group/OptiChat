@@ -1,0 +1,205 @@
+{
+  "solution_type": "expected_value_problem",
+  "backend": "pyomo",
+  "solver": "gurobi",
+  "solver_status": "ok",
+  "termination_condition": "optimal",
+  "xi_bar": [
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    5.0,
+    3.0,
+    2.0
+  ],
+  "optimal_expected_value_first_stage_solution": [
+    0.833333333333333,
+    3.0,
+    4.166666666666667,
+    4.0
+  ],
+  "x_EV": [
+    0.833333333333333,
+    3.0,
+    4.166666666666667,
+    4.0
+  ],
+  "optimal_second_stage_solution_mean_scenario": [
+    0.833333333333333,
+    0.0,
+    0.0,
+    0.0,
+    3.0,
+    0.0,
+    4.166666666666667,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    2.0
+  ],
+  "y_EV_mean_scenario": [
+    0.833333333333333,
+    0.0,
+    0.0,
+    0.0,
+    3.0,
+    0.0,
+    4.166666666666667,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    2.0
+  ],
+  "expected_value_objective": 378.6666666666667,
+  "EV": 378.6666666666667,
+  "expected_result_of_using_expected_value_solution": 383.9866666666667,
+  "EEV": 383.9866666666667,
+  "stochastic_objective_reference": 381.8533333333333,
+  "z_SP": 381.8533333333333,
+  "value_of_stochastic_solution": 2.1333333333333826,
+  "VSS": 2.1333333333333826,
+  "first_stage_cost": 120.0,
+  "mean_scenario_second_stage_cost": 258.6666666666667,
+  "total_expected_second_stage_cost_based_on_x_EV": 263.9866666666667,
+  "scenario_second_stage_costs": {
+    "xi_1": 174.4,
+    "xi_2": 258.6666666666667,
+    "xi_3": 360.6666666666667
+  },
+  "probability_weighted_second_stage_costs": {
+    "xi_1": 52.32,
+    "xi_2": 103.46666666666668,
+    "xi_3": 108.2
+  },
+  "mean_scenario_recourse_evaluation": {
+    "recourse_cost": 258.6666666666667,
+    "y": [
+      0.833333333333333,
+      0.0,
+      0.0,
+      0.0,
+      3.0,
+      0.0,
+      4.166666666666667,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      2.0
+    ],
+    "status": "ok",
+    "status_message": "ok",
+    "termination_condition": "optimal",
+    "infeasible": false,
+    "success": true
+  },
+  "recourse_evaluations": {
+    "xi_1": {
+      "recourse_cost": 174.4,
+      "y": [
+        0.0,
+        0.833333333333333,
+        0.0,
+        0.0,
+        1.0,
+        2.0,
+        3.0,
+        1.166666666666667,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "status": "ok",
+      "status_message": "ok",
+      "termination_condition": "optimal",
+      "infeasible": false,
+      "success": true,
+      "scenario_id": "xi_1",
+      "probability": 0.3,
+      "xi": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        3.0,
+        3.0,
+        2.0
+      ]
+    },
+    "xi_2": {
+      "recourse_cost": 258.6666666666667,
+      "y": [
+        0.833333333333333,
+        0.0,
+        0.0,
+        0.0,
+        3.0,
+        0.0,
+        4.166666666666667,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        2.0
+      ],
+      "status": "ok",
+      "status_message": "ok",
+      "termination_condition": "optimal",
+      "infeasible": false,
+      "success": true,
+      "scenario_id": "xi_2",
+      "probability": 0.4,
+      "xi": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        5.0,
+        3.0,
+        2.0
+      ]
+    },
+    "xi_3": {
+      "recourse_cost": 360.6666666666667,
+      "y": [
+        0.833333333333333,
+        0.0,
+        0.0,
+        2.0,
+        1.0,
+        0.0,
+        4.166666666666667,
+        0.0,
+        0.0,
+        0.0,
+        2.0,
+        2.0
+      ],
+      "status": "ok",
+      "status_message": "ok",
+      "termination_condition": "optimal",
+      "infeasible": false,
+      "success": true,
+      "scenario_id": "xi_3",
+      "probability": 0.3,
+      "xi": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        7.0,
+        3.0,
+        2.0
+      ]
+    }
+  },
+  "scenario_ids": [
+    "xi_1",
+    "xi_2",
+    "xi_3"
+  ]
+}

@@ -1,0 +1,125 @@
+{
+  "instance_name": "lands_instance",
+  "method": "pyomo_primal_dual_strong_duality",
+  "solver": "gurobi",
+  "solver_status": "ok",
+  "termination_condition": "optimal",
+  "selected_scenario": "scenario_3",
+  "selected_scenario_index_1_based": 3,
+  "xi_hat": [
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    7.0,
+    3.0,
+    2.0
+  ],
+  "initial_cost_gap_at_xi_hat": 10.333333333333258,
+  "gamma_l1_radius": 1.761904552035053,
+  "nearest_violation_xi": [
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    5.23809530393669,
+    3.0,
+    2.0
+  ],
+  "absolute_deviation_t": [
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    1.761904552035053,
+    0.0,
+    0.0
+  ],
+  "l1_distance_check": 1.7619046960633096,
+  "x_star": [
+    2.666666666666667,
+    3.9999999999999996,
+    3.3333333333333335,
+    1.9999999999999987
+  ],
+  "x_EV": [
+    0.833333333333333,
+    3.0,
+    4.166666666666667,
+    4.0
+  ],
+  "first_stage_cost_star": 119.99999999999999,
+  "first_stage_cost_EV": 120.0,
+  "y_star": [
+    1.9047621146315858,
+    0.7619045520350833,
+    0.0,
+    0.0,
+    2.2380953039367104,
+    1.7619046960632918,
+    3.3333331893051525,
+    1.4402818493408634e-07,
+    0.0,
+    0.0,
+    0.0,
+    0.23809530393669043
+  ],
+  "y_EV": [
+    0.833333333333333,
+    0.0,
+    0.0,
+    0.23809530393667666,
+    2.7619046960633256,
+    0.0,
+    4.166666666666667,
+    0.0,
+    0.0,
+    0.0,
+    0.23809530393669087,
+    1.9999999999991829
+  ],
+  "pi_star": [
+    -3.9999999999990905,
+    -0.9999999999999005,
+    -12.0,
+    0.0,
+    -44.0,
+    -28.0,
+    -5.5000000000022045
+  ],
+  "pi_EV": [
+    -10.99999999999909,
+    -5.999999999998636,
+    -18.999999999999076,
+    0.0,
+    -51.00000000000001,
+    -33.0,
+    -5.5
+  ],
+  "Q_x_star_at_nearest_violation": 270.8095271674393,
+  "Q_x_EV_at_nearest_violation": 270.8095271674332,
+  "cost_with_x_star_at_nearest_violation": 390.8095271674393,
+  "cost_with_x_EV_at_nearest_violation": 390.8095271674332,
+  "gap_at_nearest_violation": -6.0822458181064576e-12,
+  "residual_checks": {
+    "max_primal_EV_violation_positive_part": 8.171241461241152e-13,
+    "max_primal_star_violation_positive_part": 2.1316282072803006e-14,
+    "max_dual_EV_violation_positive_part": 1.3713474800169934e-12,
+    "max_dual_star_violation_positive_part": 2.303934820702125e-12,
+    "strong_duality_EV_abs_residual": 1.3415046851150692e-11,
+    "strong_duality_star_abs_residual": 4.6088433691693353e-07,
+    "violation_constraint_lhs_minus_rhs": -6.0822458181064576e-12
+  },
+  "source_files": {
+    "instance_data": "instance_data.json",
+    "stochastic_results": "stochastic_results.json",
+    "expectedvalue_results": "expectedvalue_results.json",
+    "cost_gap_diagnostics": "cost_gap_diagnostics.json",
+    "cost_gap_dominating_scenarios": "cost_gap_dominating_scenarios.json"
+  },
+  "notes": [
+    "Positive initial gap means x_star dominates x_EV at xi_hat.",
+    "The returned radius is the nearest l1 distance to any xi where the dominance is no longer strict, i.e., Delta(xi) <= 0.",
+    "The model uses Wy <= H xi - T x, matching T x + W y <= H xi."
+  ]
+}
