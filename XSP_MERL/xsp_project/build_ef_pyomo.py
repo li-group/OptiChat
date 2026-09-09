@@ -54,6 +54,8 @@ ef = sputils.create_EF(
     suppress_warnings=False,
 )
 
+# WRITE YOUR OWN SYMBOLIC MODEL. PYSSP. 
+
 # Implement TSSP structure
 # Convert Data to JSON
 # Have a way to add doc strings to params and variables.
