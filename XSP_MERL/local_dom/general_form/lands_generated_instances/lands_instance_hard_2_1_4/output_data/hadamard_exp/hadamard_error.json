@@ -1,0 +1,13 @@
+{
+  "instance_name": "lands_instance_hard_2_1_4",
+  "family": "hard",
+  "status": "ERROR",
+  "error": "HadamardBigMError('Hadamard factor r^(r/2) exceeds max_finite_M=1.000e+90.')",
+  "time_limit_sec": 300.0,
+  "threads": 1,
+  "num_scenarios": 10,
+  "n_x": 75,
+  "n_y": 3750,
+  "n_recourse_rows": 125,
+  "xi_dim": 125
+}

@@ -1,0 +1,112 @@
+{
+  "instance_name": "lands_instance_med_1_1_1",
+  "definition": {
+    "cost_gap": "Delta(xi) = (c^T x_EV + Q(x_EV, xi)) - (c^T x_star + Q(x_star, xi)).",
+    "sign_convention": "Positive means x_EV is more expensive than x_star for that realized scenario; negative means x_EV is cheaper."
+  },
+  "metrics": {
+    "RP": 648.4140972176197,
+    "EV_objective": 513.1958139125338,
+    "EEV": 679.8781055361994,
+    "VSS": 31.464008318579772,
+    "expected_cost_gap": 31.464008318579886,
+    "first_stage_cost_difference_cTxEV_minus_cTxStar": 43.470901183979436
+  },
+  "scenario_cost_gaps": {
+    "scenario_1": {
+      "probability": 0.1,
+      "Q_x_star_xi": 225.6184239723374,
+      "Q_x_EV_xi": 188.53896760548142,
+      "cost_with_x_star": 583.3322718703294,
+      "cost_with_x_EV": 589.7237166874528,
+      "cost_gap": 6.391444817123443,
+      "weighted_cost_gap": 0.6391444817123443
+    },
+    "scenario_2": {
+      "probability": 0.1,
+      "Q_x_star_xi": 360.1415043489584,
+      "Q_x_EV_xi": 355.19736309097124,
+      "cost_with_x_star": 717.8553522469504,
+      "cost_with_x_EV": 756.3821121729427,
+      "cost_gap": 38.52675992599234,
+      "weighted_cost_gap": 3.852675992599234
+    },
+    "scenario_3": {
+      "probability": 0.1,
+      "Q_x_star_xi": 299.0897104811424,
+      "Q_x_EV_xi": 274.574583249889,
+      "cost_with_x_star": 656.8035583791343,
+      "cost_with_x_EV": 675.7593323318604,
+      "cost_gap": 18.955773952726076,
+      "weighted_cost_gap": 1.8955773952726078
+    },
+    "scenario_4": {
+      "probability": 0.1,
+      "Q_x_star_xi": 432.6090921124355,
+      "Q_x_EV_xi": 517.1451860544009,
+      "cost_with_x_star": 790.3229400104275,
+      "cost_with_x_EV": 918.3299351363723,
+      "cost_gap": 128.00699512594485,
+      "weighted_cost_gap": 12.800699512594486
+    },
+    "scenario_5": {
+      "probability": 0.1,
+      "Q_x_star_xi": 356.2921211331909,
+      "Q_x_EV_xi": 341.72363884217367,
+      "cost_with_x_star": 714.0059690311829,
+      "cost_with_x_EV": 742.908387924145,
+      "cost_gap": 28.902418892962146,
+      "weighted_cost_gap": 2.890241889296215
+    },
+    "scenario_6": {
+      "probability": 0.1,
+      "Q_x_star_xi": 195.334201803386,
+      "Q_x_EV_xi": 195.581013997859,
+      "cost_with_x_star": 553.048049701378,
+      "cost_with_x_EV": 596.7657630798304,
+      "cost_gap": 43.71771337845246,
+      "weighted_cost_gap": 4.371771337845246
+    },
+    "scenario_7": {
+      "probability": 0.1,
+      "Q_x_star_xi": 342.10794916828536,
+      "Q_x_EV_xi": 293.1363844076544,
+      "cost_with_x_star": 699.8217970662773,
+      "cost_with_x_EV": 694.3211334896258,
+      "cost_gap": -5.500663576651505,
+      "weighted_cost_gap": -0.5500663576651504
+    },
+    "scenario_8": {
+      "probability": 0.1,
+      "Q_x_star_xi": 220.22496233513198,
+      "Q_x_EV_xi": 184.362218344478,
+      "cost_with_x_star": 577.938810233124,
+      "cost_with_x_EV": 585.5469674264494,
+      "cost_gap": 7.608157193325496,
+      "weighted_cost_gap": 0.7608157193325497
+    },
+    "scenario_9": {
+      "probability": 0.1,
+      "Q_x_star_xi": 234.68440193231532,
+      "Q_x_EV_xi": 210.10478550544082,
+      "cost_with_x_star": 592.3982498303073,
+      "cost_with_x_EV": 611.2895345874122,
+      "cost_gap": 18.891284757104813,
+      "weighted_cost_gap": 1.8891284757104814
+    },
+    "scenario_10": {
+      "probability": 0.1,
+      "Q_x_star_xi": 240.90012590909302,
+      "Q_x_EV_xi": 226.56942344393238,
+      "cost_with_x_star": 598.613973807085,
+      "cost_with_x_EV": 627.7541725259038,
+      "cost_gap": 29.140198718818738,
+      "weighted_cost_gap": 2.914019871881874
+    }
+  },
+  "source_files": {
+    "stochastic_results": "stochastic_results.json",
+    "expectedvalue_results": "expectedvalue_results.json"
+  },
+  "note": "This file was computed only from saved result JSONs; no optimization model was re-solved."
+}

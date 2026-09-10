@@ -1,0 +1,393 @@
+{
+  "instance_name": "lands_instance_small_1_1_2",
+  "method": "reduced_asymmetric_star_KKT_Hadamard_BigM",
+  "formulation": {
+    "EV_side": "primal feasible y_EV only",
+    "star_side": "primal y_star + dual mu=-pi_star + KKT",
+    "complementarity": "Fortuny-Amat explicit binaries",
+    "big_M_source": "rank-r dense Hadamard-Cramer bounds specialized to standard-form star recourse [W I]",
+    "safe_xi_domain_source": "independently verified violating incumbent U",
+    "g_equals_Ht_pi_variables": false,
+    "SOS1_constraints": false,
+    "nonconvex_bilinear_terms": false
+  },
+  "selected_scenario": {
+    "scenario_index_1_based": 2,
+    "scenario_name": "scenario_2",
+    "xi_hat": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.875309,
+      10.906313,
+      1.338196
+    ],
+    "initial_cost_gap": 20.74534721134478,
+    "probability": 0.1
+  },
+  "instance_structure": {
+    "num_scenarios": 10,
+    "n_x_first_stage": 4,
+    "n_y_second_stage": 12,
+    "n_recourse_rows": 7,
+    "xi_dim": 7,
+    "n_first_stage_rows": 2,
+    "nnz_A": 8,
+    "nnz_T": 4,
+    "nnz_W": 24,
+    "nnz_H": 3,
+    "standard_form_follower_dimension_y_plus_row_slack": 19,
+    "integer_W_verified": true,
+    "integer_W_max_deviation": 0.0,
+    "theoretical_hadamard_bigm_num_continuous_vars": 45,
+    "theoretical_hadamard_bigm_num_binary_vars": 19,
+    "theoretical_hadamard_bigm_num_total_vars": 64,
+    "theoretical_hadamard_bigm_num_linear_constraints": 80
+  },
+  "hadamard_bounds": {
+    "rank_r": 7,
+    "safe_incumbent": {
+      "radius_U": 11.569345000000002,
+      "xi": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        2.155122,
+        2.819261,
+        4.540676
+      ],
+      "cost_gap": -24.363841854184727,
+      "source": "saved_realized_scenario",
+      "search_runtime_sec": 2.0041999960085377e-05
+    },
+    "rhs_bound": {
+      "formula": "|b_i(xi)| <= |b_i(xi_hat)| + U * ||H_i,:||_inf",
+      "rowwise_abs_bounds": [
+        3.8629480999999988,
+        1.653821,
+        5.0530819000000005,
+        4.255957900000002,
+        13.444654000000002,
+        22.475658000000003,
+        12.907541000000002
+      ],
+      "Bmax": 22.475658000000003
+    },
+    "hadamard": {
+      "Wbar_max_abs": 1.0,
+      "qbar_max_abs": 100.454997,
+      "factor_r_to_r_over_2": 907.4926996951542,
+      "M_primal_uniform_for_y_star_and_row_slack": 20396.495555844995,
+      "M_mu_uniform": 91162.17642539862,
+      "M_reduced_cost_componentwise": [
+        182353.70857779722,
+        182356.00197679724,
+        182363.54951379725,
+        182411.22022379722,
+        182390.81583079725,
+        182327.92600679724,
+        182417.89875279725,
+        182327.43245979724,
+        182424.80784779723,
+        182329.16284979723,
+        182395.77316879723,
+        182400.61563279724
+      ],
+      "M_reduced_cost_max": 182424.80784779723,
+      "M_dual_slack_uniform_exact_writeup_formula": 638235.6899747906,
+      "log10_M_primal": 4.309555555097479,
+      "log10_M_mu": 4.959814685071938,
+      "log10_M_reduced_cost_max": 5.261083897472682
+    },
+    "factorial_reference_not_used": {
+      "factor_r_factorial": 5040.0,
+      "factorial_over_hadamard_factor_ratio": 5.5537636850335454,
+      "M_primal": 113277.31632000001,
+      "M_mu": 506293.18488,
+      "M_reduced_cost_uniform": 3544152.7491570003,
+      "log10_M_primal": 5.054142951493105,
+      "log10_M_mu": 5.704402081467564,
+      "log10_M_reduced_cost_uniform": 6.549512431241658
+    }
+  },
+  "raw_gurobi_model_structure": {
+    "num_vars": 64,
+    "num_linear_constraints": 80,
+    "num_sos": 0,
+    "num_binary_vars": 19,
+    "num_integer_vars": 19,
+    "num_continuous_vars": 45,
+    "num_nonzeros": 245,
+    "is_mip": true
+  },
+  "continuous_relaxation": {
+    "computed": true,
+    "status": "OPTIMAL",
+    "objective": 0.0,
+    "runtime_sec": 0.0003736670005309861
+  },
+  "solver_configuration": {
+    "solver": "gurobi",
+    "gurobi_version": [
+      12,
+      0,
+      1
+    ],
+    "time_limit_sec": 300.0,
+    "target_mip_gap": 0.0001,
+    "threads": 1,
+    "seed": 1,
+    "int_feas_tol": 1e-08,
+    "feasibility_tol": 1e-08,
+    "numeric_focus": 0,
+    "extra_gurobi_params": {}
+  },
+  "performance": {
+    "status_code": 2,
+    "status": "OPTIMAL",
+    "has_incumbent": true,
+    "solution_count": 1,
+    "runtime_sec_gurobi": 0.00909876823425293,
+    "runtime_sec_python_wall": 0.009209957999701146,
+    "bounds_preprocessing_runtime_sec": 0.0005300409975461662,
+    "total_runtime_including_bounds_sec": 0.009739998997247312,
+    "work": 0.005965636216153042,
+    "node_count": 20.0,
+    "simplex_iterations": 229.0,
+    "barrier_iterations": 0,
+    "objective_value": 0.6219094593599235,
+    "best_bound": 0.6219094593599235,
+    "mip_gap": 0.0
+  },
+  "solution": {
+    "gamma_l1_radius_incumbent": 0.6219094593599235,
+    "nearest_violation_xi": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.875309,
+      10.906313,
+      1.9601054593599234
+    ],
+    "absolute_deviation_t": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.6219094593599235
+    ],
+    "y_EV": [
+      0.0,
+      3.2997379000000002,
+      0.0,
+      0.0,
+      0.3831362406400771,
+      1.9601054593599234,
+      0.0,
+      5.0301416,
+      0.0,
+      1.875309,
+      2.193297259359923,
+      0.0
+    ],
+    "y_star": [
+      0.0,
+      3.8629480999999988,
+      0.0,
+      0.0,
+      0.0,
+      1.6538210000001201,
+      0.0,
+      5.053081900001416,
+      0.0,
+      1.8753090000012267,
+      1.9902829999998133,
+      0.30628445936091
+    ],
+    "mu_equals_minus_pi_star": [
+      39.77119199999289,
+      72.689626,
+      68.34070899999288,
+      0.0,
+      4.809998999990057,
+      71.42031799999289,
+      76.262782
+    ],
+    "pi_star": [
+      -39.77119199999289,
+      -72.689626,
+      -68.34070899999288,
+      -0.0,
+      -4.809998999990057,
+      -71.42031799999289,
+      -76.262782
+    ],
+    "row_slack": [
+      0.0,
+      -1.2012613126444194e-13,
+      -1.4157564010019996e-12,
+      0.08408144063805167,
+      1.226796442210798e-12,
+      1.227462576025573e-12,
+      1.106670310946356e-12
+    ],
+    "reduced_cost": [
+      64.31692000000282,
+      -3.552713678800501e-15,
+      2.705072999992886,
+      154.74700000000996,
+      67.73228800000712,
+      2.6645352591003757e-15,
+      157.07661200000283,
+      -4.884981308350689e-15,
+      92.53292399999289,
+      9.943157408542902e-12,
+      7.105427357601002e-12,
+      0.0
+    ],
+    "z_row": [
+      1.0,
+      1.0,
+      1.0,
+      -0.0,
+      1.0,
+      1.0,
+      1.0
+    ],
+    "z_var": [
+      1.0,
+      -0.0,
+      1.0,
+      1.0,
+      1.0,
+      -0.0,
+      1.0,
+      -0.0,
+      1.0,
+      -0.0,
+      -0.0,
+      -0.0
+    ]
+  },
+  "validation": {
+    "l1_distance_from_xi_hat": 0.6219094593599235,
+    "sum_t": 0.6219094593599235,
+    "sum_t_minus_l1_distance": 0.0,
+    "safe_radius_U": 11.569345000000002,
+    "sum_t_minus_U": -10.947435540640079,
+    "certificate_lhs_minus_rhs": -1.8530954548623413e-11,
+    "max_primal_EV_violation_positive_part": 0.0,
+    "min_star_row_slack": -1.4157564010019996e-12,
+    "min_reduced_cost": -4.884981308350689e-15,
+    "max_row_complementarity_product_abs": 9.675379621575489e-11,
+    "max_variable_complementarity_product_abs": 1.8646492576669377e-11,
+    "max_row_binary_integrality_error": 0.0,
+    "max_var_binary_integrality_error": 0.0,
+    "bigM_utilization": {
+      "max_y_star_over_M_primal": 0.0002477426519750037,
+      "max_row_slack_over_M_primal": 4.12234741050683e-06,
+      "max_mu_over_M_mu": 0.0008365616639529077,
+      "max_reduced_cost_over_component_M": 0.0008610811388243456
+    },
+    "independent_recourse_EV": {
+      "status": "OPTIMAL",
+      "objective": 318.05905093509625,
+      "y": [
+        0.0,
+        3.2997379000000002,
+        0.0,
+        0.0,
+        0.3831362406400771,
+        1.9601054593599234,
+        0.0,
+        5.0301416,
+        0.0,
+        1.875309,
+        2.193297259359923,
+        0.0
+      ],
+      "pi": [
+        -39.771192,
+        -4.957337999999993,
+        -68.34070899999999,
+        0.0,
+        -4.809999,
+        -71.420318,
+        -8.530493999999994
+      ]
+    },
+    "independent_recourse_star": {
+      "status": "OPTIMAL",
+      "objective": 318.2547922132525,
+      "y": [
+        0.0,
+        3.8629480999999988,
+        0.0,
+        0.0,
+        0.0,
+        1.653821,
+        0.0,
+        5.0530819000000005,
+        0.0,
+        1.875309,
+        1.9902830000000016,
+        0.30628445935992343
+      ],
+      "pi": [
+        -39.771192,
+        -72.689626,
+        -68.34070899999999,
+        0.0,
+        -4.809999,
+        -71.420318,
+        -76.262782
+      ]
+    },
+    "true_gap_from_independent_recourse_LPs": 5.4001247917767614e-11,
+    "star_recourse_objective_from_KKT_y_star": 318.254792213325,
+    "star_recourse_KKT_minus_independent_LP": 7.253220246639103e-11,
+    "pi_star_recovered_as_minus_mu": [
+      -39.77119199999289,
+      -72.689626,
+      -68.34070899999288,
+      -0.0,
+      -4.809998999990057,
+      -71.42031799999289,
+      -76.262782
+    ],
+    "row_slack": [
+      0.0,
+      -1.2012613126444194e-13,
+      -1.4157564010019996e-12,
+      0.08408144063805167,
+      1.226796442210798e-12,
+      1.227462576025573e-12,
+      1.106670310946356e-12
+    ],
+    "reduced_cost": [
+      64.31692000000282,
+      -3.552713678800501e-15,
+      2.705072999992886,
+      154.74700000000996,
+      67.73228800000712,
+      2.6645352591003757e-15,
+      157.07661200000283,
+      -4.884981308350689e-15,
+      92.53292399999289,
+      9.943157408542902e-12,
+      7.105427357601002e-12,
+      0.0
+    ]
+  },
+  "files": {
+    "gurobi_log": "/Users/ahluwala/Documents/GitHub/OptiChat/XSP_MERL/local_dom/general_form/lands_generated_instances/lands_instance_small_1_1_2/output_data/hadamard_exp/gurobi_scenario_2.log",
+    "scenario_result": "/Users/ahluwala/Documents/GitHub/OptiChat/XSP_MERL/local_dom/general_form/lands_generated_instances/lands_instance_small_1_1_2/output_data/hadamard_exp/hadamard_result_scenario_2.json",
+    "canonical_result": "/Users/ahluwala/Documents/GitHub/OptiChat/XSP_MERL/local_dom/general_form/lands_generated_instances/lands_instance_small_1_1_2/output_data/hadamard_exp/hadamard_result.json",
+    "bounds": "/Users/ahluwala/Documents/GitHub/OptiChat/XSP_MERL/local_dom/general_form/lands_generated_instances/lands_instance_small_1_1_2/output_data/hadamard_exp/hadamard_bounds.json"
+  }
+}

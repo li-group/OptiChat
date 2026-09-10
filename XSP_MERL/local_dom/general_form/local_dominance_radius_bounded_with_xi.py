@@ -2071,7 +2071,7 @@ class LocalDominanceRadiusProblem:
         )
 
         output_filename = (
-            "local_dominance_radius_compact_g_bounded.json"
+            "local_dominance_radius_compact_g_bounded_xi_bounded.json"
             if has_g_star
             else "local_dominance_radius_compact.json"
         )

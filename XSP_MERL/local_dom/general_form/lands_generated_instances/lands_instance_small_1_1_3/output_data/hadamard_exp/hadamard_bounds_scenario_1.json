@@ -1,0 +1,77 @@
+{
+  "instance_name": "lands_instance_small_1_1_3",
+  "selected_scenario": "scenario_1",
+  "theorem_checks": {
+    "standard_form_Wbar": "[W I_r]",
+    "W_integral_verified": true,
+    "max_abs_W_minus_round_W": 0.0,
+    "Wbar_full_row_rank_reason": "identity slack block I_r",
+    "determinant_denominator_lower_bound": "|det(B)| >= 1 for every nonsingular integer basis B"
+  },
+  "specialization_note": "Unlike the general optimistic-bilevel primal bound, this one-sided local-dominance certificate only needs the optimal recourse value on the x_star side. Therefore one optimal basic follower solution is sufficient, allowing a rank-r Hadamard-Cramer primal M after a safe incumbent radius bounds the RHS.",
+  "rank_r": 7,
+  "safe_incumbent": {
+    "radius_U": 10.407135999999998,
+    "xi": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      3.776374,
+      6.758696,
+      2.278289
+    ],
+    "cost_gap": -26.957565088240074,
+    "source": "saved_realized_scenario",
+    "search_runtime_sec": 2.4708999262657017e-05
+  },
+  "rhs_bound": {
+    "formula": "|b_i(xi)| <= |b_i(xi_hat)| + U * ||H_i,:||_inf",
+    "rowwise_abs_bounds": [
+      7.623546,
+      2.0121860000000007,
+      5.624578,
+      5.1876299999999995,
+      18.748737999999996,
+      11.948304999999998,
+      12.061043999999997
+    ],
+    "Bmax": 18.748737999999996
+  },
+  "hadamard": {
+    "Wbar_max_abs": 1.0,
+    "qbar_max_abs": 109.995419,
+    "factor_r_to_r_over_2": 907.4926996951542,
+    "M_primal_uniform_for_y_star_and_row_slack": 17014.342863497124,
+    "M_mu_uniform": 99820.03974240966,
+    "M_reduced_cost_componentwise": [
+      199643.19951981932,
+      199727.53355881933,
+      199750.07490381933,
+      199680.4893268193,
+      199665.70533681932,
+      199680.3328968193,
+      199705.3469738193,
+      199730.3154148193,
+      199644.91175681932,
+      199746.1595468193,
+      199647.1025548193,
+      199710.06888281932
+    ],
+    "M_reduced_cost_max": 199750.07490381933,
+    "M_dual_slack_uniform_exact_writeup_formula": 698850.2736158678,
+    "log10_M_primal": 4.230815180215946,
+    "log10_M_mu": 4.9992177384404,
+    "log10_M_reduced_cost_max": 5.300486950841145
+  },
+  "factorial_reference_not_used": {
+    "factor_r_factorial": 5040.0,
+    "factorial_over_hadamard_factor_ratio": 5.5537636850335454,
+    "M_primal": 94493.63951999998,
+    "M_mu": 554376.91176,
+    "M_reduced_cost_uniform": 3880748.377739,
+    "log10_M_primal": 4.975402576611573,
+    "log10_M_mu": 5.743805134836027,
+    "log10_M_reduced_cost_uniform": 6.58891548461012
+  }
+}
