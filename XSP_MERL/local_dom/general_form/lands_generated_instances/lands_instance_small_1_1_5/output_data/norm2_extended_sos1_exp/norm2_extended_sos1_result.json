@@ -1,0 +1,331 @@
+{
+  "instance_name": "lands_instance_small_1_1_5",
+  "method": "norm2_extended_sos1",
+  "display_name": "L2 extended SOS1 local-dominance",
+  "formulation": {
+    "norm": "L2",
+    "norm_implementation": "minimize squared Euclidean distance; report sqrt(objective)",
+    "formulation_kind": "extended",
+    "EV_side": "KKT optimal recourse",
+    "star_side": "KKT optimal recourse",
+    "complementarity": "SOS1(row_slack,mu) and SOS1(y,reduced_cost) on every KKT side",
+    "violation_condition": "Delta(xi) <= -0",
+    "violation_margin": 0.0,
+    "artificial_xi_bounds": false,
+    "artificial_dual_bounds": false,
+    "big_M_complementarity": false,
+    "native_SOS1_preserved_via_PreSOS1BigM_0": true,
+    "nonconvex_bilinear_strong_duality_terms": false
+  },
+  "selected_scenario": {
+    "scenario_index_1_based": 1,
+    "scenario_name": "scenario_1",
+    "xi_hat": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.992466,
+      9.815555,
+      2.076166
+    ],
+    "initial_cost_gap": 56.05535667688309,
+    "probability": 0.1
+  },
+  "instance_structure": {
+    "num_scenarios": 10,
+    "n_x_first_stage": 4,
+    "n_y_second_stage": 12,
+    "n_recourse_rows": 7,
+    "xi_dim": 7,
+    "n_first_stage_rows": 2,
+    "nnz_A": 8,
+    "nnz_T": 4,
+    "nnz_W": 24,
+    "nnz_H": 3,
+    "theoretical_sos1_model_num_vars": 83,
+    "theoretical_sos1_model_num_linear_constraints": 39,
+    "theoretical_sos1_model_num_sos1": 38,
+    "theoretical_quadratic_objective_terms": 7,
+    "theoretical_explicit_binary_vars": 0
+  },
+  "raw_gurobi_model_structure": {
+    "num_vars": 83,
+    "num_linear_constraints": 39,
+    "num_quadratic_constraints": 0,
+    "num_sos": 38,
+    "num_binary_vars": 0,
+    "num_integer_vars": 0,
+    "num_continuous_vars": 83,
+    "num_linear_nonzeros": 164,
+    "num_quadratic_objective_nonzeros": 7,
+    "is_mip": true
+  },
+  "solver_configuration": {
+    "solver": "gurobi",
+    "gurobi_version": [
+      12,
+      0,
+      1
+    ],
+    "time_limit_sec": 300.0,
+    "target_mip_gap": 0.0001,
+    "threads": 1,
+    "seed": 1,
+    "int_feas_tol": 1e-08,
+    "feasibility_tol": 1e-08,
+    "PreSOS1BigM": 0,
+    "extra_gurobi_params": {}
+  },
+  "performance": {
+    "status_code": 2,
+    "status": "OPTIMAL",
+    "has_incumbent": true,
+    "solution_count": 4,
+    "runtime_sec_gurobi": 0.011334896087646484,
+    "runtime_sec_python_wall": 0.011517291015479714,
+    "work": 0.007004478766147917,
+    "node_count": 139.0,
+    "simplex_iterations": 481.0,
+    "barrier_iterations": 0,
+    "objective_raw": 0.9801993442423651,
+    "best_bound_raw": 0.9801993442423651,
+    "radius_incumbent": 0.990050172588429,
+    "best_bound_radius": 0.9900501725884224,
+    "mip_gap": 0.0
+  },
+  "solution": {
+    "nearest_violation_xi": [
+      -0.0,
+      -0.0,
+      -0.0,
+      -0.0,
+      1.992466,
+      8.82550482741157,
+      2.076166
+    ],
+    "delta_xi": [
+      -0.0,
+      -0.0,
+      -0.0,
+      -0.0,
+      0.0,
+      -0.990050172588429,
+      0.0
+    ],
+    "radius_incumbent": 0.990050172588429,
+    "squared_l2_objective": 0.9801993442423651,
+    "EV_KKT": {
+      "y": [
+        0.0,
+        5.1167792,
+        0.0,
+        0.0,
+        3.1786831500000003,
+        0.0,
+        0.0,
+        0.5300424774115711,
+        2.076166,
+        1.992466,
+        0.0,
+        0.0
+      ],
+      "mu": [
+        88.52201,
+        56.618703,
+        0.0,
+        0.0,
+        5.669699,
+        92.738441,
+        6.37216
+      ],
+      "row_slack": [
+        0.0,
+        0.0,
+        3.23402622258843,
+        3.265098599999999,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "reduced_cost": [
+        157.722282,
+        0.0,
+        175.256009,
+        81.61892499999999,
+        0.0,
+        77.279602,
+        79.92664900000001,
+        0.0,
+        0.0,
+        0.0,
+        6.093681000000004,
+        87.22073900000001
+      ]
+    },
+    "star_KKT": {
+      "y": [
+        0.0,
+        3.416945,
+        0.0,
+        0.0,
+        5.408559827411571,
+        0.0,
+        0.0,
+        0.0,
+        2.076166,
+        1.992466,
+        0.0,
+        0.0
+      ],
+      "mu": [
+        31.903306999999998,
+        0.0,
+        0.0,
+        0.0,
+        5.669699,
+        36.119738,
+        6.37216
+      ],
+      "row_slack": [
+        0.0,
+        2.7754461725884294,
+        2.8458126499999996,
+        0.8778659999999998,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "reduced_cost": [
+        101.10357900000001,
+        0.0,
+        118.63730600000001,
+        25.000222,
+        0.0,
+        20.660899,
+        79.92664900000001,
+        56.618703,
+        0.0,
+        0.0,
+        62.712384,
+        87.22073900000001
+      ]
+    }
+  },
+  "validation": {
+    "radius_recomputed_from_xi": 0.990050172588429,
+    "true_gap_from_independent_recourse_LPs": 2.842170943040401e-14,
+    "true_margin_constraint_residual": 2.842170943040401e-14,
+    "independent_recourse_EV": {
+      "status": "OPTIMAL",
+      "objective": 210.06940644727067,
+      "y": [
+        0.0,
+        5.1167792,
+        0.0,
+        0.0,
+        3.1786831500000003,
+        0.0,
+        0.0,
+        0.5300424774115706,
+        2.076166,
+        1.992466,
+        0.0,
+        0.0
+      ],
+      "pi": [
+        -88.52201,
+        -56.618703,
+        0.0,
+        0.0,
+        -5.669699,
+        -92.738441,
+        -6.37216
+      ]
+    },
+    "independent_recourse_star": {
+      "status": "OPTIMAL",
+      "objective": 234.28942117302014,
+      "y": [
+        0.0,
+        3.416945,
+        0.0,
+        0.0,
+        5.408559827411571,
+        0.0,
+        0.0,
+        0.0,
+        2.076166,
+        1.992466,
+        0.0,
+        0.0
+      ],
+      "pi": [
+        -31.903306999999998,
+        0.0,
+        0.0,
+        0.0,
+        -5.669699,
+        -36.119738,
+        -6.37216
+      ]
+    },
+    "squared_radius_recomputed": 0.980199344242378,
+    "objective_minus_squared_radius": -1.2878587085651816e-14,
+    "EV_KKT": {
+      "label": "EV",
+      "max_primal_slack_equality_abs_residual": 8.881784197001252e-16,
+      "max_reduced_cost_equality_abs_residual": 0.0,
+      "max_row_sos_pair_min_abs": 0.0,
+      "max_variable_sos_pair_min_abs": 0.0,
+      "max_row_complementarity_product_abs": 0.0,
+      "max_variable_complementarity_product_abs": 0.0,
+      "min_row_slack": 0.0,
+      "min_mu": 0.0,
+      "min_y": 0.0,
+      "min_reduced_cost": 0.0,
+      "recourse_objective_from_KKT_y": 210.06940644727072,
+      "KKT_minus_independent_LP": 5.684341886080802e-14,
+      "pi_recovered_as_minus_mu": [
+        -88.52201,
+        -56.618703,
+        -0.0,
+        -0.0,
+        -5.669699,
+        -92.738441,
+        -6.37216
+      ]
+    },
+    "star_KKT": {
+      "label": "star",
+      "max_primal_slack_equality_abs_residual": 0.0,
+      "max_reduced_cost_equality_abs_residual": 1.4210854715202004e-14,
+      "max_row_sos_pair_min_abs": 0.0,
+      "max_variable_sos_pair_min_abs": 0.0,
+      "max_row_complementarity_product_abs": 0.0,
+      "max_variable_complementarity_product_abs": 0.0,
+      "min_row_slack": 0.0,
+      "min_mu": 0.0,
+      "min_y": 0.0,
+      "min_reduced_cost": 0.0,
+      "recourse_objective_from_KKT_y": 234.28942117302014,
+      "KKT_minus_independent_LP": 0.0,
+      "pi_recovered_as_minus_mu": [
+        -31.903306999999998,
+        -0.0,
+        -0.0,
+        -0.0,
+        -5.669699,
+        -36.119738,
+        -6.37216
+      ]
+    },
+    "model_value_gap_from_KKT_y": 2.842170943040401e-14,
+    "model_margin_constraint_residual": 2.842170943040401e-14
+  },
+  "files": {
+    "gurobi_log": "/Users/ahluwala/Documents/GitHub/OptiChat/XSP_MERL/local_dom/general_form/lands_generated_instances/lands_instance_small_1_1_5/output_data/norm2_extended_sos1_exp/gurobi_scenario_1.log",
+    "scenario_result": "/Users/ahluwala/Documents/GitHub/OptiChat/XSP_MERL/local_dom/general_form/lands_generated_instances/lands_instance_small_1_1_5/output_data/norm2_extended_sos1_exp/norm2_extended_sos1_result_scenario_1.json",
+    "canonical_result": "/Users/ahluwala/Documents/GitHub/OptiChat/XSP_MERL/local_dom/general_form/lands_generated_instances/lands_instance_small_1_1_5/output_data/norm2_extended_sos1_exp/norm2_extended_sos1_result.json"
+  }
+}
