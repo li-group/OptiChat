@@ -25,7 +25,7 @@ from prompts import get_prompts, get_tools, get_syntax_guidance_tool
 from agents import Interpreter, Coordinator, Explainer, Engineer
 
 
-def get_agents(fn_names, client, llm='gpt-4-turbo-preview'):
+def get_agents(fn_names, client, llm='gpt-6-luna'):
     interpreter = Interpreter(client=client, llm=llm)
     explainer = Explainer(client=client, llm=llm)
 

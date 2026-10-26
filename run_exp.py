@@ -900,7 +900,7 @@ if __name__ == '__main__':
     skip_syntax = False
     skip_description = True
 
-    gpt_model = 'gpt-4.1'  # 'gpt-4o-mini', 'gpt-4o', 'gpt-4-turbo', "gpt-4.1", "o3"
+    gpt_model = 'gpt-6-luna'  # 'gpt-4o-mini', 'gpt-4o', 'gpt-4-turbo', "gpt-4.1", "o3"
     temperature = 0  # temperature for the model
 
     if sum([interpreter_experiment, internal_experiment, external_experiment]) > 1:

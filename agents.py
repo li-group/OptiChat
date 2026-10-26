@@ -12,7 +12,7 @@ import re
 
 
 class Agent:
-    def __init__(self, name, description, client, llm="gpt-4-turbo-preview", **kwargs):
+    def __init__(self, name, description, client, llm="gpt-6-luna", **kwargs):
         self.name = name
         self.description = description
         self.client = client
@@ -127,7 +127,7 @@ class Agent:
             response_format = {"type": "text"}
 
         if type(self.client) in [OpenAI, Client]:
-            if self.llm not in ["o3"]:
+            if self.llm not in ["o3", "gpt-6-luna"]:
                 completion = self.client.chat.completions.create(
                 model=self.llm,
                 messages=messages,
@@ -694,7 +694,7 @@ class Engineer(Agent):
             tool_choice = "required"
 
         if type(self.client) in [OpenAI, Client]:
-            if self.llm not in ["o3"]:
+            if self.llm not in ["o3", "gpt-6-luna"]:
                 completion = self.client.chat.completions.create(
                 model=self.llm,
                 messages=messages,
@@ -709,7 +709,8 @@ class Engineer(Agent):
                 messages=messages,
                 seed=seed,
                 tools=tools,
-                tool_choice=tool_choice
+                tool_choice=tool_choice,
+                **({"reasoning_effort": "none"} if self.llm == "gpt-6-luna" else {})
                 )
 
             if completion.choices[0].message.tool_calls:
